@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -31,6 +33,7 @@ import com.example.root.openssme.Adapter.GateAdapter;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.User;
+import com.example.root.openssme.Utils.PrefUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.PendingResult;
@@ -64,7 +67,8 @@ public class LocationService extends Service implements
         LocationListener,
         Observer,
         Response.Listener,
-        Response.ErrorListener {
+        Response.ErrorListener
+        {
 
     protected static final String TAG = LocationService.class.getSimpleName();
     public static final String REQUEST_TAG = "MainVolleyActivity";
@@ -74,6 +78,7 @@ public class LocationService extends Service implements
     public LocationRequest mLocationRequest;
     private Location mLocationServices;
     private RequestQueue mQueue;
+    private Handler mCallHandler;
     private Handler mHandler;
     private boolean mLocker = true;
 
@@ -88,6 +93,7 @@ public class LocationService extends Service implements
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
         mHandler = new Handler();
+        mCallHandler = new Handler();
 
 
         setupLocationRequestBalanced();
@@ -102,14 +108,14 @@ public class LocationService extends Service implements
     public void connectClient() {
 
         // Connect the client.
-         if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
+        if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
             mGoogleConnection.connect();
         }
     }
 
     public void setupLocationRequestBalanced() {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
     }
@@ -137,21 +143,23 @@ public class LocationService extends Service implements
     public void onLocationChanged(Location location) {
         if (location != null) {
 
-            float distanse = CalcDistanc(location);
+            CalcDistanc(location);
 
+            Intent intent = new Intent(Constants.LOCATION_SERVICE);
+            intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
+            intent.putExtra(Constants.LOCATION, location);
+            LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(intent);
 
             //we send the last broadcast and stop the location service
-            if (ListGateComplexPref.getInstance().gates.get(0).status) {
+            if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).status) {
                 //unlock notification block
                 mLocker = true;
 
-                Log.d(TAG, "Stop Location Updats, Almost There Wihing : " + distanse + " Meters");
+                Log.d(TAG, "Stop Location Updats, Almost There");
                 StopLocationUpdates();
 
-                Intent intent = new Intent(Constants.LOCATION_SERVICE);
-                intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
-                intent.putExtra(Constants.LOCATION, location);
-                LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(intent);
+                //mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
 
                 MakeTheCall();
 
@@ -163,24 +171,28 @@ public class LocationService extends Service implements
         }
     }
 
-    private float CalcDistanc(Location from) {
-        Location loc = new Location("dummyprovider");
-        loc.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
-        loc.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
-        float distance = from.distanceTo(loc);
+    private void CalcDistanc(Location from) {
 
-        if (distance <= Constants.DISTANCE_TO_OPEN) {
-            ListGateComplexPref.getInstance().gates.get(0).status = true;
-        } else
-            ListGateComplexPref.getInstance().gates.get(0).status = false;
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+            Location loc = new Location("dummyprovider");
+            loc.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
+            loc.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
+            float distance = from.distanceTo(loc);
 
-        Log.d(TAG, "Are We Inside The Radius Of The Gate? " + ListGateComplexPref.getInstance().gates.get(0).status);
 
-        return distance;
+            if (distance <= PrefUtils.getSettings(this, Constants.OPEN_DISTANCE)) {
+                ListGateComplexPref.getInstance().gates.get(0).status = true;
+                Toast.makeText(this, "Inside the Radius: Distance:" + distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
+            } else {
+                ListGateComplexPref.getInstance().gates.get(0).status = false;
+                Toast.makeText(this, "OutSite The Radius Distance: " + distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
 
+            }
+
+            Log.d(TAG, "Are We Inside The Radius Of The Gate? " + ListGateComplexPref.getInstance().gates.get(0).status);
+
+        }
     }
-
-
 
 
     /*
@@ -190,6 +202,10 @@ public class LocationService extends Service implements
     public void askForLocation() {
 
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
+            return;
+        }
         mLocationServices = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
         if (mLocationServices != null) {
             Log.d(TAG, "GPS location was found!");
@@ -202,6 +218,10 @@ public class LocationService extends Service implements
 
 
     private String SetUpURLString(ArrayList<Gate> gates) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
+            return "";
+        }
         mLocationServices = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
         String str = "";
 
@@ -217,13 +237,13 @@ public class LocationService extends Service implements
                 }
 
             }
-            str = "http://maps.googleapis.com/maps/api/distancematrix/json" +
+            str = "https://maps.googleapis.com/maps/api/distancematrix/json" +
 
                     "?origins=" +
                     mLocationServices.getLatitude() + "," + mLocationServices.getLongitude() +
                     "&destinations=" +
                     sbDestinations.toString() +
-                    "&mode=driving&sensor=false";
+                    "&mode=driving&sensor=false&key=AIzaSyBtPT-uUi5oZ7ls7ysY8Zs8v8sWFApaCkM";
 
         }
         return str;
@@ -234,11 +254,16 @@ public class LocationService extends Service implements
         start the location updates
      */
     protected void startLocationUpdates() {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
-                    mLocationRequest, this);
+        //mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
+
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
+                mLocationRequest, this);
 
     }
-
 
 
     @Nullable
@@ -253,7 +278,6 @@ public class LocationService extends Service implements
         Log.d(TAG, "onUnbind");
         return super.onUnbind(intent);
     }
-
 
 
     @Override
@@ -324,10 +348,12 @@ public class LocationService extends Service implements
         }
         ListGateComplexPref.getInstance().sort();
 
-        Intent intent = new Intent(Constants.LOCATION_SERVICE);
-        intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
-        intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+            Intent intent = new Intent(Constants.LOCATION_SERVICE);
+            intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
+            intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        }
 
         StartApiLocationUpdate();
 
@@ -352,50 +378,60 @@ public class LocationService extends Service implements
 
     private void StartApiLocationUpdate() {
 
-        //outside the radius
-        //lees then 2 min to the gate
-        if (ListGateComplexPref.getInstance().gates.get(0).ETA < Constants.START_LOCATAION_UPDATE && !ListGateComplexPref.getInstance().gates.get(0).status) {
+        if(ListGateComplexPref.getInstance().gates.size()==0) {
 
-            Log.d(TAG, "API Location Were Stoped");
-            StopApiLocationUpdate();
-            Log.d(TAG, "Start Location Updates");
-            startLocationUpdates();
+            StopAllServices();
+        }
+        else {
 
-        } else {
 
-            //look if the user is outside the gate raduis
-            if (ListGateComplexPref.getInstance().gates.get(0).distance > Constants.DISTANCE_TO_OPEN) {
-                Log.d(TAG, "Outside Gate Radius");
-                //gate not in radius
-                ListGateComplexPref.getInstance().gates.get(0).status = false;
+            //outside the radius
+            //lees then 2 min to the gate
+            if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).ETA <= PrefUtils.getSettings(this, Constants.START_LOCATAION_UPDATE) && !ListGateComplexPref.getInstance().gates.get(0).status) {
 
-            }
-            //start the Api Location Update in Constants.API_REFRESH seconds
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "Start Api Location Update From Response");
-                    ApiLocationUpdate();
+                Log.d(TAG, "API Location Were Stoped");
+                StopApiLocationUpdate();
+                Log.d(TAG, "Start Location Updates");
+                startLocationUpdates();
+
+            } else {
+
+
+                //look if the user is outside the gate raduis
+                if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).distance > PrefUtils.getSettings(this, Constants.OPEN_DISTANCE) * 2) {
+                    Log.d(TAG, "Outside Gate Radius");
+                    //gate not in radius
+                    ListGateComplexPref.getInstance().gates.get(0).status = false;
 
                 }
-            }, Constants.API_REFRESH);
-
-            //ask user if he want to reopen the current gate
-            //the user is inside the rdius
-            //mLocker true  - first time entering
-            if (mLocker && ListGateComplexPref.getInstance().gates.get(0).status) {
-                mLocker = false;
+                //start the Api Location Update in Constants.API_REFRESH seconds
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        Log.d(TAG, "Start Api Location Update From Response");
+                        StopApiLocationUpdate();
+                        ApiLocationUpdate();
 
-                        Log.d(TAG, "Start Notification after 2 minunes");
-                        MakeTheCallOnBack();
                     }
-                }, 1000 * 10);
+                }, Constants.API_REFRESH);
+
+                //ask user if he want to reopen the current gate
+                //the user is inside the rdius
+                //mLocker true  - first time entering
+                if (mLocker && ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).status) {
+                    mLocker = false;
+                    mCallHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            Log.d(TAG, "Start Notification after 2 minunes");
+                            MakeTheCallOnBack();
+                        }
+                    }, 1000 * 10);
+                }
+
+
             }
-
-
         }
     }
 
@@ -403,6 +439,7 @@ public class LocationService extends Service implements
     public void StopApiLocationUpdate() {
         mHandler.removeCallbacksAndMessages(null);
     }
+
 
 
     class MyBinder extends Binder {
@@ -433,46 +470,54 @@ public class LocationService extends Service implements
     }
 
     public void MakeTheCallOnBack() {
-        Toast.makeText(this, "call", Toast.LENGTH_SHORT).show();
-        Intent callIntent = new Intent(Intent.ACTION_CALL);
-        callIntent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.gate)
-                .setContentTitle(this.getResources().getString(R.string.app_name))
-                .setAutoCancel(true)
-                .setSound(defaultSoundUri)
-                .setContentIntent(pendingIntent);
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+            Intent callIntent = new Intent(Intent.ACTION_CALL);
+            callIntent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.drawable.gate)
+                    .setContentTitle(this.getResources().getString(R.string.app_name))
+                    .setContentText("Click To Open Gate")
+                    .setAutoCancel(true)
+                    .setSound(defaultSoundUri)
+                    .setContentIntent(pendingIntent);
 
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-        notificationBuilder.setStyle(inboxStyle);
-        inboxStyle.setBigContentTitle("OpenSSME");
-        inboxStyle.addLine("OpenSSME");
-        notificationBuilder.setStyle(inboxStyle);
+            NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+            notificationBuilder.setStyle(inboxStyle);
+            inboxStyle.setBigContentTitle("OpenSSME");
+            inboxStyle.addLine("OpenSSME");
+            notificationBuilder.setStyle(inboxStyle);
 
-        NotificationManager notificationManager =
-                (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        int NOTIFICATION_ID = 100;
-        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
+            NotificationManager notificationManager =
+                    (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+            int NOTIFICATION_ID = 100;
+            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
+        }
     }
 
     private void MakeTheCall() {
 
-        Intent intent = new Intent(Intent.ACTION_CALL);
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
 
-        intent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
+            Intent intent = new Intent(Intent.ACTION_CALL);
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermission();
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "No Phone Call Premission", Toast.LENGTH_LONG).show();
+                return;
+            }
+            this.startActivity(intent);
         }
-        this.startActivity(intent);
     }
-    private void requestPermission() {
-        //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, mRequestCode);
-    }
+
+            private void StopAllServices(){
+                    stopSelf();
+            }
+
 
 
     }

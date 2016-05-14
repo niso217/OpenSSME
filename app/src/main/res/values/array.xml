@@ -1,0 +1,51 @@
+<resources>
+    <string-array name="openDistance">
+        <item>10 Meters</item>
+        <item>50 Meters</item>
+        <item>100 Meters</item>
+        <item>150 Meters</item>
+    </string-array>
+
+    <string-array name="openDistanceValues">
+        <item>10</item>
+        <item>50</item>
+        <item>100</item>
+        <item>150</item>
+
+    </string-array>
+
+    <string-array name="GPSDistance">
+        <item>1 Minute</item>
+        <item>2 Minutes</item>
+        <item>3 Minutes</item>
+        <item>4 Minutes</item>
+    </string-array>
+
+    <string-array name="GPSDistanceValues">
+        <item>60</item>
+        <item>120</item>
+        <item>180</item>
+        <item>240</item>
+
+    </string-array>
+
+    <string-array name="MapType">
+        <item>Normal</item>
+        <item>Satellite</item>
+        <item>Hybrid</item>
+        <item>Terrain</item>
+
+    </string-array>
+
+    <string-array name="MapTypeValues">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+
+
+    </string-array>
+
+
+
+</resources>

@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -35,6 +36,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.UserDictionary;
@@ -52,23 +54,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.BounceInterpolator;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.User;
+import com.example.root.openssme.Utils.ComplexPreferences;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.PictUtil;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationRequest;
+
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
@@ -90,16 +86,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Objects;
 
 import com.example.root.openssme.Adapter.CustomWindowAdapter;
 import com.example.root.openssme.Utils.Constants;
@@ -116,7 +105,7 @@ public class MapFragment extends Fragment implements
 
     private static final String TAG = "MapFragment";
     public MapView mapView;
-    private GoogleMap map;
+    public GoogleMap map;
     private Float zoom, tilt, bearing;
     private LatLng latlng;
     private ArrayList<MarkerOptions> mMarkers;
@@ -127,6 +116,7 @@ public class MapFragment extends Fragment implements
     private LatLng mCurrentMarker;
     private Circle mCircle;
     private Bundle msavedInstanceState;
+
 
 
     /*
@@ -143,8 +133,7 @@ public class MapFragment extends Fragment implements
                 case Constants.LOCATION_UPDATE_FLAG:
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
-                        ZoomToCurrentLocation(intent);
-
+                        onLocationChanged(intent);
                     }
 
                     break;
@@ -167,6 +156,7 @@ public class MapFragment extends Fragment implements
             bearing = savedInstanceState.getFloat("bearing");
             mMarkers = savedInstanceState.getParcelableArrayList("markers");
             mCurrentMarker = savedInstanceState.getParcelable("currentmarker");
+            mOnClickLatLang = savedInstanceState.getParcelable("onclicklatlang");
 
 
         } else {
@@ -191,6 +181,9 @@ public class MapFragment extends Fragment implements
             outState.putFloat("bearing", map.getCameraPosition().bearing);
             outState.putParcelable("currentmarker", mCurrentMarker);
             outState.putParcelableArrayList("markers", mMarkers);
+            outState.putParcelable("onclicklatlang", mOnClickLatLang);
+
+
         }
         super.onSaveInstanceState(outState);
 
@@ -204,7 +197,26 @@ public class MapFragment extends Fragment implements
         map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater(getArguments())));
         map.setOnInfoWindowClickListener(this);
         map.setOnMarkerClickListener(this);
-        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        int maptype = PrefUtils.getSettings(getContext(),Constants.MAP_TYPE);
+        switch(maptype){
+            case 1:
+                map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                break;
+            case 2:
+                map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                break;
+            case 3:
+                map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                break;
+            case 4:
+                map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                break;
+            case 5:
+                map.setMapType(GoogleMap.MAP_TYPE_NONE);
+                break;
+
+
+        }
         SetUpCircle();
 
 
@@ -221,12 +233,16 @@ public class MapFragment extends Fragment implements
         restoreMarkerArrayToMap();
 
         for (int i = 0; i < mMarkers.size(); i++) {
-            Marker temp = map.addMarker(mMarkers.get(i));
-            if (mCurrentMarker != null && mLocationService.distance(mMarkers.get(i).getPosition().latitude, mMarkers.get(i).getPosition().longitude,
-                    mCurrentMarker.latitude, mCurrentMarker.longitude) < 0.0001) {
-                temp.showInfoWindow();
-            }
+            if (mMarkers.get(i) != null && mMarkers.get(i).getPosition()!=null) {
+                Marker temp = map.addMarker(mMarkers.get(i));
+                if (temp != null) {
+                    if (mCurrentMarker != null && mLocationService.distance(mMarkers.get(i).getPosition().latitude, mMarkers.get(i).getPosition().longitude,
+                            mCurrentMarker.latitude, mCurrentMarker.longitude) < 0.0001) {
+                        temp.showInfoWindow();
+                    }
+                }
 
+            }
         }
 
     }
@@ -310,30 +326,21 @@ public class MapFragment extends Fragment implements
         }
     }
 
+    public void onLocationChanged(Intent Intent) {
 
+        Bundle b = Intent.getExtras();
+        Location location = (Location)b.get(android.location.LocationManager.KEY_LOCATION_CHANGED);
+        //zoom to current position:
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(location.getLatitude(),location.getLongitude())).zoom(14).build();
 
-
-    public void ZoomToCurrentLocation(Intent intent){
-        Bundle b = intent.getExtras();
-        Location loc = (Location)b.get(LocationManager.KEY_LOCATION_CHANGED);
-        LatLng latLng = new LatLng(loc.getLatitude(),loc.getLongitude());
-        Double distance = intent.getDoubleExtra(Constants.DISTANCE, 0);
-            if (map!=null && !isLocationUpdatesEnable) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18));
-                isLocationUpdatesEnable = true;
-            }
-
-
-        if(distance < Constants.DISTANCE_TO_OPEN){
-            isLocationUpdatesEnable = false;
-        }
-
-
-        Log.d(TAG, "Location Update" + latLng.latitude + ","+ latLng.longitude);
-        Log.d(TAG, "Distance" + intent.getDoubleExtra(Constants.DISTANCE,0));
-
+        map.animateCamera(CameraUpdateFactory
+                .newCameraPosition(cameraPosition));
 
     }
+
+
+
 
 
     private void askForPremissions() {
@@ -353,10 +360,10 @@ public class MapFragment extends Fragment implements
             if (mCircle == null) {
                 mCircle = map.addCircle(new CircleOptions()
                         .center(ListGateComplexPref.getInstance().gates.get(0).location)
-                        .radius(Constants.DISTANCE_TO_OPEN)
+                        .radius(PrefUtils.getSettings(getContext(),Constants.OPEN_DISTANCE))
                         .strokeColor(Color.RED));
             } else {
-                mCircle.setRadius(Constants.DISTANCE_TO_OPEN);
+                mCircle.setRadius(PrefUtils.getSettings(getContext(),Constants.OPEN_DISTANCE));
 
             }
         }
@@ -575,15 +582,20 @@ public class MapFragment extends Fragment implements
                 .title(contactName).snippet(contactNumber).icon(defaultMarker);
 
         // Creates and adds marker to the map
-        Marker marker = map.addMarker(markerOptions);
+        if (map!=null){
+            Marker marker = map.addMarker(markerOptions);
+            dropPinEffect(marker);
+            SetUpCircle();
+
+        }
         mMarkers.add(markerOptions);
 
         //fist gate just added, start the service
-        if (ListGateComplexPref.getInstance().gates.size()==1){
+        if (!mServiceBound && ListGateComplexPref.getInstance().gates.size()==1){
             bindService();
         }
 
-        dropPinEffect(marker);
+
     }
 
 
@@ -673,8 +685,6 @@ public class MapFragment extends Fragment implements
 
 
 
-
-
     private void requestSettings() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .setAlwaysShow(true)
@@ -682,6 +692,7 @@ public class MapFragment extends Fragment implements
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mLocationService.mGoogleConnection.getGoogleApiClient(), builder.build());
         result.setResultCallback(this);
     }
+
 };
 
 

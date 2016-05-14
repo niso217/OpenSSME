@@ -10,7 +10,7 @@
             android:title="@string/map" />
 
         <item
-            android:id="@+id/events"
+            android:id="@+id/gate_list"
             android:checked="false"
             android:icon="@drawable/ic_star_black"
             android:title="@string/events" />
@@ -20,6 +20,7 @@
             android:checked="false"
             android:icon="@drawable/ic_send_black"
             android:title="@string/log_out" />
+
 
 
     </group>

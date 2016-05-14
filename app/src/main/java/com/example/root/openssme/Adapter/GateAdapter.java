@@ -20,6 +20,7 @@ import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PictUtil;
+import com.example.root.openssme.Utils.PrefUtils;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -70,10 +71,23 @@ public class GateAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View view, ViewGroup parent) {
+    public View getView(final int position, View view, ViewGroup parent) {
         Gate gate = (Gate) getItem(position);
         if (view == null) {
             view = inflater.inflate(R.layout.gate_list, null);
+
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    ListGateComplexPref.getInstance().gates.remove(position);
+                    ListGateComplexPref.getInstance().sort();
+                    PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
+                    notifyDataSetChanged();
+                    Log.d("test","clicked");
+                    return false;
+                }
+
+            });
         }
 
 
@@ -94,6 +108,10 @@ public class GateAdapter extends BaseAdapter {
                     .centerCrop()
                     .into(movieurl);
 
+
+
         return view;
     }
+
+
 }

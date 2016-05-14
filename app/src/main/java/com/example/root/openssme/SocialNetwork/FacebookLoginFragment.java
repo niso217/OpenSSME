@@ -66,7 +66,7 @@ public class FacebookLoginFragment extends Fragment {
         View rootFragment = inflater.inflate(R.layout.fragment_facebook, null);
         loginButton= (LoginButton)rootFragment.findViewById(R.id.facebook_login);
         loginButton.setFragment(this);
-        loginButton.setReadPermissions(Arrays.asList("user_location"));
+        loginButton.setReadPermissions(Arrays.asList("public_profile","email"));
         return rootFragment;
     }
 

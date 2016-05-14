@@ -1,8 +1,11 @@
 package com.example.root.openssme.Utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.widget.Toast;
 
-import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.User;
 
@@ -29,6 +32,13 @@ public class PrefUtils {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, "user_prefs", 0);
         complexPreferences.clearObject();
         complexPreferences.commit();
+    }
+
+    public static int getSettings(Context ctx, String key){
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
+        String str = pref.getString(key,"1");
+        return Integer.parseInt(str);
+
     }
 
     public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx){

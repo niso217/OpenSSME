@@ -1,11 +1,16 @@
 package com.example.root.openssme;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -35,6 +40,8 @@ import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
 
+import java.util.logging.Logger;
+
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener
 
@@ -57,6 +64,11 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //request phone call premission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermission();
+        }
 
         if (savedInstanceState != null) {
             // Let's first dynamically add a fragment into a frame container
@@ -180,12 +192,20 @@ public class MainActivity extends AppCompatActivity implements
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch(item.getItemId())
+        {
+
+            case R.id.action_settings:
+                Intent i = new Intent(this, PreferencesActivity.class);
+                startActivity(i);
+                break;
+
+//            case R.id.map_type_normal:
+//                M.map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+//                break;
         }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -207,14 +227,6 @@ public class MainActivity extends AppCompatActivity implements
     public void onBackPressed() {
 
 
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        }
-        if (!viewIsAtHome) { //if the current view is not the News fragment
-            displayView(R.id.map); //display the News fragment
-        } else {
-            moveTaskToBack(true);  //If view is in News fragment, exit application
-        }
 
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
@@ -239,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements
         String title = getString(R.string.app_name);
 
         switch (viewId) {
-            case R.id.events:
+            case R.id.gate_list:
                 fragment = getSupportFragmentManager().findFragmentByTag(GATE_LIST_FRAGMENT);
                 if (fragment==null){
                     fragment = new GateListFragment();
@@ -253,12 +265,17 @@ public class MainActivity extends AppCompatActivity implements
                 if (fragment==null){
                     fragment = new MapFragment();
                 }
-                title = "Events";
+                title = "Map";
                 viewIsAtHome = true;
                 CurrentFragment = MAP_FRAGMENT;
                 break;
 
+            case R.id.logout:
+                signOut();
+                return;
         }
+
+
 
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.frame, fragment,CurrentFragment);
@@ -275,6 +292,72 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+
+
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
+    }
+
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
+            if(grantResults.length > 0){
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //user accepted , make call
+                    Log.d(TAG,"Permission granted");
+
+                }
+                else if(grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                    boolean should = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
+                    if(should){
+                        //user denied without Never ask again, just show rationale explanation
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("Permission Denied");
+                        builder.setMessage("Without this permission the app is unable to make call.Are you sure you want to deny this permission?");
+                        builder.setPositiveButton("I'M SURE", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        builder.setNegativeButton("RE-TRY", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                requestPermission();
+                            }
+                        });
+                        builder.show();
+
+                    }else{
+                        //user has denied with `Never Ask Again`, go to settings
+                        promptSettings();
+                    }
+                }
+            }
+        }
+    }
+
+    private void promptSettings() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Denied Never Ask");
+        builder.setMessage("Denied Never Ask Msg");
+        builder.setPositiveButton("go to Settings", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                goToSettings();
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void goToSettings() {
+        Intent myAppSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
+        myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
+        myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.startActivity(myAppSettings);
+    }
 
 
 }

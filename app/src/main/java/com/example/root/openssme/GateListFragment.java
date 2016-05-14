@@ -69,4 +69,6 @@ public class GateListFragment extends Fragment {
         // [END customize_button]
         return rootFragment;
     }
+
+
 }

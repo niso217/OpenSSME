@@ -2,12 +2,14 @@ package com.example.root.openssme;
 
 import android.app.Application;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.SocialNetworkHelper;
 import com.example.root.openssme.SocialNetwork.User;
 import com.example.root.openssme.Utils.PrefUtils;
+import com.example.root.openssme.common.GoogleConnection;
 
 
 public class MyApplication extends Application{
@@ -29,7 +31,9 @@ public class MyApplication extends Application{
             Log.d(TAG,"new sign in");
             User.getInstance().copy(mUser);
         }
-
+        if (!GoogleConnection.getInstance(this).getGoogleApiClient().isConnected()){
+            GoogleConnection.getInstance(this).getGoogleApiClient().connect();
+        }
         //initialize user from share pref saved user params
         ListGateComplexPref mListGateComplexPref = PrefUtils.getCurrentGate(getApplicationContext());
         if (mListGateComplexPref != null) {

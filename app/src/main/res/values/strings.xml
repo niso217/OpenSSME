@@ -5,6 +5,13 @@
     <string name="google_app_id">AIzaSyAi4JVFyvEZxrAi-MOBJ5RSMqgd9UwBc9Q</string>
 
 
+    <string name="map_type_hybrid">Hybrid</string>
+    <string name="map_type_normal">Normal</string>
+    <string name="map_type_satellite">Satellite</string>
+    <string name="map_type_terrain">Terrain</string>
+
+
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
@@ -32,7 +39,7 @@
     <string name="google_sender_id">903106005199</string>
 
     <string name="map">Map</string>
-    <string name="events">Events</string>
+    <string name="events">My Gates</string>
     <string name="log_out">Log Out</string>
     <string name="closeDrawer">Navigation View</string>
     <string name="openDrawer">Navigation View Closed</string>

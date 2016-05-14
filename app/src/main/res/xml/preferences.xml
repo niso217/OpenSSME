@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Update Information"
+        android:key="update_category">
+
+        <ListPreference
+            android:key="gps_distance"
+            android:title="GPS Activation Distance"
+            android:summary="Define the distance to start the GPS tracking"
+            android:defaultValue="60"
+            android:entries="@array/GPSDistance"
+            android:entryValues="@array/GPSDistanceValues"
+            />
+
+        <ListPreference
+            android:key="open_distance"
+            android:title="Open Gate Distance"
+            android:summary="Define the distance the call to the gate will be performed"
+            android:defaultValue="10"
+            android:entries="@array/openDistance"
+            android:entryValues="@array/openDistanceValues"
+            />
+
+        <ListPreference
+            android:key="map_type"
+            android:title="Map Types"
+            android:summary="types of maps you can display using the Google Maps"
+            android:defaultValue="1"
+            android:entries="@array/MapType"
+            android:entryValues="@array/MapTypeValues"
+            />
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="Customisations"
+        android:key="custom_category">
+
+
+        <RingtonePreference
+            android:key="notification_ringtone"
+            android:title="Notification Ringtone"
+            android:summary="Customise Notification Ringtone for you"
+            android:dialogTitle="Notification Ringtone"
+            android:dialogMessage="Customise Notification Ringtone for you"/>
+
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
