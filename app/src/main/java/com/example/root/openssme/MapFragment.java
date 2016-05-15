@@ -418,9 +418,6 @@ public class MapFragment extends Fragment implements
         }
     }
 
-
-
-
     @Override
     public void onMapLongClick(LatLng latLng) {
         mOnClickLatLang = latLng;
@@ -428,6 +425,9 @@ public class MapFragment extends Fragment implements
          SetContactPickerIntent();
 
     }
+
+
+
 
 
 
