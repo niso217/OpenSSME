@@ -97,8 +97,8 @@ import com.example.root.openssme.Utils.Constants;
 public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
-        ServiceConnection, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener,
-        ResultCallback<LocationSettingsResult>
+        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener
+
 
 {
 
@@ -109,9 +109,6 @@ public class MapFragment extends Fragment implements
     private Float zoom, tilt, bearing;
     private LatLng latlng;
     private ArrayList<MarkerOptions> mMarkers;
-    private LocationService mLocationService;
-    private Boolean isLocationUpdatesEnable = false;
-    private boolean mServiceBound = false;
     private LatLng mOnClickLatLang;
     private LatLng mCurrentMarker;
     private Circle mCircle;
@@ -124,23 +121,6 @@ public class MapFragment extends Fragment implements
      * returned in Activity.onActivityResult
      */
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getFlags()) {
-
-
-                case Constants.LOCATION_UPDATE_FLAG:
-                    //recived location update
-                    if (intent.hasExtra(Constants.LOCATION)) {
-                        onLocationChanged(intent);
-                    }
-
-                    break;
-            }
-        }
-    };
-
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -149,7 +129,6 @@ public class MapFragment extends Fragment implements
 
         if (savedInstanceState != null) {
             msavedInstanceState = savedInstanceState;
-            isLocationUpdatesEnable = savedInstanceState.getBoolean("savedInstanceState");
             zoom = savedInstanceState.getFloat("zoom");
             latlng = new LatLng(savedInstanceState.getDouble("lat"), savedInstanceState.getDouble("lon"));
             tilt = savedInstanceState.getFloat("tilt");
@@ -173,7 +152,6 @@ public class MapFragment extends Fragment implements
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (map != null) {
-            outState.putBoolean("isLocationUpdatesEnable", isLocationUpdatesEnable);
             outState.putDouble("lat", map.getCameraPosition().target.latitude);
             outState.putDouble("lon", map.getCameraPosition().target.longitude);
             outState.putFloat("zoom", map.getCameraPosition().zoom);
@@ -189,6 +167,46 @@ public class MapFragment extends Fragment implements
 
 
     }
+
+    @Override
+    public void onResume() {
+        mapView.onResume();
+        super.onResume();
+    }
+
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+
+    }
+
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getFlags()) {
+
+
+                case Constants.LOCATION_UPDATE_FLAG:
+                    //recived location update
+                    if (intent.hasExtra(Constants.LOCATION)) {
+                        onLocationChanged(intent);
+                    }
+
+                    break;
+            }
+        }
+    };
+
 
 
     @Override
@@ -236,10 +254,10 @@ public class MapFragment extends Fragment implements
             if (mMarkers.get(i) != null && mMarkers.get(i).getPosition()!=null) {
                 Marker temp = map.addMarker(mMarkers.get(i));
                 if (temp != null) {
-                    if (mCurrentMarker != null && mLocationService.distance(mMarkers.get(i).getPosition().latitude, mMarkers.get(i).getPosition().longitude,
-                            mCurrentMarker.latitude, mCurrentMarker.longitude) < 0.0001) {
-                        temp.showInfoWindow();
-                    }
+//                    if (mCurrentMarker != null && mLocationService.distance(mMarkers.get(i).getPosition().latitude, mMarkers.get(i).getPosition().longitude,
+//                            mCurrentMarker.latitude, mCurrentMarker.longitude) < 0.0001) {
+//                        temp.showInfoWindow();
+//                    }
                 }
 
             }
@@ -267,45 +285,6 @@ public class MapFragment extends Fragment implements
             //Log.e(TAG, "Inflate exception");
         }
         return rootView;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        //must have at least 1 gate to start the serive
-        if (ListGateComplexPref.getInstance().gates.size() > 0)
-        bindService();
-
-    }
-
-    @Override
-    public void onResume() {
-        mapView.onResume();
-        super.onResume();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mServiceBound) {
-            unBindService();
-            mServiceBound = false;
-        }
-
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mapView.onDestroy();
-
-    }
-
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        mapView.onLowMemory();
     }
 
 
@@ -340,20 +319,6 @@ public class MapFragment extends Fragment implements
     }
 
 
-
-
-
-    private void askForPremissions() {
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Check Permissions Now
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                    Constants.PREMISSIONS);
-        }
-    }
-
     private void SetUpCircle(){
 
         if (ListGateComplexPref.getInstance().gates.size()>0) {
@@ -370,54 +335,6 @@ public class MapFragment extends Fragment implements
     }
 
 
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String[] permissions,
-                                           int[] grantResults) {
-        if (requestCode == Constants.PREMISSIONS) {
-            if (grantResults.length == 2
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // We can now safely use the API we requested access to
-                    requestSettings();
-
-            } else {
-                // Permission was denied or request was cancelled
-            }
-        }
-    }
-
-
-    /*
-     * Handle results returned to the FragmentActivity by Google Play services
-     */
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Decide what to do based on the original request code
-        switch (requestCode) {
-            case Constants.REQUEST_CHECK_SETTINGS:
-                switch (resultCode) {
-                    case Activity.RESULT_OK:
-                        if (msavedInstanceState==null){
-                            mLocationService.askForLocation();
-                        }                        break;
-                    case Activity.RESULT_CANCELED:
-                        // The user was asked to change settings, but chose not to
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            case Constants.PICK_CONTACT:
-                if (resultCode == Activity.RESULT_OK){
-                    retrieveContactNumber(data);
-                }
-                break;
-        }
-    }
-
     @Override
     public void onMapLongClick(LatLng latLng) {
         mOnClickLatLang = latLng;
@@ -425,13 +342,6 @@ public class MapFragment extends Fragment implements
          SetContactPickerIntent();
 
     }
-
-
-
-
-
-
-
 
 
     private void restoreMarkerArrayToMap() {
@@ -458,47 +368,22 @@ public class MapFragment extends Fragment implements
 
     }
 
-
-
-
-    public void bindService() {
-        Intent intent = new Intent(getContext(), LocationService.class);
-        getActivity().startService(intent);
-        getActivity().bindService(intent, this, getContext().BIND_AUTO_CREATE);
-    }
-
-    public void unBindService() {
-        getActivity().unbindService(this);
-        if (mLocationService != null) {
-            mLocationService = null;
-        }
-    }
-
-    //implements
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder binder) {
-        LocationService.MyBinder myBinder = (LocationService.MyBinder) binder;
-        mLocationService = myBinder.getService();
-        mServiceBound = true;
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.M) {
-            askForPremissions();
-        }
-        requestSettings();
-
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        if (mLocationService == null)
-            return;
-        mLocationService = null;
-        mServiceBound = false;
-
-    }
-
     private void SetContactPickerIntent(){
         Intent contact =  new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
         startActivityForResult(contact, Constants.PICK_CONTACT);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Decide what to do based on the original request code
+        switch (requestCode) {
+            case Constants.PICK_CONTACT:
+                if (resultCode == Activity.RESULT_OK){
+                    retrieveContactNumber(data);
+                }
+                break;
+        }
     }
 
     private void retrieveContactNumber(Intent intent) {
@@ -591,8 +476,7 @@ public class MapFragment extends Fragment implements
         mMarkers.add(markerOptions);
 
         //fist gate just added, start the service
-        if (!mServiceBound && ListGateComplexPref.getInstance().gates.size()==1){
-            bindService();
+        if (ListGateComplexPref.getInstance().gates.size()==1){
         }
 
 
@@ -646,52 +530,12 @@ public class MapFragment extends Fragment implements
         return false;
     }
 
-    @Override
-    public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-
-        final Status status = locationSettingsResult.getStatus();
-        switch (status.getStatusCode()) {
-            case LocationSettingsStatusCodes.SUCCESS:
-                // All location settings are satisfied. The client can initialize location
-                if (msavedInstanceState==null){
-                    mLocationService.askForLocation();
-                }
-                Log.d(TAG, "All location settings are satisfied. The client can initialize location requests here");
-                break;
-            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                // Location settings are not satisfied. But could be fixed by showing the user
-                // a dialog.
-                ChangeLocationSettings(status);
-                break;
-            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                Log.e(TAG, "Settings change unavailable. We have no way to fix the settings so we won't show the dialog.");
-                break;
-        }
-
-    }
-    private void ChangeLocationSettings(Status status) {
-        // Location settings are not satisfied. But could be fixed by showing the user
-        // a dialog.
-        try {
-            // Show the dialog by calling startResolutionForResult(),
-            // and check the result in onActivityResult().
-            status.startResolutionForResult(
-                    getActivity(),
-                    Constants.REQUEST_CHECK_SETTINGS);
-        } catch (IntentSender.SendIntentException e) {
-            // Ignore the error.
-        }
-    }
 
 
 
-    private void requestSettings() {
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .setAlwaysShow(true)
-                .addLocationRequest(mLocationService.mLocationRequest);
-        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mLocationService.mGoogleConnection.getGoogleApiClient(), builder.build());
-        result.setResultCallback(this);
-    }
+
+
+
 
 };
 

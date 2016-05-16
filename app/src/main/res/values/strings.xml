@@ -38,11 +38,16 @@
     <string name="server_client_id">903106005199-c3upo2gko5po0lircq4q73u64ehh3hb8.apps.googleusercontent.com</string>
     <string name="google_sender_id">903106005199</string>
 
+    <string name="main">Main</string>
     <string name="map">Map</string>
     <string name="events">My Gates</string>
     <string name="log_out">Log Out</string>
     <string name="closeDrawer">Navigation View</string>
     <string name="openDrawer">Navigation View Closed</string>
     <string name="title_activity_maps">Map</string>
+    <string name="request_location"> Without this permission the app is unable to work properly.Are you sure you want to deny this permission?</string>
+    <string name="request_call"> Without this permission the app is unable to make call.Are you sure you want to deny this permission?</string>
+
+
 
 </resources>

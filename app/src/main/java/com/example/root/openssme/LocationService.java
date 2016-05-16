@@ -48,6 +48,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
@@ -73,8 +74,6 @@ public class LocationService extends Service implements
     protected static final String TAG = LocationService.class.getSimpleName();
     public static final String REQUEST_TAG = "MainVolleyActivity";
     public GoogleConnection mGoogleConnection;
-    private long UPDATE_INTERVAL = 60000;  /* 60 secs */
-    private long FASTEST_INTERVAL = 3000; /* 5 secs */
     public LocationRequest mLocationRequest;
     private Location mLocationServices;
     private RequestQueue mQueue;
@@ -85,7 +84,9 @@ public class LocationService extends Service implements
     @Override
     public void onCreate() {
 
-        super.onCreate();
+        //get the last user settings
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
         mQueue = CustomVolleyRequestQueue.getInstance(getApplication())
                 .getRequestQueue();
 
@@ -97,11 +98,19 @@ public class LocationService extends Service implements
 
 
         setupLocationRequestBalanced();
+
+        super.onCreate();
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        connectClient();
+        if (mGoogleConnection.getGoogleApiClient().isConnected()){
+            askForLocation();
+        }
+        else{
+            connectClient();
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -116,8 +125,8 @@ public class LocationService extends Service implements
     public void setupLocationRequestBalanced() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+        mLocationRequest.setInterval(Constants.UPDATE_INTERVAL);
+        mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
     }
 
 
@@ -134,6 +143,8 @@ public class LocationService extends Service implements
         Log.d(TAG, "Location Distroy");
 
         super.onDestroy();
+
+        stopSelf();
     }
 
     @Override
@@ -148,6 +159,7 @@ public class LocationService extends Service implements
             Intent intent = new Intent(Constants.LOCATION_SERVICE);
             intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
             intent.putExtra(Constants.LOCATION, location);
+            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
             LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(intent);
 
             //we send the last broadcast and stop the location service
@@ -157,8 +169,6 @@ public class LocationService extends Service implements
 
                 Log.d(TAG, "Stop Location Updats, Almost There");
                 StopLocationUpdates();
-
-                //mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
 
                 MakeTheCall();
@@ -174,10 +184,22 @@ public class LocationService extends Service implements
     private void CalcDistanc(Location from) {
 
         if (ListGateComplexPref.getInstance().gates.size() > 0) {
+
+            for (int i = 0; i <ListGateComplexPref.getInstance().gates.size() ; i++) {
+                Location loc = new Location("dummyprovider");
+                loc.setLatitude(ListGateComplexPref.getInstance().gates.get(i).location.latitude);
+                loc.setLongitude(ListGateComplexPref.getInstance().gates.get(i).location.longitude);
+                float distance = from.distanceTo(loc);
+                ListGateComplexPref.getInstance().gates.get(i).distance = new Double(distance);
+
+            }
+            ListGateComplexPref.getInstance().sort();
+
             Location loc = new Location("dummyprovider");
             loc.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
             loc.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
             float distance = from.distanceTo(loc);
+
 
 
             if (distance <= PrefUtils.getSettings(this, Constants.OPEN_DISTANCE)) {
@@ -200,7 +222,6 @@ public class LocationService extends Service implements
         else request additional settings
      */
     public void askForLocation() {
-
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
@@ -254,7 +275,6 @@ public class LocationService extends Service implements
         start the location updates
      */
     protected void startLocationUpdates() {
-        //mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
 
@@ -296,6 +316,7 @@ public class LocationService extends Service implements
 
             case OPENED:
                 Log.d(TAG, "OPENED");
+                askForLocation();
                 // We are signed in!
                 // Retrieve some profile information to personalize our app for the user.
                 break;
@@ -352,6 +373,8 @@ public class LocationService extends Service implements
             Intent intent = new Intent(Constants.LOCATION_SERVICE);
             intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
             intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
+            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
+
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
 
@@ -360,7 +383,7 @@ public class LocationService extends Service implements
     }
 
     private void ApiLocationUpdate() {
-        if (mLocationServices != null && ListGateComplexPref.getInstance().gates != null) {
+        if (mLocationServices != null && ListGateComplexPref.getInstance().gates.size() > 0) {
 
             //calc the status of the gate, if inside the radius
             CalcDistanc(mLocationServices);
@@ -377,12 +400,6 @@ public class LocationService extends Service implements
     }
 
     private void StartApiLocationUpdate() {
-
-        if(ListGateComplexPref.getInstance().gates.size()==0) {
-
-            StopAllServices();
-        }
-        else {
 
 
             //outside the radius
@@ -431,7 +448,7 @@ public class LocationService extends Service implements
                 }
 
 
-            }
+
         }
     }
 
@@ -513,11 +530,6 @@ public class LocationService extends Service implements
             this.startActivity(intent);
         }
     }
-
-            private void StopAllServices(){
-                    stopSelf();
-            }
-
 
 
     }

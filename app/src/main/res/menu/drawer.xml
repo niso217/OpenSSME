@@ -4,6 +4,12 @@
     <group android:checkableBehavior="single">
 
         <item
+            android:id="@+id/main"
+            android:checked="false"
+            android:icon="@drawable/ic_send_black"
+            android:title="@string/main" />
+
+        <item
             android:id="@+id/map"
             android:checked="false"
             android:icon="@drawable/ic_inbox_black"
