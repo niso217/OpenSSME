@@ -10,11 +10,14 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -68,14 +71,14 @@ public class LocationService extends Service implements
         LocationListener,
         Observer,
         Response.Listener,
-        Response.ErrorListener
-        {
+        Response.ErrorListener {
 
     protected static final String TAG = LocationService.class.getSimpleName();
     public static final String REQUEST_TAG = "MainVolleyActivity";
     public GoogleConnection mGoogleConnection;
     public LocationRequest mLocationRequest;
-    private Location mLocationServices;
+    private Location mCurrentLocation;
+    private LocationManager mLocationManager;
     private RequestQueue mQueue;
     private Handler mCallHandler;
     private Handler mHandler;
@@ -89,6 +92,9 @@ public class LocationService extends Service implements
 
         mQueue = CustomVolleyRequestQueue.getInstance(getApplication())
                 .getRequestQueue();
+
+        mLocationManager = (LocationManager) this.getSystemService(
+                Context.LOCATION_SERVICE);
 
 
         mGoogleConnection = GoogleConnection.getInstance(this);
@@ -105,10 +111,9 @@ public class LocationService extends Service implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mGoogleConnection.getGoogleApiClient().isConnected()){
+        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
             askForLocation();
-        }
-        else{
+        } else {
             connectClient();
         }
         return super.onStartCommand(intent, flags, startId);
@@ -154,13 +159,11 @@ public class LocationService extends Service implements
     public void onLocationChanged(Location location) {
         if (location != null) {
 
-            CalcDistanc(location);
+            mCurrentLocation = location;
 
-            Intent intent = new Intent(Constants.LOCATION_SERVICE);
-            intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
-            intent.putExtra(Constants.LOCATION, location);
-            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
-            LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(intent);
+            CalcDistanc();
+
+            LocationBroadcast();
 
             //we send the last broadcast and stop the location service
             if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).status) {
@@ -181,24 +184,64 @@ public class LocationService extends Service implements
         }
     }
 
-    private void CalcDistanc(Location from) {
+    public void GetCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mLocationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER,
+                new android.location.LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        mCurrentLocation = location;
+                    }
 
-        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                    }
+
+                    @Override
+                    public void onProviderEnabled(String provider) {
+
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String provider) {
+
+                    }
+                }, null);
+
+
+        }
+
+
+
+    private void CalcDistanc() {
+
+        if (mCurrentLocation != null && ListGateComplexPref.getInstance().gates.size() > 0) {
+
+            Location to = new Location("");
+            float distance;
 
             for (int i = 0; i <ListGateComplexPref.getInstance().gates.size() ; i++) {
-                Location loc = new Location("dummyprovider");
-                loc.setLatitude(ListGateComplexPref.getInstance().gates.get(i).location.latitude);
-                loc.setLongitude(ListGateComplexPref.getInstance().gates.get(i).location.longitude);
-                float distance = from.distanceTo(loc);
+                to.setLatitude(ListGateComplexPref.getInstance().gates.get(i).location.latitude);
+                to.setLongitude(ListGateComplexPref.getInstance().gates.get(i).location.longitude);
+                 distance = mCurrentLocation.distanceTo(to);
                 ListGateComplexPref.getInstance().gates.get(i).distance = new Double(distance);
 
             }
             ListGateComplexPref.getInstance().sort();
 
-            Location loc = new Location("dummyprovider");
-            loc.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
-            loc.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
-            float distance = from.distanceTo(loc);
+            to.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
+            to.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
+             distance = mCurrentLocation.distanceTo(to);
 
 
 
@@ -227,8 +270,8 @@ public class LocationService extends Service implements
             Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
             return;
         }
-        mLocationServices = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
-        if (mLocationServices != null) {
+        mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
+        if (mCurrentLocation != null) {
             Log.d(TAG, "GPS location was found!");
             ApiLocationUpdate();
         } else {
@@ -238,22 +281,21 @@ public class LocationService extends Service implements
     }
 
 
-    private String SetUpURLString(ArrayList<Gate> gates) {
+    private String SetUpURLString() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
             return "";
         }
-        mLocationServices = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
         String str = "";
 
-        if (mLocationServices != null) {
+        if (mCurrentLocation != null) {
 
 
             StringBuilder sbDestinations = new StringBuilder();
 
-            for (int i = 0; i < gates.size(); i++) {
-                sbDestinations.append(gates.get(i).location.latitude + "," + gates.get(i).location.longitude);
-                if (i != gates.size() - 1) {
+            for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+                sbDestinations.append(ListGateComplexPref.getInstance().gates.get(i).location.latitude + "," + ListGateComplexPref.getInstance().gates.get(i).location.longitude);
+                if (i != ListGateComplexPref.getInstance().gates.size() - 1) {
                     sbDestinations.append("|");
                 }
 
@@ -261,7 +303,7 @@ public class LocationService extends Service implements
             str = "https://maps.googleapis.com/maps/api/distancematrix/json" +
 
                     "?origins=" +
-                    mLocationServices.getLatitude() + "," + mLocationServices.getLongitude() +
+                    mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude() +
                     "&destinations=" +
                     sbDestinations.toString() +
                     "&mode=driving&sensor=false&key=AIzaSyBtPT-uUi5oZ7ls7ysY8Zs8v8sWFApaCkM";
@@ -339,9 +381,25 @@ public class LocationService extends Service implements
 
     }
 
+            private void ApiLocationUpdate() {
+
+                GetCurrentLocation();
+
+                if (ListGateComplexPref.getInstance().gates.size() > 0) {
+
+                    //start the http request
+                    String url = SetUpURLString();
+                    Log.d(TAG, "Request URL" + url);
+                    final CustomJSONObjectRequest jsonRequest = new CustomJSONObjectRequest(Request.Method
+                            .GET, url,
+                            new JSONObject(), this, this);
+                    jsonRequest.setTag(REQUEST_TAG);
+                    mQueue.add(jsonRequest);
+                }
+            }
+
     @Override
     public void onResponse(Object response) {
-        double distance = Double.MAX_VALUE;
         try {
             JSONObject root = new JSONObject(response.toString());
             JSONArray array_rows = root.getJSONArray("rows");
@@ -355,7 +413,7 @@ public class LocationService extends Service implements
 
 
                 double duration = Integer.parseInt(object_duration.get("value").toString().split(" ")[0]);
-                distance = Double.parseDouble(object_distance.get("value").toString().split(" ")[0]);
+                double distance = Double.parseDouble(object_distance.get("value").toString().split(" ")[0]);
 
                 ListGateComplexPref.getInstance().gates.get(i).ETA = duration;
                 ListGateComplexPref.getInstance().gates.get(i).distance = distance;
@@ -367,37 +425,31 @@ public class LocationService extends Service implements
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         ListGateComplexPref.getInstance().sort();
 
-        if (ListGateComplexPref.getInstance().gates.size() > 0) {
-            Intent intent = new Intent(Constants.LOCATION_SERVICE);
-            intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
-            intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
-            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
+        LocationBroadcast();
 
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        }
 
         StartApiLocationUpdate();
 
     }
 
-    private void ApiLocationUpdate() {
-        if (mLocationServices != null && ListGateComplexPref.getInstance().gates.size() > 0) {
+    private void LocationBroadcast(){
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+            Intent intent = new Intent(Constants.LOCATION_SERVICE);
+            intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
+            intent.putExtra(Constants.LOCATION, mCurrentLocation);
+            intent.putExtra(Constants.SOURCE_FUNCTION, Constants.GOOGLE_API);
+            intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
+            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
+            intent.putExtra(Constants.GOOGLE_CONNECTION, GoogleConnection.getInstance(this).getGoogleApiClient().isConnected());
 
-            //calc the status of the gate, if inside the radius
-            CalcDistanc(mLocationServices);
-
-            //start the http request
-            String url = SetUpURLString(ListGateComplexPref.getInstance().gates);
-            Log.d(TAG, "Request URL" + url);
-            final CustomJSONObjectRequest jsonRequest = new CustomJSONObjectRequest(Request.Method
-                    .GET, url,
-                    new JSONObject(), this, this);
-            jsonRequest.setTag(REQUEST_TAG);
-            mQueue.add(jsonRequest);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
+
+
 
     private void StartApiLocationUpdate() {
 
@@ -459,7 +511,7 @@ public class LocationService extends Service implements
 
 
 
-    class MyBinder extends Binder {
+            class MyBinder extends Binder {
         public LocationService getService() {
             return LocationService.this;
         }

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.view.LayoutInflater;
@@ -19,7 +20,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.root.openssme.Adapter.GateAdapter;
+import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.Utils.Constants;
+import com.example.root.openssme.common.GoogleConnection;
 
 
 /**
@@ -30,21 +33,29 @@ public class MainFragment extends Fragment implements
  {
      private boolean mServiceBound;
     private LocationService mLocationService;
-     private TextView tv;
+     private TextView Gate,ETA,Distance,UpdatedBy,Radius,LastUpdate,Google;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
          @Override
          public void onReceive(Context context, Intent intent) {
-             switch (intent.getFlags()) {
+
+                 switch (intent.getFlags()) {
+
+                     case Constants.LOCATION_UPDATE_FLAG:
+                         //recived location update
+                         int time = intent.getIntExtra(Constants.LAST_UPDATE, 0);
+                         boolean connection = intent.getBooleanExtra(Constants.GOOGLE_CONNECTION, true);
+                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA * 0.0166666667 * 100) / 100 + " Minutes");
+                         Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
+                         Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+                         UpdatedBy.setText(intent.getStringExtra(Constants.SOURCE_FUNCTION));
+                         Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+                         LastUpdate.setText(time + "");
+                         Google.setText(connection + "");
 
 
-                 case Constants.LOCATION_UPDATE_FLAG:
-                     //recived location update
-                     if (intent.hasExtra(Constants.LAST_UPDATE)) {
-                         int time = intent.getIntExtra(Constants.LAST_UPDATE,0);
-                         tv.setText("Keep Alive: "+time);
-                     }
-                     break;
+                         break;
+
              }
          }
      };
@@ -63,7 +74,14 @@ public class MainFragment extends Fragment implements
 
          View rootFragment = inflater.inflate(R.layout.fragment_main, null);
 
-          tv = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
+         Gate = (TextView) (rootFragment).findViewById(R.id.textViewNG);
+         ETA = (TextView) (rootFragment).findViewById(R.id.textViewETA);
+         Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
+         UpdatedBy = (TextView) (rootFragment).findViewById(R.id.textViewUpdateBy);
+         Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
+         LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
+         Google = (TextView) (rootFragment).findViewById(R.id.googleapi);
+
 
          return rootFragment;
      }

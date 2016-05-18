@@ -21,6 +21,7 @@ import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PictUtil;
 import com.example.root.openssme.Utils.PrefUtils;
+import com.example.root.openssme.common.GoogleConnection;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -99,7 +100,9 @@ public class GateAdapter extends BaseAdapter {
         TextView phone = (TextView) view.findViewById(R.id.phone);
         phone.setText(gate.phone);
         TextView distance = (TextView) view.findViewById(R.id.distance);
-        distance.setText(gate.distance / 1000 + " KM");
+        distance.setText(Math.floor(gate.distance * 0.001 * 100) / 100 + " Km");
+        TextView ETA = (TextView) view.findViewById(R.id.ETA);
+        ETA.setText(Math.floor(gate.ETA * 0.0166666667 *100) /100 + " Minutes");
 
         ImageView movieurl = (ImageView) view.findViewById(R.id.imageView);
             Picasso.with(context)

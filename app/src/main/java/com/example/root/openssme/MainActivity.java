@@ -91,21 +91,23 @@ public class MainActivity extends AppCompatActivity implements
         setupLocationRequestBalanced();
 
 
-        if (savedInstanceState != null) {
-            // Let's first dynamically add a fragment into a frame container
-
-
-        }
-        else
-        {
-            //displayView(R.id.main);
-
-        }
+//        if (savedInstanceState != null) {
+//
+//
+//        }
+//        else
+//        {
+//            displayView(R.id.main);
+//
+//        }
 
 
         setContentView(R.layout.activity_main);
 
         Initialize();
+
+        displayView(R.id.main);
+
 
 
     }
@@ -300,7 +302,6 @@ public class MainActivity extends AppCompatActivity implements
         }
         if (!mLocationPremissionGranted || !mCallPremissionGranted) {
             GetAllPremissionNeeded();
-            requestSettings();
             return;
         }
 

@@ -199,7 +199,13 @@ public class MapFragment extends Fragment implements
                 case Constants.LOCATION_UPDATE_FLAG:
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
-                        onLocationChanged(intent);
+                        if (map!=null){
+                            onLocationChanged(intent);
+                        }
+                    }
+                case Constants.CHANGE_MAP:
+                    if (map!=null){
+                        ChangeMapType();
                     }
 
                     break;
@@ -215,28 +221,10 @@ public class MapFragment extends Fragment implements
         map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater(getArguments())));
         map.setOnInfoWindowClickListener(this);
         map.setOnMarkerClickListener(this);
-        int maptype = PrefUtils.getSettings(getContext(),Constants.MAP_TYPE);
-        switch(maptype){
-            case 1:
-                map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-                break;
-            case 2:
-                map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-                break;
-            case 3:
-                map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-                break;
-            case 4:
-                map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-                break;
-            case 5:
-                map.setMapType(GoogleMap.MAP_TYPE_NONE);
-                break;
 
+        ChangeMapType();
 
-        }
         SetUpCircle();
-
 
         getMyLocation();
 
@@ -264,6 +252,29 @@ public class MapFragment extends Fragment implements
         }
 
     }
+
+    private void ChangeMapType() {
+        int maptype = PrefUtils.getSettings(getContext(), Constants.MAP_TYPE);
+        switch (maptype) {
+            case 1:
+                map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                break;
+            case 2:
+                map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                break;
+            case 3:
+                map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                break;
+            case 4:
+                map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                break;
+            case 5:
+                map.setMapType(GoogleMap.MAP_TYPE_NONE);
+                break;
+        }
+    }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -311,24 +322,27 @@ public class MapFragment extends Fragment implements
         Location location = (Location)b.get(android.location.LocationManager.KEY_LOCATION_CHANGED);
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(location.getLatitude(),location.getLongitude())).zoom(14).build();
+                .target(new LatLng(location.getLatitude(),location.getLongitude())).zoom(map.getCameraPosition().zoom).build();
 
         map.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
+
+        SetUpCircle();
 
     }
 
 
     private void SetUpCircle(){
 
-        if (ListGateComplexPref.getInstance().gates.size()>0) {
+        if (ListGateComplexPref.getInstance().gates.size()>0 && map!=null) {
             if (mCircle == null) {
                 mCircle = map.addCircle(new CircleOptions()
                         .center(ListGateComplexPref.getInstance().gates.get(0).location)
                         .radius(PrefUtils.getSettings(getContext(),Constants.OPEN_DISTANCE))
                         .strokeColor(Color.RED));
             } else {
-                mCircle.setRadius(PrefUtils.getSettings(getContext(),Constants.OPEN_DISTANCE));
+
+                mCircle.setCenter(ListGateComplexPref.getInstance().gates.get(0).location);
 
             }
         }
