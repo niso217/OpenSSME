@@ -203,6 +203,7 @@ public class MapFragment extends Fragment implements
                             onLocationChanged(intent);
                         }
                     }
+                    break;
                 case Constants.CHANGE_MAP:
                     if (map!=null){
                         ChangeMapType();

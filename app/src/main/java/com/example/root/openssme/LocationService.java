@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -82,6 +83,8 @@ public class LocationService extends Service implements
     private RequestQueue mQueue;
     private Handler mCallHandler;
     private Handler mHandler;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
     private boolean mLocker = true;
 
     @Override
@@ -96,6 +99,9 @@ public class LocationService extends Service implements
         mLocationManager = (LocationManager) this.getSystemService(
                 Context.LOCATION_SERVICE);
 
+         mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PARTIAL_WAKE_LOCK");
 
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
@@ -185,7 +191,8 @@ public class LocationService extends Service implements
     }
 
     public void GetCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -195,11 +202,13 @@ public class LocationService extends Service implements
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+        mWakeLock.acquire();
         mLocationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER,
                 new android.location.LocationListener() {
                     @Override
                     public void onLocationChanged(Location location) {
                         mCurrentLocation = location;
+                        mWakeLock.release();
                     }
 
                     @Override
@@ -219,7 +228,9 @@ public class LocationService extends Service implements
                 }, null);
 
 
-        }
+
+
+    }
 
 
 

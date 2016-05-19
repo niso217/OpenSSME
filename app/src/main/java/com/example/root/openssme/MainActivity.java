@@ -70,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements
     private TextView tvName,tvEmail;
     private boolean viewIsAtHome;
     private  String CurrentFragment;
-    public  boolean mCallPremissionGranted = false;
-    public  boolean mLocationPremissionGranted = false;
+    public  boolean mCallPremissionGranted;
+    public  boolean mLocationPremissionGranted;
     public LocationRequest mLocationRequest;
     public GoogleConnection mGoogleConnection;
     private final String MAP_FRAGMENT = "mMapFragment";
@@ -90,17 +90,7 @@ public class MainActivity extends AppCompatActivity implements
 
         setupLocationRequestBalanced();
 
-
-//        if (savedInstanceState != null) {
-//
-//
-//        }
-//        else
-//        {
-//            displayView(R.id.main);
-//
-//        }
-
+        CheckPremissions();
 
         setContentView(R.layout.activity_main);
 
@@ -110,6 +100,15 @@ public class MainActivity extends AppCompatActivity implements
 
 
 
+    }
+
+    private boolean CheckPremissions() {
+        mCallPremissionGranted =  ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE) &&
+                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
+        mLocationPremissionGranted = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) &&
+                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        return mCallPremissionGranted && mLocationPremissionGranted;
     }
 
     @Override
@@ -220,12 +219,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void GetAllPremissionNeeded(){
         //request phone call premission M+
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             requestCallPermission();
         }
         else
         {
-            mCallPremissionGranted = true;
+            CheckPremissions();
 
         }
         //request location call premission M+
@@ -300,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements
             signOut();
             return;
         }
-        if (!mLocationPremissionGranted || !mCallPremissionGranted) {
+        if (CheckPremissions()) {
             GetAllPremissionNeeded();
             return;
         }
@@ -410,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements
         switch (status.getStatusCode()) {
             case LocationSettingsStatusCodes.SUCCESS:
                 // All location settings are satisfied. The client can initialize location
-                mLocationPremissionGranted = true;
+                CheckPremissions();
                 Log.d(TAG, "All location settings are satisfied. The client can initialize location requests here");
                 break;
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
@@ -419,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements
                 ChangeLocationSettings(status);
                 break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                mLocationPremissionGranted = false;
+                CheckPremissions();
                 Log.e(TAG, "Settings change unavailable. We have no way to fix the settings so we won't show the dialog.");
                 break;
         }
@@ -435,7 +435,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
     private void requestCallPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
     }
 
 
@@ -461,10 +461,10 @@ public class MainActivity extends AppCompatActivity implements
             case Constants.REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        mLocationPremissionGranted = true;
+                        CheckPremissions();
                         break;
                     case Activity.RESULT_CANCELED:
-                        mLocationPremissionGranted = false;
+                        CheckPremissions();
                         // The user was asked to change settings, but chose not to
                         break;
                     default:
@@ -479,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements
         if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
             if(grantResults.length > 0){
                 if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    mCallPremissionGranted = true;
+                    CheckPremissions();
                     //user accepted , make call
                     Log.d(TAG,"Permission granted");
                 }
