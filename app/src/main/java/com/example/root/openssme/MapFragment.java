@@ -54,8 +54,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.BounceInterpolator;
+import android.widget.AdapterView;
 import android.widget.Toast;
 
+import com.example.root.openssme.CitiesAutoComplete.general.DelayAutoCompleteTextView;
+import com.example.root.openssme.CitiesAutoComplete.general.MyAutoCompleteAdapter;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.Utils.ComplexPreferences;
@@ -126,7 +129,6 @@ public class MapFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-
         if (savedInstanceState != null) {
             msavedInstanceState = savedInstanceState;
             zoom = savedInstanceState.getFloat("zoom");
@@ -165,6 +167,11 @@ public class MapFragment extends Fragment implements
         }
         super.onSaveInstanceState(outState);
 
+
+    }
+
+    private void setViews()
+    {
 
     }
 
@@ -296,8 +303,29 @@ public class MapFragment extends Fragment implements
         } catch (InflateException e) {
             //Log.e(TAG, "Inflate exception");
         }
+
+
+        final DelayAutoCompleteTextView cityPrediction = (DelayAutoCompleteTextView) (rootView).findViewById(R.id.cityTitle);
+        cityPrediction.setThreshold(1);
+        cityPrediction.setAdapter(new MyAutoCompleteAdapter(getContext()));
+        cityPrediction.setLoadingIndicator((android.widget.ProgressBar) (rootView).findViewById(R.id.progressBar));
+        cityPrediction.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id)
+            {
+                String city = (String) adapterView.getItemAtPosition(position);
+                cityPrediction.setText(city);
+                cityPrediction.setSelection(cityPrediction.getText().length());
+            }
+        });
+
+
+
         return rootView;
     }
+
+
 
 
     void getMyLocation() {

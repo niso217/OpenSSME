@@ -5,6 +5,8 @@ import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.example.root.openssme.CitiesAutoComplete.managers.ContentManager;
+import com.example.root.openssme.CitiesAutoComplete.rest.RestClientManager;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.SocialNetworkHelper;
 import com.example.root.openssme.SocialNetwork.User;
@@ -21,6 +23,9 @@ public class MyApplication extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
+
+        RestClientManager.init(getApplicationContext());
+        ContentManager.init(getApplicationContext());
 
         mInstance = this;
         mSocialNetworkHelper = new SocialNetworkHelper(this);

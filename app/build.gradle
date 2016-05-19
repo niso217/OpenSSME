@@ -34,4 +34,6 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:2.0.0'
     compile 'com.google.android.gms:play-services-ads:8.4.0'
     compile 'com.android.volley:volley:1.0.0'
+    compile 'com.squareup.retrofit:retrofit:1.6.1'
+    compile 'org.parceler:parceler:0.2.13'
 }
