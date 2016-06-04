@@ -6,9 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
@@ -17,50 +15,34 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.PowerManager;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
+import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.example.root.openssme.Adapter.GateAdapter;
-import com.example.root.openssme.SocialNetwork.Gate;
+
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.User;
-import com.example.root.openssme.Utils.PrefUtils;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
+import com.example.root.openssme.SocialNetwork.Settings;
+
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.common.GoogleConnection;
 import com.example.root.openssme.common.State;
-import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -68,7 +50,7 @@ import org.json.JSONObject;
 
 
 public class LocationService extends Service implements
-        ResultCallback<LocationSettingsResult>,
+
         LocationListener,
         Observer,
         Response.Listener,
@@ -76,22 +58,26 @@ public class LocationService extends Service implements
 
     protected static final String TAG = LocationService.class.getSimpleName();
     public static final String REQUEST_TAG = "MainVolleyActivity";
+    public static final int NOTIFICATION_ID = 100;
+
+
     public GoogleConnection mGoogleConnection;
     public LocationRequest mLocationRequest;
     private Location mCurrentLocation;
     private LocationManager mLocationManager;
     private RequestQueue mQueue;
     private Handler mCallHandler;
+    private NotificationManager mNotificationManager;
     private Handler mHandler;
-    private PowerManager mPowerManager;
-    private PowerManager.WakeLock mWakeLock;
     private boolean mLocker = true;
+    private boolean mIsLocationUpdatesOn = false;
+    private long mNextApiUpdate = Constants.API_REFRESH_GO;
+
 
     @Override
     public void onCreate() {
 
-        //get the last user settings
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
 
         mQueue = CustomVolleyRequestQueue.getInstance(getApplication())
                 .getRequestQueue();
@@ -99,17 +85,18 @@ public class LocationService extends Service implements
         mLocationManager = (LocationManager) this.getSystemService(
                 Context.LOCATION_SERVICE);
 
-         mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
 
-        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PARTIAL_WAKE_LOCK");
 
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
         mHandler = new Handler();
         mCallHandler = new Handler();
 
+        mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
 
         setupLocationRequestBalanced();
+
 
         super.onCreate();
 
@@ -159,56 +146,59 @@ public class LocationService extends Service implements
     }
 
     @Override
-    /*
-      Called by startLocationUpdates, updates every UPDATE_INTERVAL seconds
-     */
     public void onLocationChanged(Location location) {
         if (location != null) {
 
+            mIsLocationUpdatesOn = true;
+
             mCurrentLocation = location;
 
-            CalcDistanc();
-
-            LocationBroadcast();
-
-            //we send the last broadcast and stop the location service
-            if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).status) {
-                //unlock notification block
-                mLocker = true;
-
-                Log.d(TAG, "Stop Location Updats, Almost There");
-                StopLocationUpdates();
-
-
-                MakeTheCall();
-
-                Log.d(TAG, "Start Api Location Updates Every " + Constants.API_REFRESH + "Seconds");
-                StartApiLocationUpdate();
             }
+    }
 
+
+    private void IsInsideTheRadius(){
+
+        if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance()) {
+            ListGateComplexPref.getInstance().gates.get(0).status = true;
+            Toast.makeText(this, "Inside the Radius: Distance:" + ListGateComplexPref.getInstance().gates.get(0).distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
 
         }
+        else {
+            ListGateComplexPref.getInstance().gates.get(0).status = false;
+            //clear all call notification
+            mNotificationManager.cancel(NOTIFICATION_ID);
+            Toast.makeText(this, "OutSite The Radius Distance: " + ListGateComplexPref.getInstance().gates.get(0).distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
+
+        }
+
+
+        Log.d(TAG, "Are We Inside The Radius Of The Gate? " + ListGateComplexPref.getInstance().gates.get(0).status);
+
     }
 
     public void GetCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        mWakeLock.acquire();
-        mLocationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER,
+        String provider = "";
+        switch (Settings.getInstance().getService_provider())
+        {
+            case 1:
+                provider = LocationManager.NETWORK_PROVIDER;
+                break;
+            case 2:
+                provider = LocationManager.GPS_PROVIDER;
+                break;
+        }
+        mLocationManager.requestSingleUpdate(provider,
                 new android.location.LocationListener() {
                     @Override
                     public void onLocationChanged(Location location) {
+                        Log.d(TAG,"New Location arrived from request Single Update From Network Provider");
                         mCurrentLocation = location;
-                        mWakeLock.release();
+                        ApiLocationUpdate();
                     }
 
                     @Override
@@ -226,50 +216,7 @@ public class LocationService extends Service implements
 
                     }
                 }, null);
-
-
-
-
     }
-
-
-
-    private void CalcDistanc() {
-
-        if (mCurrentLocation != null && ListGateComplexPref.getInstance().gates.size() > 0) {
-
-            Location to = new Location("");
-            float distance;
-
-            for (int i = 0; i <ListGateComplexPref.getInstance().gates.size() ; i++) {
-                to.setLatitude(ListGateComplexPref.getInstance().gates.get(i).location.latitude);
-                to.setLongitude(ListGateComplexPref.getInstance().gates.get(i).location.longitude);
-                 distance = mCurrentLocation.distanceTo(to);
-                ListGateComplexPref.getInstance().gates.get(i).distance = new Double(distance);
-
-            }
-            ListGateComplexPref.getInstance().sort();
-
-            to.setLatitude(ListGateComplexPref.getInstance().gates.get(0).location.latitude);
-            to.setLongitude(ListGateComplexPref.getInstance().gates.get(0).location.longitude);
-             distance = mCurrentLocation.distanceTo(to);
-
-
-
-            if (distance <= PrefUtils.getSettings(this, Constants.OPEN_DISTANCE)) {
-                ListGateComplexPref.getInstance().gates.get(0).status = true;
-                Toast.makeText(this, "Inside the Radius: Distance:" + distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
-            } else {
-                ListGateComplexPref.getInstance().gates.get(0).status = false;
-                Toast.makeText(this, "OutSite The Radius Distance: " + distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
-
-            }
-
-            Log.d(TAG, "Are We Inside The Radius Of The Gate? " + ListGateComplexPref.getInstance().gates.get(0).status);
-
-        }
-    }
-
 
     /*
         try to get current location, if available start location updates,
@@ -278,13 +225,12 @@ public class LocationService extends Service implements
     public void askForLocation() {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
             return;
         }
         mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
         if (mCurrentLocation != null) {
             Log.d(TAG, "GPS location was found!");
-            ApiLocationUpdate();
+            GetCurrentLocation();
         } else {
             Log.d(TAG, "Current location was null, enable GPS on emulator!");
 
@@ -293,15 +239,8 @@ public class LocationService extends Service implements
 
 
     private String SetUpURLString() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "No Location Premission", Toast.LENGTH_LONG).show();
-            return "";
-        }
         String str = "";
-
         if (mCurrentLocation != null) {
-
-
             StringBuilder sbDestinations = new StringBuilder();
 
             for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
@@ -309,7 +248,6 @@ public class LocationService extends Service implements
                 if (i != ListGateComplexPref.getInstance().gates.size() - 1) {
                     sbDestinations.append("|");
                 }
-
             }
             str = "https://maps.googleapis.com/maps/api/distancematrix/json" +
 
@@ -317,11 +255,11 @@ public class LocationService extends Service implements
                     mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude() +
                     "&destinations=" +
                     sbDestinations.toString() +
-                    "&mode=driving&sensor=false&key=AIzaSyBtPT-uUi5oZ7ls7ysY8Zs8v8sWFApaCkM";
-
+                    "&mode=" +Settings.getInstance().getProfile() +
+                    "&sensor=false" +
+                    "&key="+getResources().getString(R.string.google_app_id);
         }
         return str;
-
     }
 
     /*
@@ -333,8 +271,11 @@ public class LocationService extends Service implements
 
             return;
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
-                mLocationRequest, this);
+        if (!mIsLocationUpdatesOn){
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
+                    mLocationRequest, this);
+        }
+
 
     }
 
@@ -353,11 +294,6 @@ public class LocationService extends Service implements
     }
 
 
-    @Override
-    public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-
-
-    }
 
     @Override
     public void update(Observable observable, Object data) {
@@ -382,19 +318,16 @@ public class LocationService extends Service implements
     }
 
     public void StopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
+        if (mIsLocationUpdatesOn) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
+            mIsLocationUpdatesOn = false;
+        }
     }
 
 
-    @Override
-    public void onErrorResponse(VolleyError error) {
 
-
-    }
 
             private void ApiLocationUpdate() {
-
-                GetCurrentLocation();
 
                 if (ListGateComplexPref.getInstance().gates.size() > 0) {
 
@@ -429,6 +362,8 @@ public class LocationService extends Service implements
                 ListGateComplexPref.getInstance().gates.get(i).ETA = duration;
                 ListGateComplexPref.getInstance().gates.get(i).distance = distance;
 
+
+
                 Log.d(TAG, "Respond From Http Request, Distance : " + distance);
                 Log.d(TAG, "Respond From Http Request, Duration : " + duration);
 
@@ -439,10 +374,16 @@ public class LocationService extends Service implements
 
         ListGateComplexPref.getInstance().sort();
 
+        IsInsideTheRadius();
+
         LocationBroadcast();
 
-
         StartApiLocationUpdate();
+
+    }
+    @Override
+    public void onErrorResponse(VolleyError error) {
+
 
     }
 
@@ -451,7 +392,6 @@ public class LocationService extends Service implements
             Intent intent = new Intent(Constants.LOCATION_SERVICE);
             intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
             intent.putExtra(Constants.LOCATION, mCurrentLocation);
-            intent.putExtra(Constants.SOURCE_FUNCTION, Constants.GOOGLE_API);
             intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
             intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
             intent.putExtra(Constants.GOOGLE_CONNECTION, GoogleConnection.getInstance(this).getGoogleApiClient().isConnected());
@@ -461,57 +401,103 @@ public class LocationService extends Service implements
     }
 
 
-
+/*
+    ETA - from the http request to google Matrix
+    Distance - from the http request to google Matrix
+ */
     private void StartApiLocationUpdate() {
 
 
-            //outside the radius
-            //lees then 2 min to the gate
-            if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).ETA <= PrefUtils.getSettings(this, Constants.START_LOCATAION_UPDATE) && !ListGateComplexPref.getInstance().gates.get(0).status) {
+        if (ListGateComplexPref.getInstance().gates.size() < 1){ //there are no gates, return
+            return;
+        }
 
-                Log.d(TAG, "API Location Were Stoped");
-                StopApiLocationUpdate();
-                Log.d(TAG, "Start Location Updates");
+        if (ListGateComplexPref.getInstance().gates.get(0).status) //inside the radius
+        {
+
+
+            if (mIsLocationUpdatesOn) { //just entered the gate radius
+
+                //unlock notification block
+                mLocker = true;
+
+                Log.d(TAG, "Stop GPS Location Updates");
+                StopLocationUpdates();
+
+                Log.d(TAG, "Make the Call to " + ListGateComplexPref.getInstance().gates.get(0).phone);
+                MakeTheCall();
+            }
+
+            mNextApiUpdate = Constants.API_REFRESH_HOME;
+
+            StopLocationUpdates(); //make sure no gps updates are on
+
+            StartOpenGateNotification(); //send notofication to open gate
+
+        }
+        else //outside the radius
+        {
+
+            if (ListGateComplexPref.getInstance().gates.get(0).ETA <= Settings.getInstance().getGps_distance())//ETA is smaller then the GPS updates value
+
+            {
+                Log.d(TAG, "Start GPS Location Updates");
                 startLocationUpdates();
+                mNextApiUpdate = Constants.API_REFRESH_GPS;
 
-            } else {
+            }
+            else //ETA is greater then  GPS updates value
+            {
+                mNextApiUpdate = Constants.API_REFRESH_GO;
+                StopLocationUpdates();
+            }
+
+        }
+        StartGoogleDistanceApi(mNextApiUpdate);
 
 
-                //look if the user is outside the gate raduis
-                if (ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).distance > PrefUtils.getSettings(this, Constants.OPEN_DISTANCE) * 2) {
-                    Log.d(TAG, "Outside Gate Radius");
-                    //gate not in radius
-                    ListGateComplexPref.getInstance().gates.get(0).status = false;
+        Log.d(TAG,"Next Google Distance Http Request In " + mNextApiUpdate / 1000 + " Seconds");
+
+    }
+
+
+    private void StartGoogleDistanceApi(long seconds){
+        //start the Api Location Update in Constants.API_REFRESH seconds
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "Start Api Location Update From Response");
+                StopApiLocationUpdate();
+                if (!mIsLocationUpdatesOn){ //gps update is on, do not ask for Single Update from network provider
+                    GetCurrentLocation();
+                }
+                else
+                {
+                    ApiLocationUpdate(); //go strait for the http request
 
                 }
-                //start the Api Location Update in Constants.API_REFRESH seconds
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "Start Api Location Update From Response");
-                        StopApiLocationUpdate();
-                        ApiLocationUpdate();
 
-                    }
-                }, Constants.API_REFRESH);
+            }
+        }, seconds);
 
-                //ask user if he want to reopen the current gate
-                //the user is inside the rdius
-                //mLocker true  - first time entering
-                if (mLocker && ListGateComplexPref.getInstance().gates.size() > 0 && ListGateComplexPref.getInstance().gates.get(0).status) {
-                    mLocker = false;
-                    mCallHandler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
+        Intent intent = new Intent(Constants.LOCATION_SERVICE);
+        intent.addFlags(Constants.NEXT_UPDATE_FLAG);
+        intent.putExtra(Constants.NEXT_UPDATE, seconds);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
-                            Log.d(TAG, "Start Notification after 2 minunes");
-                            MakeTheCallOnBack();
-                        }
-                    }, 1000 * 10);
+    private void StartOpenGateNotification(){
+        if (mLocker) //first time entering
+        {
+            mLocker = false;
+            mCallHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+                    Log.d(TAG, "Start Notification After " +Constants.LEAVE_NOTIFICATION_IN / 1000+ " Seconds");
+                    MakeTheCallOnBack();
                 }
-
-
-
+            }, Constants.LEAVE_NOTIFICATION_IN);
         }
     }
 
@@ -528,26 +514,6 @@ public class LocationService extends Service implements
         }
     }
 
-    /** calculates the distance between two locations in MILES */
-    public double distance(double lat1, double lng1, double lat2, double lng2) {
-
-        double earthRadius = 3958.75; // in miles, change to 6371 for kilometer output
-
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLng = Math.toRadians(lng2 - lng1);
-
-        double sindLat = Math.sin(dLat / 2);
-        double sindLng = Math.sin(dLng / 2);
-
-        double a = Math.pow(sindLat, 2) + Math.pow(sindLng, 2)
-                * Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2));
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        double dist = earthRadius * c;
-
-        return dist; // output distance, in MILES
-    }
 
     public void MakeTheCallOnBack() {
         if (ListGateComplexPref.getInstance().gates.size() > 0) {
@@ -568,17 +534,18 @@ public class LocationService extends Service implements
             inboxStyle.setBigContentTitle("OpenSSME");
             inboxStyle.addLine("OpenSSME");
             notificationBuilder.setStyle(inboxStyle);
+            mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
 
-            NotificationManager notificationManager =
-                    (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-            int NOTIFICATION_ID = 100;
-            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
         }
     }
 
     private void MakeTheCall() {
 
         if (ListGateComplexPref.getInstance().gates.size() > 0) {
+
+            Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+            // Vibrate for 500 milliseconds
+            v.vibrate(1000);
 
             Intent intent = new Intent(Intent.ACTION_CALL);
 

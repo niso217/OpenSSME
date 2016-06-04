@@ -42,7 +42,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Marker;
 import com.squareup.picasso.Picasso;
 
@@ -72,11 +74,15 @@ public class MainActivity extends AppCompatActivity implements
     private  String CurrentFragment;
     public  boolean mCallPremissionGranted;
     public  boolean mLocationPremissionGranted;
+    public  boolean mContactPremissionGranted;
+    public  boolean mStoragePremissionGranted;
     public LocationRequest mLocationRequest;
     public GoogleConnection mGoogleConnection;
     private final String MAP_FRAGMENT = "mMapFragment";
     private final String GATE_LIST_FRAGMENT = "mGateListFragment";
     private  final String MAIN_FRAGMENT ="MainFragment" ;
+    private View mAutocompleteFragment;
+
 
 
 
@@ -90,31 +96,40 @@ public class MainActivity extends AppCompatActivity implements
 
         setupLocationRequestBalanced();
 
-        CheckPremissions();
-
         setContentView(R.layout.activity_main);
 
         Initialize();
 
-        displayView(R.id.main);
+        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
+
+        mAutocompleteFragment.setVisibility(View.GONE);
+
+        if (savedInstanceState==null){
+            displayView(R.id.main);
+
+        }
 
 
 
     }
 
     private boolean CheckPremissions() {
-        mCallPremissionGranted =  ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE) &&
-                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
+        mCallPremissionGranted =  ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
         mLocationPremissionGranted = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) &&
                 ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+        mContactPremissionGranted =ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
+        mStoragePremissionGranted = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE) &&
+                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        return mCallPremissionGranted && mLocationPremissionGranted;
+        if (mCallPremissionGranted || mLocationPremissionGranted || mContactPremissionGranted || mStoragePremissionGranted) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     protected void onStart() {
         connectClient();
-        GetAllPremissionNeeded();
         super.onStart();
     }
 
@@ -130,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements
 
         super.onDestroy();
     }
+
 
     public void connectClient() {
 
@@ -149,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements
 
             case OPENED:
                 // We are signed in!
-                requestSettings();
+                requestLocationSettings();
                 Log.d(TAG, "Connected to Google Api Client");
                 break;
             case CLOSED:
@@ -219,21 +235,27 @@ public class MainActivity extends AppCompatActivity implements
 
     private void GetAllPremissionNeeded(){
         //request phone call premission M+
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
             requestCallPermission();
         }
-        else
-        {
-            CheckPremissions();
-
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED){
+            requestReadContactsPermission();
         }
         //request location call premission M+
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestLocationPermission();
         }
+
+        //request storage  premission M+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestStoragePermission();
+        }
+
+        requestLocationSettings();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -252,8 +274,8 @@ public class MainActivity extends AppCompatActivity implements
         {
 
             case R.id.action_settings:
-                Intent i = new Intent(this, PreferencesActivity.class);
-                startActivity(i);
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 break;
 
         }
@@ -300,13 +322,17 @@ public class MainActivity extends AppCompatActivity implements
             signOut();
             return;
         }
-        if (CheckPremissions()) {
+        if (!CheckPremissions()) {
             GetAllPremissionNeeded();
+            Toast.makeText(this,"Fix Premissions!",Toast.LENGTH_LONG).show();
             return;
         }
 
             Fragment fragment = null;
         String title = getString(R.string.app_name);
+
+        mAutocompleteFragment.setVisibility(View.GONE);
+
 
         switch (viewId) {
             case R.id.main:
@@ -314,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements
                     if (fragment == null) {
                         fragment = new MainFragment();
                     }
-                    title = "My Gates";
+                    title = "Main";
                     viewIsAtHome = false;
                     CurrentFragment = MAIN_FRAGMENT;
 
@@ -327,6 +353,8 @@ public class MainActivity extends AppCompatActivity implements
                 title  = "My Gates";
                 viewIsAtHome = false;
                 CurrentFragment = GATE_LIST_FRAGMENT;
+
+
                 break;
             case R.id.map:
                 fragment = getSupportFragmentManager().findFragmentByTag(MAP_FRAGMENT);
@@ -336,10 +364,10 @@ public class MainActivity extends AppCompatActivity implements
                 title = "Map";
                 viewIsAtHome = true;
                 CurrentFragment = MAP_FRAGMENT;
+                mAutocompleteFragment.setVisibility(View.VISIBLE);
                 break;
 
         }
-
 
         if (fragment!=null) {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -395,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements
     =================PREMISSIONS=================
      */
 
-    private void requestSettings() {
+    private void requestLocationSettings() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .setAlwaysShow(true)
                 .addLocationRequest(mLocationRequest);
@@ -410,7 +438,6 @@ public class MainActivity extends AppCompatActivity implements
         switch (status.getStatusCode()) {
             case LocationSettingsStatusCodes.SUCCESS:
                 // All location settings are satisfied. The client can initialize location
-                CheckPremissions();
                 Log.d(TAG, "All location settings are satisfied. The client can initialize location requests here");
                 break;
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
@@ -419,7 +446,6 @@ public class MainActivity extends AppCompatActivity implements
                 ChangeLocationSettings(status);
                 break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                CheckPremissions();
                 Log.e(TAG, "Settings change unavailable. We have no way to fix the settings so we won't show the dialog.");
                 break;
         }
@@ -435,7 +461,17 @@ public class MainActivity extends AppCompatActivity implements
         }
 
     private void requestCallPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
+    }
+
+    private void requestReadContactsPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
+    }
+
+
+    private void requestStoragePermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, Constants.PERMISSIONS_REQUEST_STORAGE);
+
     }
 
 
@@ -461,10 +497,8 @@ public class MainActivity extends AppCompatActivity implements
             case Constants.REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        CheckPremissions();
                         break;
                     case Activity.RESULT_CANCELED:
-                        CheckPremissions();
                         // The user was asked to change settings, but chose not to
                         break;
                     default:
@@ -476,10 +510,11 @@ public class MainActivity extends AppCompatActivity implements
 
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+
+
         if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
             if(grantResults.length > 0){
                 if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    CheckPremissions();
                     //user accepted , make call
                     Log.d(TAG,"Permission granted");
                 }
@@ -504,6 +539,26 @@ public class MainActivity extends AppCompatActivity implements
                 boolean coarse = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_COARSE_LOCATION);
 
                 if(fine || coarse){
+                    AlertDialog(getResources().getString(R.string.request_location));
+                }else{
+                    //user has denied with `Never Ask Again`, go to settings
+                    promptSettings();
+                }
+                // Permission was denied or request was cancelled
+            }
+        }
+
+
+        if (requestCode == Constants.PERMISSIONS_REQUEST_STORAGE) {
+            if (grantResults.length == 2
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // We can now safely use the API we requested access to
+
+            } else {
+                boolean write = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                boolean read = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE);
+
+                if(write || read){
                     AlertDialog(getResources().getString(R.string.request_location));
                 }else{
                     //user has denied with `Never Ask Again`, go to settings

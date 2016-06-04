@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -34,6 +35,7 @@ public class MainFragment extends Fragment implements
      private boolean mServiceBound;
     private LocationService mLocationService;
      private TextView Gate,ETA,Distance,UpdatedBy,Radius,LastUpdate,Google;
+     private CountDownTimer mCountDownTimer;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
          @Override
@@ -43,22 +45,34 @@ public class MainFragment extends Fragment implements
 
                      case Constants.LOCATION_UPDATE_FLAG:
                          //recived location update
-                         int time = intent.getIntExtra(Constants.LAST_UPDATE, 0);
                          boolean connection = intent.getBooleanExtra(Constants.GOOGLE_CONNECTION, true);
                          ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA * 0.0166666667 * 100) / 100 + " Minutes");
                          Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
                          Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
-                         UpdatedBy.setText(intent.getStringExtra(Constants.SOURCE_FUNCTION));
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-                         LastUpdate.setText(time + "");
                          Google.setText(connection + "");
-
-
                          break;
+                     case Constants.NEXT_UPDATE_FLAG:
+                         CountDown(intent.getLongExtra(Constants.NEXT_UPDATE,Constants.API_REFRESH_GO));
 
-             }
+
+                 }
          }
      };
+
+     private void CountDown(long seconds){
+         if (mCountDownTimer!=null) mCountDownTimer.cancel();
+
+         mCountDownTimer = new CountDownTimer(seconds, 1000) {
+
+             public void onTick(long millisUntilFinished) {
+                 LastUpdate.setText("" + millisUntilFinished / 1000);
+             }
+
+             public void onFinish() {
+             }
+         }.start();
+     }
 
      @Override
      public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -77,7 +91,6 @@ public class MainFragment extends Fragment implements
          Gate = (TextView) (rootFragment).findViewById(R.id.textViewNG);
          ETA = (TextView) (rootFragment).findViewById(R.id.textViewETA);
          Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
-         UpdatedBy = (TextView) (rootFragment).findViewById(R.id.textViewUpdateBy);
          Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
          LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
          Google = (TextView) (rootFragment).findViewById(R.id.googleapi);

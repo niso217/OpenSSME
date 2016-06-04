@@ -46,6 +46,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -57,13 +58,15 @@ import android.view.animation.BounceInterpolator;
 import android.widget.AdapterView;
 import android.widget.Toast;
 
-import com.example.root.openssme.CitiesAutoComplete.general.DelayAutoCompleteTextView;
-import com.example.root.openssme.CitiesAutoComplete.general.MyAutoCompleteAdapter;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
+import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.Utils.ComplexPreferences;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.PictUtil;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
@@ -72,6 +75,10 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -100,23 +107,25 @@ import com.example.root.openssme.Utils.Constants;
 public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener
+        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener,
+        PlaceSelectionListener
 
 
 {
 
 
     private static final String TAG = "MapFragment";
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     public MapView mapView;
     public GoogleMap map;
     private Float zoom, tilt, bearing;
     private LatLng latlng;
     private ArrayList<MarkerOptions> mMarkers;
     private LatLng mOnClickLatLang;
-    private LatLng mCurrentMarker;
+    private Location mCurrentMarker;
     private Circle mCircle;
     private Bundle msavedInstanceState;
-
+    private PlaceAutocompleteFragment autocompleteFragment;
 
 
     /*
@@ -170,10 +179,6 @@ public class MapFragment extends Fragment implements
 
     }
 
-    private void setViews()
-    {
-
-    }
 
     @Override
     public void onResume() {
@@ -191,11 +196,25 @@ public class MapFragment extends Fragment implements
     }
 
 
+
     @Override
     public void onLowMemory() {
         super.onLowMemory();
         mapView.onLowMemory();
     }
+
+    @Override
+    public void onDestroyView() {
+
+        super.onDestroyView();
+        Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));
+        if (fragment != null){
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .remove(fragment)
+                    .commit();
+        }
+
+}
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -217,6 +236,13 @@ public class MapFragment extends Fragment implements
                     }
 
                     break;
+                case Constants.CHANGE_RADIUS:
+                    if (map!=null){
+                        SetUpCircle();
+                    }
+
+                    break;
+
             }
         }
     };
@@ -249,20 +275,19 @@ public class MapFragment extends Fragment implements
         for (int i = 0; i < mMarkers.size(); i++) {
             if (mMarkers.get(i) != null && mMarkers.get(i).getPosition()!=null) {
                 Marker temp = map.addMarker(mMarkers.get(i));
-                if (temp != null) {
-//                    if (mCurrentMarker != null && mLocationService.distance(mMarkers.get(i).getPosition().latitude, mMarkers.get(i).getPosition().longitude,
-//                            mCurrentMarker.latitude, mCurrentMarker.longitude) < 0.0001) {
-//                        temp.showInfoWindow();
-//                    }
+                Location marker = LocationToLatLng(temp.getPosition());
+                if (mCurrentMarker != null && temp != null) {
+                    if (mCurrentMarker.distanceTo(marker)<0.0001)
+                        temp.showInfoWindow();
+                    }
                 }
 
             }
         }
 
-    }
 
     private void ChangeMapType() {
-        int maptype = PrefUtils.getSettings(getContext(), Constants.MAP_TYPE);
+        int maptype = Settings.getInstance().getMap_type();
         switch (maptype) {
             case 1:
                 map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -287,8 +312,9 @@ public class MapFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.activity_map, container, false);
+        final View rootView = inflater.inflate(R.layout.activity_map, container, false);
         try {
+
             MapsInitializer.initialize(this.getActivity());
             mapView = (MapView) rootView.findViewById(R.id.map);
             mapView.onCreate(savedInstanceState);
@@ -303,29 +329,45 @@ public class MapFragment extends Fragment implements
         } catch (InflateException e) {
             //Log.e(TAG, "Inflate exception");
         }
+        if (autocompleteFragment==null) {
+            autocompleteFragment = (PlaceAutocompleteFragment)
+                    getActivity().getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
-
-        final DelayAutoCompleteTextView cityPrediction = (DelayAutoCompleteTextView) (rootView).findViewById(R.id.cityTitle);
-        cityPrediction.setThreshold(1);
-        cityPrediction.setAdapter(new MyAutoCompleteAdapter(getContext()));
-        cityPrediction.setLoadingIndicator((android.widget.ProgressBar) (rootView).findViewById(R.id.progressBar));
-        cityPrediction.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id)
-            {
-                String city = (String) adapterView.getItemAtPosition(position);
-                cityPrediction.setText(city);
-                cityPrediction.setSelection(cityPrediction.getText().length());
-            }
-        });
-
-
+            autocompleteFragment.setOnPlaceSelectedListener(this);
+        }
 
         return rootView;
     }
 
 
+
+    @Override
+    public void onPlaceSelected(Place place) {
+
+        if (map!=null) {
+            Toast.makeText(getContext(), place.getAddress(), Toast.LENGTH_LONG).show();
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(place.getLatLng()).zoom(18).build();
+
+             Marker PlaceMarker = map.addMarker(new MarkerOptions()
+                    .position(place.getLatLng())
+                     .draggable(true)
+                    .title(place.getAddress()+"")
+                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+
+            map.animateCamera(CameraUpdateFactory
+                    .newCameraPosition(cameraPosition));
+        }
+
+    }
+
+
+
+    @Override
+    public void onError(Status status) {
+
+    }
 
 
     void getMyLocation() {
@@ -356,8 +398,6 @@ public class MapFragment extends Fragment implements
         map.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
 
-        SetUpCircle();
-
     }
 
 
@@ -367,11 +407,13 @@ public class MapFragment extends Fragment implements
             if (mCircle == null) {
                 mCircle = map.addCircle(new CircleOptions()
                         .center(ListGateComplexPref.getInstance().gates.get(0).location)
-                        .radius(PrefUtils.getSettings(getContext(),Constants.OPEN_DISTANCE))
+                        .radius(Settings.getInstance().getOpen_distance())
                         .strokeColor(Color.RED));
             } else {
 
                 mCircle.setCenter(ListGateComplexPref.getInstance().gates.get(0).location);
+                mCircle.setRadius(Settings.getInstance().getOpen_distance());
+
 
             }
         }
@@ -381,7 +423,6 @@ public class MapFragment extends Fragment implements
     @Override
     public void onMapLongClick(LatLng latLng) {
         mOnClickLatLang = latLng;
-        //showAlertDialogForPoint(latLng);
          SetContactPickerIntent();
 
     }
@@ -426,13 +467,26 @@ public class MapFragment extends Fragment implements
                     retrieveContactNumber(data);
                 }
                 break;
+            case PLACE_AUTOCOMPLETE_REQUEST_CODE:
+                if (resultCode == Activity.RESULT_OK) {
+                    Place place = PlaceAutocomplete.getPlace(getContext(), data);
+                    Log.i(TAG, "Place: " + place.getName());
+                } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                    Status status = PlaceAutocomplete.getStatus(getContext(), data);
+                    // TODO: Handle the error.
+                    Log.i(TAG, status.getStatusMessage());
+
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    // The user canceled the operation.
+                }
+
         }
     }
 
     private void retrieveContactNumber(Intent intent) {
-        String  contactID = null;
-        String contactName = null;
-        String contactNumber = null;
+        String  contactID = "";
+        String contactName = "";
+        String contactNumber = "";
         Bitmap photo = null;
 
 
@@ -450,23 +504,28 @@ public class MapFragment extends Fragment implements
 
         cursorContact.close();
 
+        try {
+            // Using the contact ID now we will get contact phone number
+            Cursor cursorPhone = getContext().getContentResolver().query(Phone.CONTENT_URI,
+                    new String[]{Phone.NUMBER},
 
-        // Using the contact ID now we will get contact phone number
-        Cursor cursorPhone = getContext().getContentResolver().query(Phone.CONTENT_URI,
-                new String[]{Phone.NUMBER},
+                    Phone.CONTACT_ID + " = ? AND " +
+                            Phone.TYPE + " = " +
+                            Phone.TYPE_MOBILE,
 
-                Phone.CONTACT_ID + " = ? AND " +
-                        Phone.TYPE + " = " +
-                        Phone.TYPE_MOBILE,
+                    new String[]{contactID},
+                    null);
 
-                new String[]{contactID},
-                null);
+            if (cursorPhone.moveToFirst()) {
+                contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(Phone.NUMBER));
+            }
 
-        if (cursorPhone.moveToFirst()) {
-            contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(Phone.NUMBER));
+            cursorPhone.close();
         }
-
-        cursorPhone.close();
+        catch (Exception e){
+            Toast.makeText(getContext(),"Contact with no phone number",Toast.LENGTH_SHORT).show();
+            return;
+        }
 
 
         try {
@@ -563,20 +622,29 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onInfoWindowClick(Marker marker) {
+        if (marker.isDraggable())
+        {
+
+            mOnClickLatLang = marker.getPosition();
+            marker.remove();
+            SetContactPickerIntent();
+        }
+
+    }
+
+    private Location LocationToLatLng(LatLng latlng){
+        Location MarkerLocation = new Location("dummy");
+        MarkerLocation.setLatitude(latlng.latitude);
+        MarkerLocation.setLatitude(latlng.longitude);
+        return MarkerLocation;
 
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        mCurrentMarker = marker.getPosition();
-
+        mCurrentMarker = LocationToLatLng(marker.getPosition());
         return false;
     }
-
-
-
-
-
 
 
 

@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
         android:name=".MyApplication"
@@ -21,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
+            android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_app_id" />
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
@@ -49,6 +50,11 @@
             android:exported="true" />
 
         <activity android:name=".MainActivity" />
+        <activity android:name=".SettingsActivity" />
+
+
+
+
 
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -72,7 +78,6 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".PreferencesActivity"></activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data
             android:name="com.google.android.gms.version"

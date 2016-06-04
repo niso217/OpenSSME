@@ -7,6 +7,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
+import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.SocialNetwork.User;
 
 /**
@@ -34,10 +35,25 @@ public class PrefUtils {
         complexPreferences.commit();
     }
 
-    public static int getSettings(Context ctx, String key){
+    public static void getSettings(Context ctx){
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
-        String str = pref.getString(key,"1");
-        return Integer.parseInt(str);
+        String gps_distance = pref.getString(Constants.START_LOCATAION_UPDATE,"3");
+        String open_distance = pref.getString(Constants.OPEN_DISTANCE,"150");
+        String map_type = pref.getString(Constants.MAP_TYPE,"1");
+        String profile = pref.getString(Constants.MAP_TYPE,"1");
+        String service_provider = pref.getString(Constants.SERVICE_PROVIDER,"1");
+        boolean follow = pref.getBoolean(Constants.FOLLOW_ME,false);
+
+
+        Settings.getInstance().setGps_distance(Integer.parseInt(gps_distance));
+        Settings.getInstance().setOpen_distance(Integer.parseInt(open_distance));
+        Settings.getInstance().setMap_type(Integer.parseInt(map_type));
+        Settings.getInstance().setService_provider(Integer.parseInt(service_provider));
+        Settings.getInstance().setProfile(profile);
+        Settings.getInstance().setFollow_me(follow);
+
+
+
 
     }
 

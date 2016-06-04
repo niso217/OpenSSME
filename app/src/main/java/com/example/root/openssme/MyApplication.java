@@ -5,8 +5,6 @@ import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.example.root.openssme.CitiesAutoComplete.managers.ContentManager;
-import com.example.root.openssme.CitiesAutoComplete.rest.RestClientManager;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.SocialNetworkHelper;
 import com.example.root.openssme.SocialNetwork.User;
@@ -24,11 +22,12 @@ public class MyApplication extends Application{
     public void onCreate() {
         super.onCreate();
 
-        RestClientManager.init(getApplicationContext());
-        ContentManager.init(getApplicationContext());
 
         mInstance = this;
         mSocialNetworkHelper = new SocialNetworkHelper(this);
+
+        //get the current shared prefernce settings and store to settings object
+        PrefUtils.getSettings(this);
 
         //initialize user from share pref saved user params
         User mUser = PrefUtils.getCurrentUser(getApplicationContext());

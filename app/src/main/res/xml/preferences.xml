@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.v7.preference.PreferenceCategory
         android:title="Update Information"
         android:key="update_category">
 
-        <ListPreference
+        <android.support.v7.preference.ListPreference
+            android:key="service_provider"
+            android:title="Sampling Location"
+            android:summary="Pick the service you would like to use before entering the gate zone"
+            android:defaultValue="1"
+            android:entries="@array/Service"
+            android:entryValues="@array/ServiceValues"
+            />
+
+        <android.support.v7.preference.ListPreference
             android:key="gps_distance"
             android:title="GPS Activation Distance"
             android:summary="Define the distance to start the GPS tracking"
@@ -13,7 +22,7 @@
             android:entryValues="@array/GPSDistanceValues"
             />
 
-        <ListPreference
+        <android.support.v7.preference.ListPreference
             android:key="open_distance"
             android:title="Open Gate Distance"
             android:summary="Define the distance the call to the gate will be performed"
@@ -22,32 +31,38 @@
             android:entryValues="@array/openDistanceValues"
             />
 
-        <ListPreference
-            android:key="map_type"
-            android:title="Map Types"
-            android:summary="types of maps you can display using the Google Maps"
+        <android.support.v7.preference.ListPreference
+            android:key="profile"
+            android:title="Transportation Type"
+            android:summary="How will you get to your destination"
             android:defaultValue="1"
-            android:entries="@array/MapType"
-            android:entryValues="@array/MapTypeValues"
+            android:entries="@array/Profile"
+            android:entryValues="@array/ProfileValues"
             />
 
-    </PreferenceCategory>
 
+    </android.support.v7.preference.PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="Customisations"
-        android:key="custom_category">
+    <android.support.v7.preference.PreferenceCategory
+        android:title="Map"
+        android:key="map_category">
 
+    <android.support.v7.preference.ListPreference
+        android:key="map_type"
+        android:title="Map Types"
+        android:summary="types of maps you can display using the Google Maps"
+        android:defaultValue="1"
+        android:entries="@array/MapType"
+        android:entryValues="@array/MapTypeValues"
+        />
 
-        <RingtonePreference
-            android:key="notification_ringtone"
-            android:title="Notification Ringtone"
-            android:summary="Customise Notification Ringtone for you"
-            android:dialogTitle="Notification Ringtone"
-            android:dialogMessage="Customise Notification Ringtone for you"/>
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="follow"
+            android:title="Follow Me"
+            android:summary="follow your current location"
+            android:defaultValue="false"
+            />
 
+</android.support.v7.preference.PreferenceCategory>
 
-
-    </PreferenceCategory>
-
-</PreferenceScreen>
+</android.support.v7.preference.PreferenceScreen>

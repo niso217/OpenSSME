@@ -1,31 +1,33 @@
 <resources>
     <string-array name="openDistance">
-        <item>10 Meters</item>
-        <item>50 Meters</item>
         <item>100 Meters</item>
         <item>150 Meters</item>
+        <item>200 Meters</item>
+        <item>250 Meters</item>
+        <item>300 Meters</item>
     </string-array>
 
     <string-array name="openDistanceValues">
-        <item>10</item>
-        <item>50</item>
         <item>100</item>
         <item>150</item>
-
+        <item>200 Meters</item>
+        <item>250 Meters</item>
+        <item>300 Meters</item>
     </string-array>
 
     <string-array name="GPSDistance">
-        <item>1 Minute</item>
-        <item>2 Minutes</item>
         <item>3 Minutes</item>
         <item>4 Minutes</item>
+        <item>5 Minutes</item>
+        <item>6 Minutes</item>
+
     </string-array>
 
     <string-array name="GPSDistanceValues">
-        <item>60</item>
-        <item>120</item>
         <item>180</item>
         <item>240</item>
+        <item>300</item>
+        <item>360</item>
 
     </string-array>
 
@@ -45,6 +47,33 @@
 
 
     </string-array>
+
+    <string-array name="Profile">
+        <item>Driving</item>
+        <item>Walking</item>
+
+
+    </string-array>
+
+    <string-array name="ProfileValues">
+        <item>driving</item>
+        <item>walking</item>
+
+    </string-array>
+
+    <string-array name="Service">
+        <item>Network</item>
+        <item>GPS</item>
+
+
+    </string-array>
+
+    <string-array name="ServiceValues">
+        <item>1</item>
+        <item>2</item>
+
+    </string-array>
+
 
 
 
