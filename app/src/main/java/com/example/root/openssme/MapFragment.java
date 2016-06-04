@@ -225,7 +225,7 @@ public class MapFragment extends Fragment implements
                 case Constants.LOCATION_UPDATE_FLAG:
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
-                        if (map!=null){
+                        if (map!=null && Settings.getInstance().isFollow_me()){
                             onLocationChanged(intent);
                         }
                     }
@@ -347,7 +347,7 @@ public class MapFragment extends Fragment implements
         if (map!=null) {
             Toast.makeText(getContext(), place.getAddress(), Toast.LENGTH_LONG).show();
             CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(place.getLatLng()).zoom(18).build();
+                    .target(place.getLatLng()).zoom(15).build();
 
              Marker PlaceMarker = map.addMarker(new MarkerOptions()
                     .position(place.getLatLng())

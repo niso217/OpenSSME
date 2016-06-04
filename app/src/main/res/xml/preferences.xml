@@ -57,7 +57,7 @@
         />
 
         <android.support.v7.preference.SwitchPreferenceCompat
-            android:key="follow"
+            android:key="follow_me"
             android:title="Follow Me"
             android:summary="follow your current location"
             android:defaultValue="false"
