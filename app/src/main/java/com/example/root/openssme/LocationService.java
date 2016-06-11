@@ -4,8 +4,10 @@ import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -37,8 +39,10 @@ import com.google.android.gms.location.LocationServices;
 
 
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Queue;
 
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.common.GoogleConnection;
@@ -59,6 +63,7 @@ public class LocationService extends Service implements
     protected static final String TAG = LocationService.class.getSimpleName();
     public static final String REQUEST_TAG = "MainVolleyActivity";
     public static final int NOTIFICATION_ID = 100;
+    private static final String NOTIFICATION_DELETED_ACTION = "delete_notofication";
 
 
     public GoogleConnection mGoogleConnection;
@@ -66,17 +71,18 @@ public class LocationService extends Service implements
     private Location mCurrentLocation;
     private LocationManager mLocationManager;
     private RequestQueue mQueue;
-    private Handler mCallHandler;
     private NotificationManager mNotificationManager;
     private Handler mHandler;
+    private Handler mCallHandler;
     private boolean mLocker = true;
     private boolean mIsLocationUpdatesOn = false;
     private long mNextApiUpdate = Constants.API_REFRESH_GO;
+    private double mDistaceBeforeGPSUpdates = Double.MAX_VALUE;
+    private boolean mIsNotificationActive;
 
 
     @Override
     public void onCreate() {
-
 
 
         mQueue = CustomVolleyRequestQueue.getInstance(getApplication())
@@ -86,7 +92,6 @@ public class LocationService extends Service implements
                 Context.LOCATION_SERVICE);
 
 
-
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
         mHandler = new Handler();
@@ -94,6 +99,7 @@ public class LocationService extends Service implements
 
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        mIsNotificationActive = false;
 
         setupLocationRequestBalanced();
 
@@ -130,6 +136,9 @@ public class LocationService extends Service implements
 
     @Override
     public void onDestroy() {
+
+        StopApiLocationUpdate();
+
         // Disconnecting the client invalidates it.
         if (mGoogleConnection != null) {
             mGoogleConnection.disconnect();
@@ -142,6 +151,8 @@ public class LocationService extends Service implements
 
         super.onDestroy();
 
+        unregisterReceiver(receiver);
+
         stopSelf();
     }
 
@@ -149,25 +160,48 @@ public class LocationService extends Service implements
     public void onLocationChanged(Location location) {
         if (location != null) {
 
-            mIsLocationUpdatesOn = true;
 
             mCurrentLocation = location;
 
+            CalcDistanc();
+
+            IsInsideTheRadius();
+
+            StartApiLocationUpdate();
+
+
+        }
+    }
+
+    private void CalcDistanc() {
+
+        if (mCurrentLocation != null && ListGateComplexPref.getInstance().gates.size() > 0) {
+
+            Location to = new Location("");
+            for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+                to.setLatitude(ListGateComplexPref.getInstance().gates.get(i).location.latitude);
+                to.setLongitude(ListGateComplexPref.getInstance().gates.get(i).location.longitude);
+                ListGateComplexPref.getInstance().gates.get(i).distance = new Double(mCurrentLocation.distanceTo(to));
+
             }
+            ListGateComplexPref.getInstance().sort();
+        }
+
+        if (ListGateComplexPref.getInstance().gates.get(0).distance > mDistaceBeforeGPSUpdates * 2) {
+            GetCurrentLocation();
+        }
     }
 
 
-    private void IsInsideTheRadius(){
+    private void IsInsideTheRadius() {
 
         if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance()) {
             ListGateComplexPref.getInstance().gates.get(0).status = true;
             Toast.makeText(this, "Inside the Radius: Distance:" + ListGateComplexPref.getInstance().gates.get(0).distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
 
-        }
-        else {
+        } else {
             ListGateComplexPref.getInstance().gates.get(0).status = false;
             //clear all call notification
-            mNotificationManager.cancel(NOTIFICATION_ID);
             Toast.makeText(this, "OutSite The Radius Distance: " + ListGateComplexPref.getInstance().gates.get(0).distance + " ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA, Toast.LENGTH_SHORT);
 
         }
@@ -182,8 +216,9 @@ public class LocationService extends Service implements
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+
         String provider = "";
-        switch (Settings.getInstance().getService_provider())
+        switch (Settings.getInstance().getService_provider()) //get the provider from settings
         {
             case 1:
                 provider = LocationManager.NETWORK_PROVIDER;
@@ -196,7 +231,8 @@ public class LocationService extends Service implements
                 new android.location.LocationListener() {
                     @Override
                     public void onLocationChanged(Location location) {
-                        Log.d(TAG,"New Location arrived from request Single Update From Network Provider");
+                        StopLocationUpdates();
+                        Log.d(TAG, "New Location arrived from request Single Update From Network Provider");
                         mCurrentLocation = location;
                         ApiLocationUpdate();
                     }
@@ -255,9 +291,9 @@ public class LocationService extends Service implements
                     mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude() +
                     "&destinations=" +
                     sbDestinations.toString() +
-                    "&mode=" +Settings.getInstance().getProfile() +
+                    "&mode=" + Settings.getInstance().getProfile() +
                     "&sensor=false" +
-                    "&key="+getResources().getString(R.string.google_app_id);
+                    "&key=" + getResources().getString(R.string.google_app_id);
         }
         return str;
     }
@@ -271,9 +307,13 @@ public class LocationService extends Service implements
 
             return;
         }
-        if (!mIsLocationUpdatesOn){
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
-                    mLocationRequest, this);
+        if (!mIsLocationUpdatesOn) {
+            if (mGoogleConnection.getGoogleApiClient().isConnected()) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(),
+                        mLocationRequest, this);
+                mIsLocationUpdatesOn = true;
+
+            }
         }
 
 
@@ -292,7 +332,6 @@ public class LocationService extends Service implements
         Log.d(TAG, "onUnbind");
         return super.onUnbind(intent);
     }
-
 
 
     @Override
@@ -319,28 +358,28 @@ public class LocationService extends Service implements
 
     public void StopLocationUpdates() {
         if (mIsLocationUpdatesOn) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
-            mIsLocationUpdatesOn = false;
+            if (mGoogleConnection.getGoogleApiClient().isConnected()) {
+                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
+                mIsLocationUpdatesOn = false;
+            }
         }
     }
 
 
+    private void ApiLocationUpdate() {
 
+        if (ListGateComplexPref.getInstance().gates.size() > 0) {
 
-            private void ApiLocationUpdate() {
-
-                if (ListGateComplexPref.getInstance().gates.size() > 0) {
-
-                    //start the http request
-                    String url = SetUpURLString();
-                    Log.d(TAG, "Request URL" + url);
-                    final CustomJSONObjectRequest jsonRequest = new CustomJSONObjectRequest(Request.Method
-                            .GET, url,
-                            new JSONObject(), this, this);
-                    jsonRequest.setTag(REQUEST_TAG);
-                    mQueue.add(jsonRequest);
-                }
-            }
+            //start the http request
+            String url = SetUpURLString();
+            Log.d(TAG, "Request URL" + url);
+            final CustomJSONObjectRequest jsonRequest = new CustomJSONObjectRequest(Request.Method
+                    .GET, url,
+                    new JSONObject(), this, this);
+            jsonRequest.setTag(REQUEST_TAG);
+            mQueue.add(jsonRequest);
+        }
+    }
 
     @Override
     public void onResponse(Object response) {
@@ -362,6 +401,7 @@ public class LocationService extends Service implements
                 ListGateComplexPref.getInstance().gates.get(i).ETA = duration;
                 ListGateComplexPref.getInstance().gates.get(i).distance = distance;
 
+                mDistaceBeforeGPSUpdates = distance;
 
 
                 Log.d(TAG, "Respond From Http Request, Distance : " + distance);
@@ -376,24 +416,23 @@ public class LocationService extends Service implements
 
         IsInsideTheRadius();
 
-        LocationBroadcast();
-
         StartApiLocationUpdate();
 
     }
+
     @Override
     public void onErrorResponse(VolleyError error) {
 
 
     }
 
-    private void LocationBroadcast(){
+    private void LocationBroadcast(long seconds) {
         if (ListGateComplexPref.getInstance().gates.size() > 0) {
             Intent intent = new Intent(Constants.LOCATION_SERVICE);
             intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
             intent.putExtra(Constants.LOCATION, mCurrentLocation);
             intent.putExtra(Constants.DISTANCE, ListGateComplexPref.getInstance().gates.get(0).distance);
-            intent.putExtra(Constants.LAST_UPDATE, Calendar.getInstance().get(Calendar.SECOND));
+            intent.putExtra(Constants.NEXT_UPDATE, seconds);
             intent.putExtra(Constants.GOOGLE_CONNECTION, GoogleConnection.getInstance(this).getGoogleApiClient().isConnected());
 
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -401,14 +440,13 @@ public class LocationService extends Service implements
     }
 
 
-/*
-    ETA - from the http request to google Matrix
-    Distance - from the http request to google Matrix
- */
+    /*
+        ETA - from the http request to google Matrix
+        Distance - from the http request to google Matrix
+     */
     private void StartApiLocationUpdate() {
 
-
-        if (ListGateComplexPref.getInstance().gates.size() < 1){ //there are no gates, return
+        if (ListGateComplexPref.getInstance().gates.size() < 1) { //there are no gates, return
             return;
         }
 
@@ -418,87 +456,84 @@ public class LocationService extends Service implements
 
             if (mIsLocationUpdatesOn) { //just entered the gate radius
 
-                //unlock notification block
-                mLocker = true;
 
                 Log.d(TAG, "Stop GPS Location Updates");
                 StopLocationUpdates();
 
                 Log.d(TAG, "Make the Call to " + ListGateComplexPref.getInstance().gates.get(0).phone);
+
                 MakeTheCall();
+
+                StartOpenGateNotification(); //send notofication to open gate
             }
 
             mNextApiUpdate = Constants.API_REFRESH_HOME;
 
-            StopLocationUpdates(); //make sure no gps updates are on
 
-            StartOpenGateNotification(); //send notofication to open gate
 
         }
         else //outside the radius
         {
+            if (!mIsLocationUpdatesOn) { //location updates is off
 
-            if (ListGateComplexPref.getInstance().gates.get(0).ETA <= Settings.getInstance().getGps_distance())//ETA is smaller then the GPS updates value
+                if (ListGateComplexPref.getInstance().gates.get(0).ETA <= Settings.getInstance().getGps_distance())//ETA is smaller then the GPS updates value
 
-            {
-                Log.d(TAG, "Start GPS Location Updates");
-                startLocationUpdates();
-                mNextApiUpdate = Constants.API_REFRESH_GPS;
+                {
+                    Log.d(TAG, "Start GPS Location Updates");
 
-            }
-            else //ETA is greater then  GPS updates value
-            {
-                mNextApiUpdate = Constants.API_REFRESH_GO;
-                StopLocationUpdates();
+                    mNextApiUpdate = Constants.API_REFRESH_GPS;
+
+                    startLocationUpdates(); //start gps updates
+
+                } else //ETA is greater then  GPS updates value
+                {
+                    mNextApiUpdate = (long) (ListGateComplexPref.getInstance().gates.get(0).ETA * 1000 / 2);
+                    StopLocationUpdates();
+                }
             }
 
         }
         StartGoogleDistanceApi(mNextApiUpdate);
 
 
-        Log.d(TAG,"Next Google Distance Http Request In " + mNextApiUpdate / 1000 + " Seconds");
+        Log.d(TAG, "Next Google Distance Http Request In " + mNextApiUpdate / 1000 + " Seconds");
 
     }
 
 
-    private void StartGoogleDistanceApi(long seconds){
-        //start the Api Location Update in Constants.API_REFRESH seconds
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "Start Api Location Update From Response");
-                StopApiLocationUpdate();
-                if (!mIsLocationUpdatesOn){ //gps update is on, do not ask for Single Update from network provider
-                    GetCurrentLocation();
-                }
-                else
-                {
-                    ApiLocationUpdate(); //go strait for the http request
+    private void StartGoogleDistanceApi(long seconds) {
+        if (seconds != Constants.API_REFRESH_GPS) {
+            //start the Api Location Update in Constants.API_REFRESH seconds
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "Start Api Location Update From Response");
+
+                    StopApiLocationUpdate();
+                    GetCurrentLocation(); //get a sample gps location
 
                 }
+            }, seconds);
+        }
 
-            }
-        }, seconds);
-
-        Intent intent = new Intent(Constants.LOCATION_SERVICE);
-        intent.addFlags(Constants.NEXT_UPDATE_FLAG);
-        intent.putExtra(Constants.NEXT_UPDATE, seconds);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        LocationBroadcast(seconds);
     }
 
-    private void StartOpenGateNotification(){
-        if (mLocker) //first time entering
-        {
-            mLocker = false;
+    private void StartOpenGateNotification() {
+
+        if (!mIsNotificationActive){
             mCallHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-
-                    Log.d(TAG, "Start Notification After " +Constants.LEAVE_NOTIFICATION_IN / 1000+ " Seconds");
                     MakeTheCallOnBack();
+
                 }
             }, Constants.LEAVE_NOTIFICATION_IN);
         }
+
+
+
+
     }
 
 
@@ -507,8 +542,7 @@ public class LocationService extends Service implements
     }
 
 
-
-            class MyBinder extends Binder {
+    class MyBinder extends Binder {
         public LocationService getService() {
             return LocationService.this;
         }
@@ -517,9 +551,17 @@ public class LocationService extends Service implements
 
     public void MakeTheCallOnBack() {
         if (ListGateComplexPref.getInstance().gates.size() > 0) {
+
+            mIsNotificationActive = true;
+
+            Intent intent = new Intent(NOTIFICATION_DELETED_ACTION);
+            PendingIntent pendintIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+            registerReceiver(receiver, new IntentFilter(NOTIFICATION_DELETED_ACTION));
+
             Intent callIntent = new Intent(Intent.ACTION_CALL);
-            callIntent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, callIntent, 0);
+            registerReceiver(receiver, new IntentFilter(Intent.ACTION_CALL));
+
             Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.gate)
@@ -527,7 +569,8 @@ public class LocationService extends Service implements
                     .setContentText("Click To Open Gate")
                     .setAutoCancel(true)
                     .setSound(defaultSoundUri)
-                    .setContentIntent(pendingIntent);
+                    .setDeleteIntent(pendintIntent)
+                    .setContentIntent(mPendingIntent);
 
             NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
             notificationBuilder.setStyle(inboxStyle);
@@ -536,16 +579,32 @@ public class LocationService extends Service implements
             notificationBuilder.setStyle(inboxStyle);
             mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
 
+
+
         }
     }
 
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mIsNotificationActive = false;
+
+            switch (intent.getAction()) {
+                case Intent.ACTION_CALL:
+                    MakeTheCall();
+                    break;
+                case NOTIFICATION_DELETED_ACTION:
+                    break;
+
+            }
+            unregisterReceiver(this);
+        }
+    };
+
     private void MakeTheCall() {
 
-        if (ListGateComplexPref.getInstance().gates.size() > 0) {
+        if (ListGateComplexPref.getInstance().gates.size() > 0 && !mIsNotificationActive) {
 
-            Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
-            // Vibrate for 500 milliseconds
-            v.vibrate(1000);
 
             Intent intent = new Intent(Intent.ACTION_CALL);
 
@@ -558,11 +617,16 @@ public class LocationService extends Service implements
                 return;
             }
             this.startActivity(intent);
+
+
         }
     }
+}
 
 
-    }
+
+
+
 
 
 

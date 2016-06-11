@@ -43,6 +43,8 @@ public class PrefUtils {
         String profile = pref.getString(Constants.MAP_TYPE,"1");
         String service_provider = pref.getString(Constants.SERVICE_PROVIDER,"1");
         boolean follow = pref.getBoolean(Constants.FOLLOW_ME,false);
+        boolean screen = pref.getBoolean(Constants.SCREEN,false);
+
 
 
         Settings.getInstance().setGps_distance(Integer.parseInt(gps_distance));
@@ -51,9 +53,7 @@ public class PrefUtils {
         Settings.getInstance().setService_provider(Integer.parseInt(service_provider));
         Settings.getInstance().setProfile(profile);
         Settings.getInstance().setFollow_me(follow);
-
-
-
+        Settings.getInstance().setScreen(screen);
 
     }
 

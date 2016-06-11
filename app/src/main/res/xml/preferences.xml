@@ -26,7 +26,7 @@
             android:key="open_distance"
             android:title="Open Gate Distance"
             android:summary="Define the distance the call to the gate will be performed"
-            android:defaultValue="10"
+            android:defaultValue="200"
             android:entries="@array/openDistance"
             android:entryValues="@array/openDistanceValues"
             />
@@ -38,6 +38,13 @@
             android:defaultValue="1"
             android:entries="@array/Profile"
             android:entryValues="@array/ProfileValues"
+            />
+
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="screen"
+            android:title="Screen On"
+            android:summary="keep the screen turned on"
+            android:defaultValue="false"
             />
 
 

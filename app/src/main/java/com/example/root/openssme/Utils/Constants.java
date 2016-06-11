@@ -10,16 +10,17 @@ public class Constants {
     public static final int CHANGE_MAP = 2;
     public static final int CHANGE_RADIUS = 3;
     public static final int REQUEST_CHECK_SETTINGS = 5;
+    public static final int REQ_SELECT_PHOTO = 11;
     public static final int PREMISSIONS = 6;
     public static final int VOLLEY = 9;
     public static final int PERMISSIONS_REQUEST_CALL_PHONE = 7;
     public final static int PICK_CONTACT = 8;
     public static final int PERMISSIONS_REQUEST_STORAGE = 10;
-    public static final long API_REFRESH_HOME= 1000 * 60;
+    public static final long API_REFRESH_HOME= 1000 * 900;
     public static final long API_REFRESH_GPS= 1000 * 5;
     public static final long API_REFRESH_GO= 1000 * 30;
 
-    public static final long LEAVE_NOTIFICATION_IN= 1000 * 120;
+    public static final long LEAVE_NOTIFICATION_IN= 1000 * 10;
 
 
     public static final long UPDATE_INTERVAL= 3000;
@@ -33,6 +34,8 @@ public class Constants {
     public static final String MAP_TYPE = "map_type";
     public static final String SERVICE_PROVIDER = "service_provider";
     public static final String FOLLOW_ME = "follow_me";
+    public static final String SCREEN = "screen";
+
 
 
     public static final String PROFILE = "profile";

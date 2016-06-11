@@ -54,6 +54,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.AdapterView;
 import android.widget.Toast;
@@ -137,6 +138,12 @@ public class MapFragment extends Fragment implements
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        //keep screen on when follow me is true
+        if (Settings.getInstance().isFollow_me()){
+            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        }
 
         if (savedInstanceState != null) {
             msavedInstanceState = savedInstanceState;
@@ -228,26 +235,19 @@ public class MapFragment extends Fragment implements
                         if (map!=null && Settings.getInstance().isFollow_me()){
                             onLocationChanged(intent);
                         }
-                    }
-                    break;
-                case Constants.CHANGE_MAP:
-                    if (map!=null){
-                        ChangeMapType();
-                    }
-
-                    break;
-                case Constants.CHANGE_RADIUS:
-                    if (map!=null){
                         SetUpCircle();
                     }
-
                     break;
 
             }
         }
     };
 
-
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        ScreenSetup();
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -369,6 +369,14 @@ public class MapFragment extends Fragment implements
 
     }
 
+    private void ScreenSetup(){
+        if (Settings.getInstance().isScreen()) {
+            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+        else
+            getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
 
     void getMyLocation() {
         if (map != null) {
@@ -386,6 +394,7 @@ public class MapFragment extends Fragment implements
             }
         }
     }
+
 
     public void onLocationChanged(Intent Intent) {
 
@@ -579,6 +588,8 @@ public class MapFragment extends Fragment implements
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size()==1){
+            Intent LocationService = new Intent(getActivity(), LocationService.class);
+            getActivity().startService(LocationService);
         }
 
 

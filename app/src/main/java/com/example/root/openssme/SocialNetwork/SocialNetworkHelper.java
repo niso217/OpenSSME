@@ -56,40 +56,10 @@ public class SocialNetworkHelper
     public SocialNetworkHelper(Context context){
         mContext = context;
         FacebookSdk.sdkInitialize(mContext);
+        callbackManager = CallbackManager.Factory.create();
         setShareCallback();
-        //Log.d(TAG, "Google Is Connected: " + IsGoogleCached());
-        //Log.d(TAG,"Facebook Is Connected: "+ IsFacebookCached());
     }
 
-
-    private boolean playServiceAvalibale() {
-
-        return GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext)
-                == ConnectionResult.SUCCESS;
-    }
-
-    //GCM use
-    public void getGoogleToken() {
-        if (playServiceAvalibale()) {
-            new AsyncTask<Void, Void, Void>() {
-
-                @Override
-                protected Void doInBackground(Void... params) {
-                    InstanceID instanceID = InstanceID.getInstance(mContext);
-                    try {
-                        String token = instanceID.getToken(mContext.getString(R.string.google_app_id), GoogleCloudMessaging.INSTANCE_ID_SCOPE);
-                        if (token != null) {
-                            Log.d("mytoken: ", "token: " + token);
-                            User.getInstance().accesstoken = token;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            }.execute();
-        }
-    }
 
 
     public FacebookCallback<Sharer.Result> getShareCallback() {
@@ -258,11 +228,6 @@ public class SocialNetworkHelper
         }
     }
 
-    public void StartActivity(Activity activitya, Class activityb) {
-        Intent intent = new Intent(activitya, activityb);
-        activitya.startActivity(intent);
-        activitya.finish();
-    }
 
 
 

@@ -79,9 +79,12 @@ public class MainActivity extends AppCompatActivity implements
     public LocationRequest mLocationRequest;
     public GoogleConnection mGoogleConnection;
     private final String MAP_FRAGMENT = "mMapFragment";
+    private final String SETTINGS_FRAGMENT = "mSettingsFragment";
     private final String GATE_LIST_FRAGMENT = "mGateListFragment";
     private  final String MAIN_FRAGMENT ="MainFragment" ;
     private View mAutocompleteFragment;
+    private Fragment fragment;
+
 
 
 
@@ -108,8 +111,6 @@ public class MainActivity extends AppCompatActivity implements
             displayView(R.id.main);
 
         }
-
-
 
     }
 
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "Connected to Google Api Client");
                 break;
             case CLOSED:
-                Log.d(TAG, "Disconnected to Google Api Client");
+                Log.d(TAG, "Disconnected from Google Api Client");
                 break;
         }
     }
@@ -258,33 +259,6 @@ public class MainActivity extends AppCompatActivity implements
 
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-
-        switch(item.getItemId())
-        {
-
-            case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                break;
-
-        }
-
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public boolean onNavigationItemSelected(MenuItem menuItem) {
 
 
@@ -328,7 +302,6 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
 
-            Fragment fragment = null;
         String title = getString(R.string.app_name);
 
         mAutocompleteFragment.setVisibility(View.GONE);
@@ -364,15 +337,37 @@ public class MainActivity extends AppCompatActivity implements
                 title = "Map";
                 viewIsAtHome = true;
                 CurrentFragment = MAP_FRAGMENT;
-                mAutocompleteFragment.setVisibility(View.VISIBLE);
+                break;
+
+            case R.id.settings:
+                fragment = getSupportFragmentManager().findFragmentByTag(SETTINGS_FRAGMENT);
+                if (fragment==null){
+                    fragment = new SettingsFragment();
+                }
+                title = "Settings";
+                viewIsAtHome = true;
+                CurrentFragment = SETTINGS_FRAGMENT;
+                break;
+
+            case  R.id.share:
+                postStatusUpdate();
                 break;
 
         }
 
         if (fragment!=null) {
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.replace(R.id.frame, fragment, CurrentFragment);
-            ft.commit();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                    ft.replace(R.id.frame, fragment, CurrentFragment);
+                    ft.commit();
+                    if (CurrentFragment.equals(MAP_FRAGMENT)){
+                        mAutocompleteFragment.setVisibility(View.VISIBLE);
+                    }
+                }
+            }, 300);
+
         }
 
 
@@ -382,7 +377,9 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         if (drawerLayout!=null)
-        drawerLayout.closeDrawer(GravityCompat.START);
+            drawerLayout.closeDrawer(GravityCompat.START);
+
+
 
     }
 
@@ -504,9 +501,32 @@ public class MainActivity extends AppCompatActivity implements
                     default:
                         break;
                 }
+            case Constants.REQ_SELECT_PHOTO:
+
+                    if (User.getInstance().source.equals(Constants.GPLUS)) {
+                        MyApplication.getSocialNetworkHelper().GooglePostPhoto(this, data);
+                    }
+                    if (User.getInstance().source.equals(Constants.FACEBOOK)) {
+                        MyApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
+                    }
+
         }
     }
 
+    private void postStatusUpdate() {
+        if (User.getInstance().source.equals(Constants.GPLUS)) {
+            MyApplication.getSocialNetworkHelper().PostOnGoogle(this,
+                    getResources().getString(R.string.subject),
+                    getResources().getString(R.string.body),
+                    getResources().getString(R.string.url));
+        }
+        if (User.getInstance().source.equals(Constants.FACEBOOK)) {
+            MyApplication.getSocialNetworkHelper().PostOnFacebook(this,
+                    getResources().getString(R.string.subject),
+                    getResources().getString(R.string.body),
+                    getResources().getString(R.string.url));
+        }
+    }
 
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {

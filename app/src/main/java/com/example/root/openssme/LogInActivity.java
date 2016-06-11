@@ -2,6 +2,7 @@ package com.example.root.openssme;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -45,7 +46,7 @@ public class LogInActivity extends AppCompatActivity {
         if (PrefUtils.getCurrentUser(this) == null) {
             setContentView(R.layout.activity_login);
         } else {
-            MyApplication.getSocialNetworkHelper().StartActivity(this, MainActivity.class);
+            startActivity(new Intent(this, MainActivity.class));
             finish();
 
         }

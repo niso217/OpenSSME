@@ -13,7 +13,15 @@ public class Settings {
     private int service_provider;
     private String profile;
     private boolean follow_me;
+    private boolean screen;
 
+    public boolean isScreen() {
+        return screen;
+    }
+
+    public void setScreen(boolean screen) {
+        this.screen = screen;
+    }
 
     public boolean isFollow_me() {
         return follow_me;

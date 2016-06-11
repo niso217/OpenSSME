@@ -6,25 +6,37 @@
         <item
             android:id="@+id/main"
             android:checked="false"
-            android:icon="@drawable/ic_send_black"
+            android:icon="@drawable/ic_home_black_24dp"
             android:title="@string/main" />
 
         <item
             android:id="@+id/map"
             android:checked="false"
-            android:icon="@drawable/ic_inbox_black"
+            android:icon="@drawable/ic_map_black_24dp"
             android:title="@string/map" />
 
         <item
             android:id="@+id/gate_list"
             android:checked="false"
-            android:icon="@drawable/ic_star_black"
+            android:icon="@drawable/ic_favorite_black_24dp"
             android:title="@string/events" />
+
+        <item
+            android:id="@+id/share"
+            android:checked="false"
+            android:icon="@drawable/ic_thumb_up_black_24dp"
+            android:title="@string/share" />
+
+        <item
+            android:id="@+id/settings"
+            android:checked="false"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="@string/settings" />
 
         <item
             android:id="@+id/logout"
             android:checked="false"
-            android:icon="@drawable/ic_send_black"
+            android:icon="@drawable/ic_exit_to_app_black_24dp"
             android:title="@string/log_out" />
 
 

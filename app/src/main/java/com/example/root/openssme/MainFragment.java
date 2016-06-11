@@ -16,12 +16,14 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.root.openssme.Adapter.GateAdapter;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
+import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.common.GoogleConnection;
 
@@ -51,10 +53,9 @@ public class MainFragment extends Fragment implements
                          Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
                          Google.setText(connection + "");
-                         break;
-                     case Constants.NEXT_UPDATE_FLAG:
                          CountDown(intent.getLongExtra(Constants.NEXT_UPDATE,Constants.API_REFRESH_GO));
 
+                         break;
 
                  }
          }
@@ -82,6 +83,12 @@ public class MainFragment extends Fragment implements
          super.onActivityCreated(savedInstanceState);
      }
 
+     @Override
+     public void onCreate(@Nullable Bundle savedInstanceState) {
+         ScreenSetup();
+         super.onCreate(savedInstanceState);
+     }
+
      @Nullable
      @Override
      public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -94,7 +101,13 @@ public class MainFragment extends Fragment implements
          Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
          LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
          Google = (TextView) (rootFragment).findViewById(R.id.googleapi);
-
+         (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 unBindService();
+                 bindService();
+             }
+         });
 
          return rootFragment;
      }
@@ -115,6 +128,14 @@ public class MainFragment extends Fragment implements
         }
 
     }
+
+     private void ScreenSetup(){
+         if (Settings.getInstance().isScreen()) {
+             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+         }
+         else
+             getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+     }
 
     public void bindService() {
         Intent intent = new Intent(getActivity(), LocationService.class);
