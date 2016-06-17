@@ -39,16 +39,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         PrefUtils.getSettings(getContext());
-//        if (key.equals(Constants.MAP_TYPE) || key.equals(Constants.FOLLOW_ME)) {
-//            Intent intent = new Intent(Constants.LOCATION_SERVICE);
-//            intent.addFlags(Constants.CHANGE_MAP);
-//            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
-//        }
-//        if (key.equals(Constants.OPEN_DISTANCE)) {
-//            Intent intent = new Intent(Constants.LOCATION_SERVICE);
-//            intent.addFlags(Constants.CHANGE_RADIUS);
-//            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
-//        }
     }
 
     @Override

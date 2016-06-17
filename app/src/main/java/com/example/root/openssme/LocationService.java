@@ -17,7 +17,6 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -33,16 +32,15 @@ import com.android.volley.VolleyError;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
 
+import com.example.root.openssme.Utils.CustomJSONObjectRequest;
+import com.example.root.openssme.Utils.CustomVolleyRequestQueue;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 
-import java.util.Calendar;
-import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Queue;
 
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.common.GoogleConnection;
@@ -64,6 +62,7 @@ public class LocationService extends Service implements
     public static final String REQUEST_TAG = "MainVolleyActivity";
     public static final int NOTIFICATION_ID = 100;
     private static final String NOTIFICATION_DELETED_ACTION = "delete_notofication";
+
 
 
     public GoogleConnection mGoogleConnection;
@@ -103,6 +102,7 @@ public class LocationService extends Service implements
 
         setupLocationRequestBalanced();
 
+        RegisterReciver();
 
         super.onCreate();
 
@@ -138,6 +138,7 @@ public class LocationService extends Service implements
     public void onDestroy() {
 
         StopApiLocationUpdate();
+        StopLocationUpdates();
 
         // Disconnecting the client invalidates it.
         if (mGoogleConnection != null) {
@@ -263,12 +264,14 @@ public class LocationService extends Service implements
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+
         mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
         if (mCurrentLocation != null) {
             Log.d(TAG, "GPS location was found!");
             GetCurrentLocation();
         } else {
             Log.d(TAG, "Current location was null, enable GPS on emulator!");
+
 
         }
     }
@@ -381,6 +384,11 @@ public class LocationService extends Service implements
         }
     }
 
+    private void RegisterReciver(){
+        IntentFilter filter = new IntentFilter(Intent.ACTION_CALL);
+        filter.addAction(NOTIFICATION_DELETED_ACTION);
+        registerReceiver(receiver, filter);
+    }
     @Override
     public void onResponse(Object response) {
         try {
@@ -556,11 +564,11 @@ public class LocationService extends Service implements
 
             Intent intent = new Intent(NOTIFICATION_DELETED_ACTION);
             PendingIntent pendintIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-            registerReceiver(receiver, new IntentFilter(NOTIFICATION_DELETED_ACTION));
 
             Intent callIntent = new Intent(Intent.ACTION_CALL);
             PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, callIntent, 0);
-            registerReceiver(receiver, new IntentFilter(Intent.ACTION_CALL));
+
+
 
             Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
@@ -597,7 +605,6 @@ public class LocationService extends Service implements
                     break;
 
             }
-            unregisterReceiver(this);
         }
     };
 

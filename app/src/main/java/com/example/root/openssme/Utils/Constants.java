@@ -16,6 +16,8 @@ public class Constants {
     public static final int PERMISSIONS_REQUEST_CALL_PHONE = 7;
     public final static int PICK_CONTACT = 8;
     public static final int PERMISSIONS_REQUEST_STORAGE = 10;
+    public static final int NOTIFICATION = 11;
+
     public static final long API_REFRESH_HOME= 1000 * 900;
     public static final long API_REFRESH_GPS= 1000 * 5;
     public static final long API_REFRESH_GO= 1000 * 30;
