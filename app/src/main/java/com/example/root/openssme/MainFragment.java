@@ -36,7 +36,7 @@ public class MainFragment extends Fragment implements
  {
      private boolean mServiceBound;
     private LocationService mLocationService;
-     private TextView Gate,ETA,Distance,UpdatedBy,Radius,LastUpdate,Google;
+     private TextView Gate,ETA,Distance,Radius,LastUpdate,Google;
      private CountDownTimer mCountDownTimer;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
@@ -47,12 +47,10 @@ public class MainFragment extends Fragment implements
 
                      case Constants.LOCATION_UPDATE_FLAG:
                          //recived location update
-                         boolean connection = intent.getBooleanExtra(Constants.GOOGLE_CONNECTION, true);
                          ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA * 0.0166666667 * 100) / 100 + " Minutes");
                          Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
                          Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-                         Google.setText(connection + "");
                          CountDown(intent.getLongExtra(Constants.NEXT_UPDATE,Constants.API_REFRESH_GO));
 
                          break;
@@ -100,7 +98,6 @@ public class MainFragment extends Fragment implements
          Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
          Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
          LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
-         Google = (TextView) (rootFragment).findViewById(R.id.googleapi);
          (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {

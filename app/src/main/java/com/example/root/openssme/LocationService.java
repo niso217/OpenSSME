@@ -78,6 +78,7 @@ public class LocationService extends Service implements
     private long mNextApiUpdate = Constants.API_REFRESH_GO;
     private double mDistaceBeforeGPSUpdates = Double.MAX_VALUE;
     private boolean mIsNotificationActive;
+    private String provider = "";
 
 
     @Override
@@ -218,7 +219,7 @@ public class LocationService extends Service implements
             return;
         }
 
-        String provider = "";
+
         switch (Settings.getInstance().getService_provider()) //get the provider from settings
         {
             case 1:
@@ -233,7 +234,7 @@ public class LocationService extends Service implements
                     @Override
                     public void onLocationChanged(Location location) {
                         StopLocationUpdates();
-                        Log.d(TAG, "New Location arrived from request Single Update From Network Provider");
+                        Log.d(TAG, "New Location arrived from request Single Update From " + provider);
                         mCurrentLocation = location;
                         ApiLocationUpdate();
                     }
@@ -495,7 +496,7 @@ public class LocationService extends Service implements
 
                 } else //ETA is greater then  GPS updates value
                 {
-                    mNextApiUpdate = (long) (ListGateComplexPref.getInstance().gates.get(0).ETA * 1000 / 2);
+                    mNextApiUpdate = (long) (ListGateComplexPref.getInstance().gates.get(0).ETA * 1000 / 3);
                     StopLocationUpdates();
                 }
             }

@@ -35,7 +35,7 @@
             android:key="profile"
             android:title="Transportation Type"
             android:summary="How will you get to your destination"
-            android:defaultValue="1"
+            android:defaultValue="driving"
             android:entries="@array/Profile"
             android:entryValues="@array/ProfileValues"
             />

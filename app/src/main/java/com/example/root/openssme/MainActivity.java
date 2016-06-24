@@ -7,9 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -22,15 +20,14 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.DialogPreference;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.common.State;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
@@ -42,10 +39,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Marker;
 import com.squareup.picasso.Picasso;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -56,7 +49,6 @@ import com.example.root.openssme.common.GoogleConnection;
 
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
@@ -84,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements
     private  final String MAIN_FRAGMENT ="MainFragment" ;
     private View mAutocompleteFragment;
     private Fragment fragment;
+    private int mCurrentViewId;
 
 
 
@@ -105,13 +98,26 @@ public class MainActivity extends AppCompatActivity implements
 
         mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
 
-        mAutocompleteFragment.setVisibility(View.GONE);
+       // mAutocompleteFragment.setVisibility(View.GONE);
 
         if (savedInstanceState==null){
             displayView(R.id.main);
 
         }
+        else
+            mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
+            displayView(mCurrentViewId);
 
+
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+
+        outState.putInt("mCurrentViewId",mCurrentViewId);
+
+        super.onSaveInstanceState(outState);
     }
 
     private boolean CheckPremissions() {
@@ -265,8 +271,8 @@ public class MainActivity extends AppCompatActivity implements
         //Checking if the item is in checked state or not, if not make it in checked state
         if(menuItem.isChecked()) menuItem.setChecked(false);
         else menuItem.setChecked(true);
-
-        displayView(menuItem.getItemId());
+        mCurrentViewId = menuItem.getItemId();
+        displayView(mCurrentViewId);
         return true;
     }
 
@@ -290,9 +296,9 @@ public class MainActivity extends AppCompatActivity implements
                 .show();
     }
 
-    public void displayView(int viewId) {
+    public void displayView(int ViewId) {
 
-        if(viewId==R.id.logout){
+        if(ViewId==R.id.logout){
             signOut();
             return;
         }
@@ -306,8 +312,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mAutocompleteFragment.setVisibility(View.GONE);
 
-
-        switch (viewId) {
+        switch (ViewId) {
             case R.id.main:
                     fragment = getSupportFragmentManager().findFragmentByTag(MAIN_FRAGMENT);
                     if (fragment == null) {
@@ -366,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
                     }
                 }
-            }, 300);
+            }, 500);
 
         }
 
