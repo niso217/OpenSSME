@@ -9,7 +9,20 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_alignParentLeft="true"
-		android:layout_alignParentStart="true"/>
+		android:layout_alignParentStart="true" />
+
+	<!--<ImageButton-->
+		<!--android:id="@+id/current_location"-->
+		<!--android:layout_width="42dp"-->
+		<!--android:layout_height="42dp"-->
+		<!--android:layout_gravity="right|top"-->
+		<!--android:background="@drawable/mapbutton_background"-->
+		<!--android:layout_marginTop="59dp"-->
+		<!--android:src="@android:drawable/ic_menu_myplaces"-->
+		<!--android:layout_alignParentTop="true"-->
+		<!--android:layout_alignParentRight="true"-->
+		<!--android:layout_alignParentEnd="true"-->
+		<!--android:layout_marginRight="10dp" />-->
 
 
 </RelativeLayout>
