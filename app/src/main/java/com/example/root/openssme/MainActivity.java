@@ -3,10 +3,13 @@ package com.example.root.openssme;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,9 +28,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.common.State;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
@@ -105,10 +110,8 @@ public class MainActivity extends AppCompatActivity implements
 
         }
         else
-            mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
+           mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
             displayView(mCurrentViewId);
-
-
 
     }
 
@@ -369,6 +372,14 @@ public class MainActivity extends AppCompatActivity implements
                     ft.commit();
                     if (CurrentFragment.equals(MAP_FRAGMENT)){
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
+                        if (com.example.root.openssme.SocialNetwork.Settings.getInstance().isFirst_run())
+                        {
+                            onCoachMark();
+                            PrefUtils.setSettings(getApplicationContext());
+                            com.example.root.openssme.SocialNetwork.Settings.getInstance().setFirst_run(false);
+
+                        }
+
                     }
                 }
             }, 500);
@@ -398,6 +409,7 @@ public class MainActivity extends AppCompatActivity implements
                         public void onResult(com.google.android.gms.common.api.Status status) {
                             PrefUtils.clearCurrentUser(getApplicationContext());
                             Log.e(TAG, "USER STATE:" + PrefUtils.getCurrentUser(getApplicationContext()));
+                            ListGateComplexPref.getInstance().clear();
                         }
                     });
 
@@ -406,6 +418,7 @@ public class MainActivity extends AppCompatActivity implements
             PrefUtils.clearCurrentUser(this);
             Log.e(TAG, "USER STATE: " + PrefUtils.getCurrentUser(this));
             LoginManager.getInstance().logOut();
+            ListGateComplexPref.getInstance().clear();
         }
 
         //go to login activity
@@ -419,6 +432,26 @@ public class MainActivity extends AppCompatActivity implements
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(Constants.UPDATE_INTERVAL);
         mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
+    }
+
+    public void onCoachMark(){
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setContentView(R.layout.coach_mark);
+        dialog.setCanceledOnTouchOutside(true);
+        //for dismissing anywhere you touch
+        View masterView = dialog.findViewById(R.id.coach_mark_master_view);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        masterView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+            }
+        });
+        dialog.show();
     }
 
     /*
@@ -593,6 +626,8 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
     }
+
+
 
     private void AlertDialog(String message){
         //user denied without Never ask again, just show rationale explanation

@@ -3,6 +3,8 @@ package com.example.root.openssme;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import com.example.root.openssme.Utils.PrefUtils;
 
@@ -18,6 +20,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     public void onCreatePreferences(Bundle bundle, String s) {
         //add xml
         addPreferencesFromResource(R.xml.preferences);
+
+        PreferenceCategory category = (PreferenceCategory) findPreference("update_category");
+        Preference logout = findPreference("first_run");
+        category.removePreference(logout);
 
 
     }

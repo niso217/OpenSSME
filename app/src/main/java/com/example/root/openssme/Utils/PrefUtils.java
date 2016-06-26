@@ -1,5 +1,6 @@
 package com.example.root.openssme.Utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -28,6 +29,7 @@ public class PrefUtils {
         return currentUser;
     }
 
+
     public static void clearCurrentUser(Context ctx){
         User.getInstance().clear();
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, "user_prefs", 0);
@@ -44,6 +46,7 @@ public class PrefUtils {
         String service_provider = pref.getString(Constants.SERVICE_PROVIDER,"1");
         boolean follow = pref.getBoolean(Constants.FOLLOW_ME,false);
         boolean screen = pref.getBoolean(Constants.SCREEN,false);
+        boolean first_run = pref.getBoolean(Constants.FIRST_RUN,true);
 
 
 
@@ -54,10 +57,18 @@ public class PrefUtils {
         Settings.getInstance().setProfile(profile);
         Settings.getInstance().setFollow_me(follow);
         Settings.getInstance().setScreen(screen);
+        Settings.getInstance().setFirst_run(first_run);
+
 
     }
 
-    public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx){
+    public static void setSettings(Context ctx) {
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
+        pref.edit().putBoolean(Constants.FIRST_RUN, false).commit();
+
+    }
+
+        public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx){
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, "gate_prefs", 0);
         complexPreferences.putObject("gate_list", currentGateList);
         complexPreferences.commit();

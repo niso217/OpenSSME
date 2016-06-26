@@ -37,6 +37,8 @@ public class Constants {
     public static final String SERVICE_PROVIDER = "service_provider";
     public static final String FOLLOW_ME = "follow_me";
     public static final String SCREEN = "screen";
+    public static final String FIRST_RUN = "first_run";
+
 
 
 

@@ -109,7 +109,7 @@ public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener,
-        PlaceSelectionListener
+        PlaceSelectionListener, View.OnClickListener
 
 
 {
@@ -315,6 +315,7 @@ public class MapFragment extends Fragment implements
         final View rootView = inflater.inflate(R.layout.activity_map, container, false);
         try {
 
+            rootView.findViewById(R.id.current_location).setOnClickListener(this);
             MapsInitializer.initialize(this.getActivity());
             mapView = (MapView) rootView.findViewById(R.id.map);
             mapView.onCreate(savedInstanceState);
@@ -434,6 +435,14 @@ public class MapFragment extends Fragment implements
         mOnClickLatLang = latLng;
          SetContactPickerIntent();
 
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (map!=null) {
+            mOnClickLatLang = new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude());
+            SetContactPickerIntent();
+        }
     }
 
 

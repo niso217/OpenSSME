@@ -407,8 +407,11 @@ public class LocationService extends Service implements
                 double duration = Integer.parseInt(object_duration.get("value").toString().split(" ")[0]);
                 double distance = Double.parseDouble(object_distance.get("value").toString().split(" ")[0]);
 
-                ListGateComplexPref.getInstance().gates.get(i).ETA = duration;
-                ListGateComplexPref.getInstance().gates.get(i).distance = distance;
+                if (ListGateComplexPref.getInstance().gates.get(i)!= null){
+                    ListGateComplexPref.getInstance().gates.get(i).ETA = duration;
+                    ListGateComplexPref.getInstance().gates.get(i).distance = distance;
+                }
+
 
                 mDistaceBeforeGPSUpdates = distance;
 

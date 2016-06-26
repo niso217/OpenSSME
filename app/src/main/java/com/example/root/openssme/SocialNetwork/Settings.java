@@ -14,6 +14,15 @@ public class Settings {
     private String profile;
     private boolean follow_me;
     private boolean screen;
+    private boolean first_run;
+
+    public boolean isFirst_run() {
+        return first_run;
+    }
+
+    public void setFirst_run(boolean first_run) {
+        this.first_run = first_run;
+    }
 
     public boolean isScreen() {
         return screen;
