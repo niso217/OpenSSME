@@ -28,6 +28,17 @@ public class Constants {
     public static final long UPDATE_INTERVAL= 3000;
     public static final long FASTEST_INTERVAL= 3000;
 
+
+    //premissions
+
+    public static final String CALL_PHONE = "android.permission.CALL_PHONE";
+    public static final String ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
+    public static final String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
+    public static final String READ_CONTACTS = "android.permission.READ_CONTACTS";
+    public static final String READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
+    public static final String WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
+
+
     public static final String GOOGLE_CONNECTION = "google_connection";
     public static final String GOOGLE_API = "google_api";
     public static final String GPS_PROVIDER = "gps_provider";
@@ -38,6 +49,9 @@ public class Constants {
     public static final String FOLLOW_ME = "follow_me";
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
+    public static final String GPS_SERVICE = "gps_service";
+
+
 
 
 

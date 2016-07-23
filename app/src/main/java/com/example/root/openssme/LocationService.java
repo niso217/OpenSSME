@@ -17,6 +17,8 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -73,12 +75,17 @@ public class LocationService extends Service implements
     private NotificationManager mNotificationManager;
     private Handler mHandler;
     private Handler mCallHandler;
-    private boolean mLocker = true;
+    private boolean mSuccesslocations = false;
     private boolean mIsLocationUpdatesOn = false;
     private long mNextApiUpdate = Constants.API_REFRESH_GO;
     private double mDistaceBeforeGPSUpdates = Double.MAX_VALUE;
     private boolean mIsNotificationActive;
     private String provider = "";
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
+    private Looper mLooper;
+    private android.location.LocationListener mLocationListener;
+    private  Handler myHandler;
 
 
     @Override
@@ -105,7 +112,49 @@ public class LocationService extends Service implements
 
         RegisterReciver();
 
+        RegisterWakeLock();
+
+        mLooper = Looper.myLooper();
+        myHandler = new Handler(mLooper);
+
+        mLocationListener = new android.location.LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                StopLocationUpdates();
+                Log.d(TAG, "New Location arrived from request Single Update From " + provider);
+                mCurrentLocation = location;
+                ApiLocationUpdate();
+                mSuccesslocations = true;
+                mLocationManager.removeUpdates(mLocationListener);
+
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+
+
         super.onCreate();
+
+    }
+
+
+
+    private void RegisterWakeLock() {
+        mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, Constants.GPS_SERVICE);
 
     }
 
@@ -149,13 +198,18 @@ public class LocationService extends Service implements
         if (mQueue != null) {
             mQueue.cancelAll(REQUEST_TAG);
         }
-        Log.d(TAG, "Location Distroy");
 
-        super.onDestroy();
 
         unregisterReceiver(receiver);
 
+        if (mWakeLock.isHeld())
+            mWakeLock.release();
+
         stopSelf();
+
+        super.onDestroy();
+        Log.d(TAG, "Location Distroy");
+
     }
 
     @Override
@@ -214,46 +268,55 @@ public class LocationService extends Service implements
     }
 
     public void GetCurrentLocation() {
+
+        mSuccesslocations = false;
+
+        if (ListGateComplexPref.getInstance().gates.size()> 0 && !ListGateComplexPref.getInstance().gates.get(0).status){
+            switch (Settings.getInstance().getService_provider()) //get the provider from settings
+            {
+                case 1:
+                    provider = LocationManager.NETWORK_PROVIDER;
+                    break;
+                case 2:
+                    provider = LocationManager.GPS_PROVIDER;
+                    break;
+            }
+        }
+        else
+            provider = LocationManager.NETWORK_PROVIDER;
+
+        singalLocationReq();
+
+    }
+
+
+    private void singalLocationReq(){
+
+        myHandler.removeCallbacksAndMessages(null);
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        try {
+            mWakeLock.acquire();
+            //in case GPS is deleyed switch to Network provider
 
+            mLocationManager.requestSingleUpdate(provider,mLocationListener,mLooper);
 
-        switch (Settings.getInstance().getService_provider()) //get the provider from settings
-        {
-            case 1:
-                provider = LocationManager.NETWORK_PROVIDER;
-                break;
-            case 2:
-                provider = LocationManager.GPS_PROVIDER;
-                break;
+            myHandler.postDelayed(new Runnable() {
+                public void run() {
+                    if (!mSuccesslocations) {
+                        Log.d(TAG,"faild to find location with GPS");
+                        provider = LocationManager.NETWORK_PROVIDER;
+                        singalLocationReq();
+                    }
+                }
+            }, 10000);
         }
-        mLocationManager.requestSingleUpdate(provider,
-                new android.location.LocationListener() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        StopLocationUpdates();
-                        Log.d(TAG, "New Location arrived from request Single Update From " + provider);
-                        mCurrentLocation = location;
-                        ApiLocationUpdate();
-                    }
-
-                    @Override
-                    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String provider) {
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String provider) {
-
-                    }
-                }, null);
+        finally {
+            mWakeLock.release();
+        }
     }
 
     /*

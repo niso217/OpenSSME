@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
+import com.example.root.openssme.Utils.PermissionsUtil;
 import com.example.root.openssme.common.State;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
@@ -52,6 +53,8 @@ import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -82,6 +85,8 @@ public class MainActivity extends AppCompatActivity implements
     private View mAutocompleteFragment;
     private Fragment fragment;
     private int mCurrentViewId;
+    final public static int REQUEST_CODE = 123;
+    List<String> permissions = new ArrayList<>();
 
 
 
@@ -92,26 +97,32 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mGoogleConnection = GoogleConnection.getInstance(this);
-        mGoogleConnection.addObserver(this);
-
-        setupLocationRequestBalanced();
-
-        setContentView(R.layout.activity_main);
-
-        Initialize();
-
-        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
-
-       // mAutocompleteFragment.setVisibility(View.GONE);
-
-        if (savedInstanceState==null){
-            displayView(R.id.main);
-
+        addPermissionToList();
+        List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissions(permissions);
+        if (unGranted.size() != 0) {
+            PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
         }
-        else
-           mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
-            displayView(mCurrentViewId);
+
+//        mGoogleConnection = GoogleConnection.getInstance(this);
+//        mGoogleConnection.addObserver(this);
+//
+//        setupLocationRequestBalanced();
+//
+//        setContentView(R.layout.activity_main);
+//
+//        Initialize();
+//
+//        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
+//
+//       // mAutocompleteFragment.setVisibility(View.GONE);
+//
+//        if (savedInstanceState==null){
+//            displayView(R.id.main);
+//
+//        }
+//        else
+//           mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
+//            displayView(mCurrentViewId);
 
     }
 
@@ -123,19 +134,55 @@ public class MainActivity extends AppCompatActivity implements
         super.onSaveInstanceState(outState);
     }
 
-    private boolean CheckPremissions() {
-        mCallPremissionGranted =  ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
-        mLocationPremissionGranted = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) &&
-                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        mContactPremissionGranted =ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
-        mStoragePremissionGranted = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE) &&
-                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (mCallPremissionGranted || mLocationPremissionGranted || mContactPremissionGranted || mStoragePremissionGranted) {
-            return false;
-        }
-        return true;
+    private void addPermissionToList() {
+        permissions.add(Manifest.permission.CALL_PHONE);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        permissions.add(Manifest.permission.READ_CONTACTS);
+        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            //Confirm the result of which request to return
+            case REQUEST_CODE: {
+                List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
+                if (unGranted.size() == 0) {
+                    //All permissions have been granted
+                } else {
+                    PermissionResolver(unGranted.get(0));
+                    //A list of authorization failed
+                }
+
+                // request only one permission
+                   /* if (PermissionsUtil.getInstance(this).checkPermissionRequest(permissions,grantResults)){
+                        //All permissions have been granted
+                    } else {
+                        //A list of authorization failed
+                    }*/
+                break;
+            }
+        }
+    }
+
+    private void PermissionResolver(String Permission)
+    {
+        boolean messege;
+        switch (Permission) {
+
+            case Constants.CALL_PHONE:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
+                if(messege){
+                    AlertDialog(getResources().getString(R.string.request_call));
+                }else{
+                    //user has denied with `Never Ask Again`, go to settings
+                    promptSettings();
+                }
+                break;
+        }
+            }
 
     @Override
     protected void onStart() {
@@ -243,28 +290,7 @@ public class MainActivity extends AppCompatActivity implements
         actionBarDrawerToggle.syncState();
     }
 
-    private void GetAllPremissionNeeded(){
-        //request phone call premission M+
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
-            requestCallPermission();
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED){
-            requestReadContactsPermission();
-        }
-        //request location call premission M+
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestLocationPermission();
-        }
 
-        //request storage  premission M+
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestStoragePermission();
-        }
-
-        requestLocationSettings();
-    }
 
 
     @Override
@@ -303,11 +329,6 @@ public class MainActivity extends AppCompatActivity implements
 
         if(ViewId==R.id.logout){
             signOut();
-            return;
-        }
-        if (!CheckPremissions()) {
-            GetAllPremissionNeeded();
-            Toast.makeText(this,"Fix Premissions!",Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -567,65 +588,65 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-
-
-        if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
-            if(grantResults.length > 0){
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //user accepted , make call
-                    Log.d(TAG,"Permission granted");
-                }
-                else if(grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    boolean should = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
-                    if(should){
-                        AlertDialog(getResources().getString(R.string.request_call));
-                    }else{
-                        //user has denied with `Never Ask Again`, go to settings
-                        promptSettings();
-                    }
-                }
-            }
-        }
-        if (requestCode == Constants.PREMISSIONS) {
-            if (grantResults.length == 2
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // We can now safely use the API we requested access to
-
-            } else {
-                boolean fine = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION);
-                boolean coarse = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_COARSE_LOCATION);
-
-                if(fine || coarse){
-                    AlertDialog(getResources().getString(R.string.request_location));
-                }else{
-                    //user has denied with `Never Ask Again`, go to settings
-                    promptSettings();
-                }
-                // Permission was denied or request was cancelled
-            }
-        }
-
-
-        if (requestCode == Constants.PERMISSIONS_REQUEST_STORAGE) {
-            if (grantResults.length == 2
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // We can now safely use the API we requested access to
-
-            } else {
-                boolean write = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                boolean read = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE);
-
-                if(write || read){
-                    AlertDialog(getResources().getString(R.string.request_location));
-                }else{
-                    //user has denied with `Never Ask Again`, go to settings
-                    promptSettings();
-                }
-                // Permission was denied or request was cancelled
-            }
-        }
-    }
+//    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+//
+//
+//        if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
+//            if(grantResults.length > 0){
+//                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                    //user accepted , make call
+//                    Log.d(TAG,"Permission granted");
+//                }
+//                else if(grantResults[0] == PackageManager.PERMISSION_DENIED) {
+//                    boolean should = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
+//                    if(should){
+//                        AlertDialog(getResources().getString(R.string.request_call));
+//                    }else{
+//                        //user has denied with `Never Ask Again`, go to settings
+//                        promptSettings();
+//                    }
+//                }
+//            }
+//        }
+//        if (requestCode == Constants.PREMISSIONS) {
+//            if (grantResults.length == 2
+//                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // We can now safely use the API we requested access to
+//
+//            } else {
+//                boolean fine = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION);
+//                boolean coarse = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_COARSE_LOCATION);
+//
+//                if(fine || coarse){
+//                    AlertDialog(getResources().getString(R.string.request_location));
+//                }else{
+//                    //user has denied with `Never Ask Again`, go to settings
+//                    promptSettings();
+//                }
+//                // Permission was denied or request was cancelled
+//            }
+//        }
+//
+//
+//        if (requestCode == Constants.PERMISSIONS_REQUEST_STORAGE) {
+//            if (grantResults.length == 2
+//                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // We can now safely use the API we requested access to
+//
+//            } else {
+//                boolean write = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//                boolean read = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE);
+//
+//                if(write || read){
+//                    AlertDialog(getResources().getString(R.string.request_location));
+//                }else{
+//                    //user has denied with `Never Ask Again`, go to settings
+//                    promptSettings();
+//                }
+//                // Permission was denied or request was cancelled
+//            }
+//        }
+//    }
 
 
 

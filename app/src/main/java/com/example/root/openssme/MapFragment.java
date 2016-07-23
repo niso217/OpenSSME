@@ -19,12 +19,14 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
@@ -54,6 +56,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.AdapterView;
@@ -314,7 +317,7 @@ public class MapFragment extends Fragment implements
 
         final View rootView = inflater.inflate(R.layout.activity_map, container, false);
         try {
-
+            rootView.findViewById(R.id.help).setOnClickListener(this);
             rootView.findViewById(R.id.current_location).setOnClickListener(this);
             MapsInitializer.initialize(this.getActivity());
             mapView = (MapView) rootView.findViewById(R.id.map);
@@ -439,10 +442,19 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        if (map!=null) {
-            mOnClickLatLang = new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude());
-            SetContactPickerIntent();
+
+        switch (v.getId()){
+            case R.id.current_location:
+                if (map!=null) {
+                    mOnClickLatLang = new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude());
+                    SetContactPickerIntent();
+                }
+                break;
+            case R.id.help:
+                onCoachMark();
+                break;
         }
+
     }
 
 
@@ -664,6 +676,26 @@ public class MapFragment extends Fragment implements
     public boolean onMarkerClick(Marker marker) {
         mCurrentMarker = LocationToLatLng(marker.getPosition());
         return false;
+    }
+
+    public void onCoachMark(){
+
+        final Dialog dialog = new Dialog(getContext());
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setContentView(R.layout.coach_mark);
+        dialog.setCanceledOnTouchOutside(true);
+        //for dismissing anywhere you touch
+        View masterView = dialog.findViewById(R.id.coach_mark_master_view);
+        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        masterView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+                getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+            }
+        });
+        dialog.show();
     }
 
 
