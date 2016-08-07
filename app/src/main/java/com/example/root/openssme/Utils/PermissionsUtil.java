@@ -3,10 +3,16 @@ package com.example.root.openssme.Utils;
 /**
  * Created by niso2 on 22/07/2016.
  */
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
+
+import com.example.root.openssme.LogInActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,5 +91,24 @@ public class PermissionsUtil {
 
     public boolean checkPermissionRequest(String[] permissions, int[] grantResult) {
         return grantResult[0] == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public boolean IsAllPermissionsGranted() {
+        List<String> unGranted = this.checkPermissions(addPermissionToList());
+        if (unGranted.size() != 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private List<String> addPermissionToList() {
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.CALL_PHONE);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        permissions.add(Manifest.permission.READ_CONTACTS);
+        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        return permissions;
     }
 }

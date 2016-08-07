@@ -609,7 +609,7 @@ public class MapFragment extends Fragment implements
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size()==1){
-            Intent LocationService = new Intent(getActivity(), LocationService.class);
+            Intent LocationService = new Intent(getActivity(), LocationService2.class);
             getActivity().startService(LocationService);
         }
 

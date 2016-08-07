@@ -46,5 +46,13 @@ public class ListGateComplexPref {
         }
     }
 
+    public double getClosestETA(){
+        return gates.get(0).ETA;
+    }
+
+    public double getClosestDistance(){
+        return gates.get(0).distance;
+    }
+
 
 }

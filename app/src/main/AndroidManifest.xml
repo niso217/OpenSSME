@@ -71,7 +71,7 @@
         <!-- </receiver> -->
 
         <service
-            android:name=".LocationService"
+            android:name=".LocationService2"
             android:enabled="true"
             android:exported="true" />
 

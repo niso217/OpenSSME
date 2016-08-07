@@ -44,6 +44,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.squareup.picasso.Picasso;
 
@@ -54,13 +55,14 @@ import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
-        ResultCallback<LocationSettingsResult>,
+
         Observer
 
 {
@@ -72,10 +74,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView tvName,tvEmail;
     private boolean viewIsAtHome;
     private  String CurrentFragment;
-    public  boolean mCallPremissionGranted;
-    public  boolean mLocationPremissionGranted;
-    public  boolean mContactPremissionGranted;
-    public  boolean mStoragePremissionGranted;
+    public  boolean mAllPremissionsGranted;
     public LocationRequest mLocationRequest;
     public GoogleConnection mGoogleConnection;
     private final String MAP_FRAGMENT = "mMapFragment";
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements
     private Fragment fragment;
     private int mCurrentViewId;
     final public static int REQUEST_CODE = 123;
-    List<String> permissions = new ArrayList<>();
 
 
 
@@ -95,35 +93,31 @@ public class MainActivity extends AppCompatActivity implements
     //
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        Log.d(TAG,"onCreate");
+
+
         super.onCreate(savedInstanceState);
 
-        addPermissionToList();
-        List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissions(permissions);
-        if (unGranted.size() != 0) {
-            PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
+
+        mGoogleConnection = GoogleConnection.getInstance(this);
+        mGoogleConnection.addObserver(this);
+
+        setupLocationRequestBalanced();
+
+        setContentView(R.layout.activity_main);
+
+        Initialize();
+
+        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
+
+        if (savedInstanceState==null){
+            displayView(R.id.main);
+
         }
-
-//        mGoogleConnection = GoogleConnection.getInstance(this);
-//        mGoogleConnection.addObserver(this);
-//
-//        setupLocationRequestBalanced();
-//
-//        setContentView(R.layout.activity_main);
-//
-//        Initialize();
-//
-//        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
-//
-//       // mAutocompleteFragment.setVisibility(View.GONE);
-//
-//        if (savedInstanceState==null){
-//            displayView(R.id.main);
-//
-//        }
-//        else
-//           mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
-//            displayView(mCurrentViewId);
-
+        else
+            mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
+        displayView(mCurrentViewId);
     }
 
     @Override
@@ -131,62 +125,33 @@ public class MainActivity extends AppCompatActivity implements
 
         outState.putInt("mCurrentViewId",mCurrentViewId);
 
+
         super.onSaveInstanceState(outState);
     }
 
-    private void addPermissionToList() {
-        permissions.add(Manifest.permission.CALL_PHONE);
-        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        permissions.add(Manifest.permission.READ_CONTACTS);
-        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            //Confirm the result of which request to return
-            case REQUEST_CODE: {
-                List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
-                if (unGranted.size() == 0) {
-                    //All permissions have been granted
-                } else {
-                    PermissionResolver(unGranted.get(0));
-                    //A list of authorization failed
-                }
+    protected void onResume() {
+        Log.d(TAG,"onResume");
 
-                // request only one permission
-                   /* if (PermissionsUtil.getInstance(this).checkPermissionRequest(permissions,grantResults)){
-                        //All permissions have been granted
-                    } else {
-                        //A list of authorization failed
-                    }*/
-                break;
-            }
-        }
+        super.onResume();
     }
-
-    private void PermissionResolver(String Permission)
-    {
-        boolean messege;
-        switch (Permission) {
-
-            case Constants.CALL_PHONE:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
-                if(messege){
-                    AlertDialog(getResources().getString(R.string.request_call));
-                }else{
-                    //user has denied with `Never Ask Again`, go to settings
-                    promptSettings();
-                }
-                break;
-        }
-            }
 
     @Override
     protected void onStart() {
-        connectClient();
+
+
+
+        Log.d(TAG,"onStart");
+
+        if (mGoogleConnection.getGoogleApiClient().isConnected())
+        {
+            GPSResolver();
+        }
+        else {
+            connectClient();
+        }
+
+
         super.onStart();
     }
 
@@ -194,6 +159,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onDestroy() {
+        Log.d(TAG,"onDestroy");
+
         // Disconnecting the client invalidates it.
         if (mGoogleConnection != null) {
             mGoogleConnection.disconnect();
@@ -222,7 +189,8 @@ public class MainActivity extends AppCompatActivity implements
 
             case OPENED:
                 // We are signed in!
-                requestLocationSettings();
+                GPSResolver();
+               // requestLocationSettings();
                 Log.d(TAG, "Connected to Google Api Client");
                 break;
             case CLOSED:
@@ -316,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        stopService(new Intent(getBaseContext(), LocationService.class));
+                        stopService(new Intent(getBaseContext(), LocationService2.class));
                         finish();
                     }
 
@@ -449,7 +417,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void setupLocationRequestBalanced() {
-        mLocationRequest = new LocationRequest();
+        mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(Constants.UPDATE_INTERVAL);
         mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
@@ -479,70 +447,51 @@ public class MainActivity extends AppCompatActivity implements
     =================PREMISSIONS=================
      */
 
-    private void requestLocationSettings() {
+
+    private void GPSResolver() {
+
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .setAlwaysShow(true)
                 .addLocationRequest(mLocationRequest);
-        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleConnection.getGoogleApiClient(), builder.build());
-        result.setResultCallback(this);
-    }
 
-    @Override
-    public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+        // **************************
+        builder.setAlwaysShow(true); // this is the key ingredient
+        // **************************
 
-        final Status status = locationSettingsResult.getStatus();
-        switch (status.getStatusCode()) {
-            case LocationSettingsStatusCodes.SUCCESS:
-                // All location settings are satisfied. The client can initialize location
-                Log.d(TAG, "All location settings are satisfied. The client can initialize location requests here");
-                break;
-            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                // Location settings are not satisfied. But could be fixed by showing the user
-                // a dialog.
-                ChangeLocationSettings(status);
-                break;
-            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                Log.e(TAG, "Settings change unavailable. We have no way to fix the settings so we won't show the dialog.");
-                break;
-        }
-
-    }
-
-    private void requestLocationPermission() {
-            // Check Permissions Now
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                    Constants.PREMISSIONS);
-        }
-
-    private void requestCallPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
-    }
-
-    private void requestReadContactsPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, Constants.PERMISSIONS_REQUEST_CALL_PHONE);
-    }
-
-
-    private void requestStoragePermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, Constants.PERMISSIONS_REQUEST_STORAGE);
-
-    }
-
-
-    private void ChangeLocationSettings(Status status) {
-        // Location settings are not satisfied. But could be fixed by showing the user
-        // a dialog.
-        try {
-            // Show the dialog by calling startResolutionForResult(),
-            // and check the result in onActivityResult().
-            status.startResolutionForResult(
-                    this,
-                    Constants.REQUEST_CHECK_SETTINGS);
-        } catch (IntentSender.SendIntentException e) {
-            // Ignore the error.
-        }
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi
+                .checkLocationSettings(mGoogleConnection.getGoogleApiClient(), builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result
+                        .getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location
+                        // requests here.
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be
+                        // fixed by showing the user
+                        // a dialog.
+                        try {
+                            // Show the dialog by calling
+                            // startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(MainActivity.this, 1000);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have
+                        // no way to fix the
+                        // settings so we won't show the dialog.
+                        break;
+                }
+            }
+        });
     }
 
     @Override
@@ -550,16 +499,6 @@ public class MainActivity extends AppCompatActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         // Decide what to do based on the original request code
         switch (requestCode) {
-            case Constants.REQUEST_CHECK_SETTINGS:
-                switch (resultCode) {
-                    case Activity.RESULT_OK:
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        // The user was asked to change settings, but chose not to
-                        break;
-                    default:
-                        break;
-                }
             case Constants.REQ_SELECT_PHOTO:
 
                     if (User.getInstance().source.equals(Constants.GPLUS)) {
@@ -588,110 +527,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-//    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-//
-//
-//        if(requestCode == Constants.PERMISSIONS_REQUEST_CALL_PHONE){
-//            if(grantResults.length > 0){
-//                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    //user accepted , make call
-//                    Log.d(TAG,"Permission granted");
-//                }
-//                else if(grantResults[0] == PackageManager.PERMISSION_DENIED) {
-//                    boolean should = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
-//                    if(should){
-//                        AlertDialog(getResources().getString(R.string.request_call));
-//                    }else{
-//                        //user has denied with `Never Ask Again`, go to settings
-//                        promptSettings();
-//                    }
-//                }
-//            }
-//        }
-//        if (requestCode == Constants.PREMISSIONS) {
-//            if (grantResults.length == 2
-//                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                // We can now safely use the API we requested access to
-//
-//            } else {
-//                boolean fine = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION);
-//                boolean coarse = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_COARSE_LOCATION);
-//
-//                if(fine || coarse){
-//                    AlertDialog(getResources().getString(R.string.request_location));
-//                }else{
-//                    //user has denied with `Never Ask Again`, go to settings
-//                    promptSettings();
-//                }
-//                // Permission was denied or request was cancelled
-//            }
-//        }
-//
-//
-//        if (requestCode == Constants.PERMISSIONS_REQUEST_STORAGE) {
-//            if (grantResults.length == 2
-//                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                // We can now safely use the API we requested access to
-//
-//            } else {
-//                boolean write = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//                boolean read = ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE);
-//
-//                if(write || read){
-//                    AlertDialog(getResources().getString(R.string.request_location));
-//                }else{
-//                    //user has denied with `Never Ask Again`, go to settings
-//                    promptSettings();
-//                }
-//                // Permission was denied or request was cancelled
-//            }
-//        }
-//    }
 
 
-
-    private void AlertDialog(String message){
-        //user denied without Never ask again, just show rationale explanation
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Permission Denied");
-        builder.setMessage(message);
-        builder.setPositiveButton("I'M SURE", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.setNegativeButton("RE-TRY", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                requestCallPermission();
-            }
-        });
-        builder.show();
-    }
-
-    private void promptSettings() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Denied Never Ask");
-        builder.setMessage("Denied Never Ask Msg");
-        builder.setPositiveButton("go to Settings", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                goToSettings();
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
-
-    private void goToSettings() {
-        Intent myAppSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
-        myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
-        myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(myAppSettings);
-    }
 
 
 }

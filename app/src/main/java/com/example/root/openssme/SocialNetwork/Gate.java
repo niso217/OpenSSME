@@ -19,6 +19,7 @@ public class Gate {
     public Double distance;
     public String imagePath;
     public boolean status;
+    public boolean active;
 
 
     public Gate(String gateName, String phone, LatLng location,String imagePath) {
@@ -29,7 +30,10 @@ public class Gate {
         this.distance = Double.MAX_VALUE;
         this.imagePath = imagePath;
         this.status = false; //close
+        this.active = true;
     }
+
+
 
 
 }

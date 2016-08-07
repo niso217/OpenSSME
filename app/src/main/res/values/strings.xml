@@ -46,8 +46,11 @@
     <string name="closeDrawer">Navigation View</string>
     <string name="openDrawer">Navigation View Closed</string>
     <string name="title_activity_maps">Map</string>
-    <string name="request_location"> Without this permission the app is unable to work properly.Are you sure you want to deny this permission?</string>
-    <string name="request_call"> Without this permission the app is unable to make call.Are you sure you want to deny this permission?</string>
+    <string name="request_call"> Call permission is necessary, Without this permission the app is unable to work properly</string>
+    <string name="request_location"> Location permission is necessary, Without this permission the app is unable to work properly</string>
+    <string name="request_contacts"> Read contacts permission is necessary, Without this permission the app is unable to work properly</string>
+    <string name="request_read_write"> Read Write from external storage permission is necessary, Without this permission the app is unable to work properly</string>
+
 
     <string name="subject">OpenSSME!</string>
     <string name="body"> Just Opened My Gate With This Cool App</string>

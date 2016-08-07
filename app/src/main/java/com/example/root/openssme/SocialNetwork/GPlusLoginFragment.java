@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.example.root.openssme.LogInActivity;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -152,7 +153,7 @@ public class GPlusLoginFragment extends Fragment implements
             }
 
             //start MainActivity
-            Intent intent = new Intent(getContext(), MainActivity.class);
+            Intent intent = new Intent(getContext(), LogInActivity.class);
             getActivity().startActivity(intent);
             getActivity().finish();
 

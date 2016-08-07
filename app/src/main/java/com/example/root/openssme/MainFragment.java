@@ -31,11 +31,11 @@ import com.example.root.openssme.common.GoogleConnection;
 /**
  * Created by niso2 on 15/05/2016.
  */
-public class MainFragment extends Fragment implements
-        ServiceConnection
+public class MainFragment extends Fragment
+
  {
      private boolean mServiceBound;
-    private LocationService mLocationService;
+//    private LocationService mLocationService;
      private TextView Gate,ETA,Distance,Radius,LastUpdate,Google;
      private CountDownTimer mCountDownTimer;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -47,7 +47,7 @@ public class MainFragment extends Fragment implements
 
                      case Constants.LOCATION_UPDATE_FLAG:
                          //recived location update
-                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA * 0.0166666667 * 100) / 100 + " Minutes");
+                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA)  + " Minutes");
                          Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
                          Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
@@ -101,8 +101,8 @@ public class MainFragment extends Fragment implements
          (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
-                 unBindService();
-                 bindService();
+                // unBindService();
+                // bindService();
              }
          });
 
@@ -111,7 +111,6 @@ public class MainFragment extends Fragment implements
 
      @Override
     public void onStart() {
-        if (!mServiceBound)
         bindService();
          super.onStart();
     }
@@ -135,33 +134,33 @@ public class MainFragment extends Fragment implements
      }
 
     public void bindService() {
-        Intent intent = new Intent(getActivity(), LocationService.class);
+        Intent intent = new Intent(getActivity(), LocationService2.class);
         getActivity().startService(intent);
-        getActivity().bindService(intent, this, getActivity().BIND_AUTO_CREATE);
+       // getActivity().bindService(intent, this, getActivity().BIND_AUTO_CREATE);
     }
 
     public void unBindService() {
-        getActivity().unbindService(this);
-        if (mLocationService != null) {
-            mLocationService = null;
-        }
+       // getActivity().unbindService(this);
+//        if (mLocationService != null) {
+//            mLocationService = null;
+//        }
     }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder binder) {
-        LocationService.MyBinder myBinder = (LocationService.MyBinder) binder;
-        mLocationService = myBinder.getService();
-        mServiceBound = true;
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        if (mLocationService == null)
-            return;
-        mLocationService = null;
-        mServiceBound = false;
-
-    }
+//
+//    @Override
+//    public void onServiceConnected(ComponentName name, IBinder binder) {
+//        LocationService.MyBinder myBinder = (LocationService.MyBinder) binder;
+//        mLocationService = myBinder.getService();
+//        mServiceBound = true;
+//    }
+//
+//    @Override
+//    public void onServiceDisconnected(ComponentName name) {
+//        if (mLocationService == null)
+//            return;
+//        mLocationService = null;
+//        mServiceBound = false;
+//
+//    }
 
 
 }

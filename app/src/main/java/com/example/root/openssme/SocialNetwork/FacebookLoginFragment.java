@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.root.openssme.LogInActivity;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -123,7 +124,7 @@ public class FacebookLoginFragment extends Fragment {
                         }
 
                         //start MainActivity
-                        Intent intent = new Intent(getContext(), MainActivity.class);
+                        Intent intent = new Intent(getContext(), LogInActivity.class);
                         getActivity().startActivity(intent);
                         getActivity().finish();
                     }
