@@ -5,6 +5,9 @@
         <item>200 Meters</item>
         <item>250 Meters</item>
         <item>300 Meters</item>
+        <item>400 Meters</item>
+        <item>500 Meters</item>
+
     </string-array>
 
     <string-array name="openDistanceValues">
@@ -13,6 +16,9 @@
         <item>200</item>
         <item>250</item>
         <item>300</item>
+        <item>400</item>
+        <item>500</item>
+
     </string-array>
 
     <string-array name="GPSDistance">

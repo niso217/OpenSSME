@@ -5,9 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -26,6 +29,7 @@ import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.common.GoogleConnection;
+import com.google.android.gms.maps.model.LatLng;
 
 
 /**
@@ -34,10 +38,9 @@ import com.example.root.openssme.common.GoogleConnection;
 public class MainFragment extends Fragment
 
  {
-     private boolean mServiceBound;
-//    private LocationService mLocationService;
      private TextView Gate,ETA,Distance,Radius,LastUpdate,Google;
      private CountDownTimer mCountDownTimer;
+     private long mMillisUntilFinished;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
          @Override
@@ -47,11 +50,13 @@ public class MainFragment extends Fragment
 
                      case Constants.LOCATION_UPDATE_FLAG:
                          //recived location update
-                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA)  + " Minutes");
+
+                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
                          Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
-                         Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+                         Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100  + " Km");
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-                         CountDown(intent.getLongExtra(Constants.NEXT_UPDATE,Constants.API_REFRESH_GO));
+                         CountDown(LocationService2.mMillisUntilFinished);
+
 
                          break;
 
@@ -65,6 +70,7 @@ public class MainFragment extends Fragment
          mCountDownTimer = new CountDownTimer(seconds, 1000) {
 
              public void onTick(long millisUntilFinished) {
+                 mMillisUntilFinished = millisUntilFinished;
                  LastUpdate.setText("" + millisUntilFinished / 1000);
              }
 
@@ -73,10 +79,25 @@ public class MainFragment extends Fragment
          }.start();
      }
 
+
+
      @Override
      public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-             LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
-                     new IntentFilter(Constants.LOCATION_SERVICE));
+
+
+         if (savedInstanceState != null && ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
+
+             ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
+             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
+             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+             CountDown(LocationService2.mMillisUntilFinished);
+
+
+
+         }
+
+
 
          super.onActivityCreated(savedInstanceState);
      }
@@ -91,22 +112,46 @@ public class MainFragment extends Fragment
      @Override
      public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-         View rootFragment = inflater.inflate(R.layout.fragment_main, null);
+             View rootFragment = inflater.inflate(R.layout.fragment_main, null);
 
-         Gate = (TextView) (rootFragment).findViewById(R.id.textViewNG);
-         ETA = (TextView) (rootFragment).findViewById(R.id.textViewETA);
-         Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
-         Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
-         LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
-         (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                // unBindService();
-                // bindService();
-             }
-         });
+             Gate = (TextView) (rootFragment).findViewById(R.id.textViewNG);
+             ETA = (TextView) (rootFragment).findViewById(R.id.textViewETA);
+             Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
+             Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
+             LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
+             (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
+                 @Override
+                 public void onClick(View v) {
+                     // unBindService();
+                     // bindService();
+                 }
+             });
 
-         return rootFragment;
+         if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
+
+             ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
+             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
+             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+             CountDown(LocationService2.mMillisUntilFinished);
+
+
+
+         }
+
+
+         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
+                 new IntentFilter(Constants.LOCATION_SERVICE));
+
+             return rootFragment;
+
+
+     }
+
+     @Override
+     public void onResume() {
+         //getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+         super.onResume();
      }
 
      @Override
@@ -115,13 +160,15 @@ public class MainFragment extends Fragment
          super.onStart();
     }
 
-    @Override
+     @Override
+     public void onPause() {
+         super.onPause();
+     }
+
+     @Override
     public void onStop() {
         super.onStop();
-        if (mServiceBound) {
-            unBindService();
-            mServiceBound = false;
-        }
+
 
     }
 
@@ -134,33 +181,18 @@ public class MainFragment extends Fragment
      }
 
     public void bindService() {
-        Intent intent = new Intent(getActivity(), LocationService2.class);
-        getActivity().startService(intent);
-       // getActivity().bindService(intent, this, getActivity().BIND_AUTO_CREATE);
+        if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
+            Intent intent = new Intent(getActivity(), LocationService2.class);
+            getActivity().startService(intent);
+        }
     }
 
-    public void unBindService() {
-       // getActivity().unbindService(this);
-//        if (mLocationService != null) {
-//            mLocationService = null;
-//        }
-    }
-//
-//    @Override
-//    public void onServiceConnected(ComponentName name, IBinder binder) {
-//        LocationService.MyBinder myBinder = (LocationService.MyBinder) binder;
-//        mLocationService = myBinder.getService();
-//        mServiceBound = true;
-//    }
-//
-//    @Override
-//    public void onServiceDisconnected(ComponentName name) {
-//        if (mLocationService == null)
-//            return;
-//        mLocationService = null;
-//        mServiceBound = false;
-//
-//    }
-
-
-}
+     @Override
+     public void onDestroy() {
+         if (mMessageReceiver != null) {
+             LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
+                     mMessageReceiver = null;
+         }
+         super.onDestroy();
+     }
+ }

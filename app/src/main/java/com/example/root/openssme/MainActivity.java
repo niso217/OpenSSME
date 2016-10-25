@@ -113,11 +113,15 @@ public class MainActivity extends AppCompatActivity implements
 
         if (savedInstanceState==null){
             displayView(R.id.main);
+            mCurrentViewId = R.id.main;
 
         }
         else
+        {
             mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
-        displayView(mCurrentViewId);
+            displayView(mCurrentViewId);
+        }
+
     }
 
     @Override
@@ -356,9 +360,12 @@ public class MainActivity extends AppCompatActivity implements
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                    ft.replace(R.id.frame, fragment, CurrentFragment);
-                    ft.commit();
+                    if (fragment.getTag()!=CurrentFragment){
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.replace(R.id.frame, fragment, CurrentFragment);
+                        ft.commit();
+                    }
+
                     if (CurrentFragment.equals(MAP_FRAGMENT)){
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
                         if (com.example.root.openssme.SocialNetwork.Settings.getInstance().isFirst_run())

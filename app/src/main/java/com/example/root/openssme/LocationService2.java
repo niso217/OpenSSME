@@ -8,11 +8,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -62,9 +64,19 @@ public class LocationService2 extends Service implements
     private boolean mIgnoreFLAG;
     private long mNextUpdate = 10000;
     private CalculateDistanceTime distance_task;
+    private Location mLastLocation;
+    private long mStartTime;
+    private double mEstimatedTime ;
+    private double mDistanceBetweenLocationCalls;
+    private double mCurrentSpeed;
+    private CountDownTimer mCountDownTimer;
+    public static long mMillisUntilFinished;
 
 
-        private final BroadcastReceiver receiver = new BroadcastReceiver() {
+
+
+
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -98,20 +110,35 @@ public class LocationService2 extends Service implements
         distance_task = new CalculateDistanceTime(this);
         distance_task.setLoadListener(this);
 
-        setupLocationRequestBalanced(3000);
+        //happen onces
+        if (ListGateComplexPref.getInstance().gates.size() > 0 &&
+                ListGateComplexPref.getInstance().gates.get(0).status &&
+                !ListGateComplexPref.getInstance().gates.get(0).active) {
+            mNextUpdate = 15 * 60 * 1000;
+        }
 
+
+        setupLocationRequestBalanced(mNextUpdate);
         super.onCreate();
+
 
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand()");
-        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
-            startLocationUpdates();
-        } else {
-            connectClient();
+
+        if (startId<2){
+            Log.d(TAG, "onStartCommand()");
+            if (mGoogleConnection.getGoogleApiClient().isConnected()) {
+                startLocationUpdates();
+            } else {
+                connectClient();
+            }
         }
+        else
+            mIgnoreFLAG = true;
+
         return Service.START_STICKY;
     }
 
@@ -130,16 +157,39 @@ public class LocationService2 extends Service implements
         super.onDestroy();
     }
 
+
+
     @Override
     public void onLocationChanged(Location location) {
+
+        if (mStartTime!=0) //first time entering onLocationChanged
+        mEstimatedTime = ((System.currentTimeMillis() - mStartTime) / 1000) * 0.000277778; //to second then to hours
+        Log.d(TAG, "onLocationChanged, time betweeinn calls: " + mEstimatedTime / 1000 +" seconds");
+
+
+        mStartTime = System.currentTimeMillis();
+
+        if (mCurrentLocation!=null) //first time entering onLocationChanged
+        mLastLocation = mCurrentLocation;
+        else mLastLocation = location;
+
+
 
         //save current location
         mCurrentLocation = location;
 
+        mDistanceBetweenLocationCalls = (mCurrentLocation.distanceTo(mLastLocation)) * 0.001; //to km;
+        Log.d(TAG, "Distance Between Location Calls: " + mDistanceBetweenLocationCalls);
+
+
+        mCurrentSpeed = mDistanceBetweenLocationCalls/mEstimatedTime;
+        Log.d(TAG, "mCurrentSpeed" + mCurrentSpeed); //to km
+
+//        Toast.makeText(this,mCurrentSpeed+"",Toast.LENGTH_LONG).show();
+
         //ignore logic inside onLocationChanged to avoid looping
         if (mIgnoreFLAG){
             mIgnoreFLAG = false;
-            LocationBroadcast(mNextUpdate);
             return;
         }
 
@@ -155,10 +205,7 @@ public class LocationService2 extends Service implements
             //calc the closest[0] gate ETA
             distance_task.getDirectionsUrl(ListGateComplexPref.getInstance().gates.get(0).location, LocationToLatLng(location));
 
-
-
         }
-        LocationBroadcast(mNextUpdate);
 
 
 
@@ -180,8 +227,17 @@ public class LocationService2 extends Service implements
 
                     int ClosestETA = (int)ListGateComplexPref.getInstance().getClosestETA();
                     long ETA = TimeUnit.MINUTES.toMillis(ClosestETA);
-                    Log.d(TAG,"Starting new location update in "+ ClosestETA / 5);
-                    mNextUpdate = ETA / 5;
+                    if (mCurrentSpeed > 0 && mCurrentSpeed < 120 && !Double.isNaN(mCurrentSpeed))
+                    {
+
+                        mNextUpdate = (long)(ListGateComplexPref.getInstance().getClosestDistance() / mCurrentSpeed) * 1000;
+
+                    }
+                    else
+                    mNextUpdate = ETA / 10;
+
+                    Log.d(TAG,"Starting new location update in "+ mNextUpdate *1000);
+
 
                 }
                 //on the way x minutes before the gate, start massive GPS request
@@ -205,6 +261,7 @@ public class LocationService2 extends Service implements
                         MakeTheCallOnBack();
                         //set the GPS interval
                         mNextUpdate = 15 * 60 * 1000;
+
 
 
                 }
@@ -241,6 +298,7 @@ public class LocationService2 extends Service implements
         StopLocationUpdates();
         setupLocationRequestBalanced(ETA);
         startLocationUpdates();
+        LocationBroadcast(mNextUpdate);
     }
 
     protected void startLocationUpdates() {
@@ -259,19 +317,34 @@ public class LocationService2 extends Service implements
             }
 
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationRequest, this);
-            }
+
+        }
     }
 
     public void setupLocationRequestBalanced(long Interval) {
         //change the time of location updates
         mLocationRequest = LocationRequest.create()
+
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(Interval)
                 .setFastestInterval(Interval);
 
-
+        CountDown(Interval);
     }
 
+    private void CountDown(long seconds){
+        if (mCountDownTimer!=null) mCountDownTimer.cancel();
+
+        mCountDownTimer = new CountDownTimer(seconds, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                mMillisUntilFinished = millisUntilFinished;
+            }
+
+            public void onFinish() {
+            }
+        }.start();
+    }
     public void StopLocationUpdates() {
             if (mGoogleConnection.getGoogleApiClient().isConnected()) {
                     LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
@@ -292,6 +365,7 @@ public class LocationService2 extends Service implements
         }
 
         switch ((State) data) {
+
 
             case OPENED:
                 Log.d(TAG, "OPENED");
@@ -329,12 +403,15 @@ public class LocationService2 extends Service implements
     }
 
     private void ClacDistancLogic(){
-        if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance())
+        //is inside gate radius
+        if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance()){
             ListGateComplexPref.getInstance().gates.get(0).status = true;
+        }
         else
             ListGateComplexPref.getInstance().gates.get(0).status = false;
 
-        if (ListGateComplexPref.getInstance().gates.get(0).distance > Settings.getInstance().getOpen_distance() * 3)
+        //active the gate
+        if (ListGateComplexPref.getInstance().gates.get(0).distance > Settings.getInstance().getOpen_distance() * 5)
             ListGateComplexPref.getInstance().gates.get(0).active = true;
     }
 
