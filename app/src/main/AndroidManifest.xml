@@ -55,6 +55,15 @@
                 <action android:name="server.http.android.androidhttpserver.RestartServer"/>
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".LocationService$NotificationCloseButtonHandler"
+            android:enabled="true"
+            android:exported="false"
+            android:label="OnStopClicked">
+            <intent-filter>
+                <action android:name="server.http.android.androidhttpserver.StopService"/>
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="com.facebook.FacebookContentProvider"

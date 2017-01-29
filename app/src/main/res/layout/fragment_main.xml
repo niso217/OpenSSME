@@ -104,14 +104,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Next Update:"
+            android:text="GPS: "
             android:id="@+id/textView8" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:id="@+id/textViewLastUpdate"
+            android:id="@+id/textViewGPS"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="10dp" />
     </LinearLayout>

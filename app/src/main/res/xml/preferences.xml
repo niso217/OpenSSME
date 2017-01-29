@@ -17,7 +17,7 @@
             android:key="gps_distance"
             android:title="GPS Activation Distance"
             android:summary="Define the distance to start the GPS tracking"
-            android:defaultValue="60"
+            android:defaultValue="6"
             android:entries="@array/GPSDistance"
             android:entryValues="@array/GPSDistanceValues"
             />
@@ -26,7 +26,7 @@
             android:key="open_distance"
             android:title="Open Gate Distance"
             android:summary="Define the distance the call to the gate will be performed"
-            android:defaultValue="200"
+            android:defaultValue="400"
             android:entries="@array/openDistance"
             android:entryValues="@array/openDistanceValues"
             />

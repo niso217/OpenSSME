@@ -579,7 +579,6 @@ public class MapFragment extends Fragment implements
             getActivity().startService(startIntent);
         }
 
-
     }
 
 

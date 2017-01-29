@@ -15,6 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.root.openssme.LocationService;
 import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
@@ -36,6 +37,7 @@ public class GateAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private Context context;
     private ArrayList<Gate> gates;
+    private LocationService mLocationService;
 
     public GateAdapter(Context context) {
 
@@ -80,13 +82,16 @@ public class GateAdapter extends BaseAdapter {
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
+                    LocationService.mCodeBlocker = true;
                     ListGateComplexPref.getInstance().gates.remove(position);
                     ListGateComplexPref.getInstance().sort();
                     PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
                     notifyDataSetChanged();
-                    if (ListGateComplexPref.getInstance().gates.isEmpty())
+                    if (!ListGateComplexPref.getInstance().gates.isEmpty())
+                    {
+                        LocationService.mCodeBlocker = false;
 
-                    Log.d("test","clicked");
+                    }
                     return false;
                 }
 
@@ -104,7 +109,7 @@ public class GateAdapter extends BaseAdapter {
         TextView distance = (TextView) view.findViewById(R.id.distance);
         distance.setText(Math.floor(gate.distance * 0.001 * 100) / 100 + " Km");
         TextView ETA = (TextView) view.findViewById(R.id.ETA);
-        ETA.setText(Math.floor(gate.ETA * 0.0166666667 *100) /100 + " Minutes");
+        ETA.setText(Math.floor(gate.ETA  *100) /100 + " Minutes");
 
         ImageView movieurl = (ImageView) view.findViewById(R.id.imageView);
             Picasso.with(context)

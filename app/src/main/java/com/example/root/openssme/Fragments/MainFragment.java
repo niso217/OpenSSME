@@ -29,7 +29,7 @@ import com.example.root.openssme.Utils.Constants;
 public class MainFragment extends Fragment
 
  {
-     private TextView Gate,ETA,Distance,Radius,LastUpdate,Google,Speed;
+     private TextView Gate,ETA,Distance,Radius,GPS,Google,Speed;
      private CountDownTimer mCountDownTimer;
      private long mMillisUntilFinished;
      private LocationService mLocationService;
@@ -43,14 +43,15 @@ public class MainFragment extends Fragment
 
                  switch (intent.getFlags()) {
 
-                     case Constants.LOCATION_UPDATE_FLAG:
+                     case Constants.DATA_UPDATE_FLAG:
                          //recived location update
 
-                         ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
-                         Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
-                         Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100  + " Km");
-                         Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+                         ETA.setText(intent.getStringExtra(Constants.ETA) + " Minutes");
+                         Gate.setText(intent.getStringExtra(Constants.GATE_NAME));
+                         Distance.setText(intent.getStringExtra(Constants.DISTANCE));
+                         Radius.setText(intent.getStringExtra(Constants.GATE_RADIUS));
                          Speed.setText(intent.getStringExtra(Constants.SPEED));
+                         GPS.setText(intent.getStringExtra(Constants.GPS));
 
                          //CountDown(LocationService.mMillisUntilFinished);
 
@@ -68,7 +69,7 @@ public class MainFragment extends Fragment
 
              public void onTick(long millisUntilFinished) {
                  mMillisUntilFinished = millisUntilFinished;
-                 LastUpdate.setText("" + millisUntilFinished / 1000);
+                 GPS.setText("" + millisUntilFinished / 1000);
              }
 
              public void onFinish() {
@@ -89,9 +90,6 @@ public class MainFragment extends Fragment
              Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
              Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
              //CountDown(LocationService.mMillisUntilFinished);
-
-
-
          }
 
 
@@ -117,7 +115,7 @@ public class MainFragment extends Fragment
 
          Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
              Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
-             LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
+             GPS = (TextView) (rootFragment).findViewById(R.id.textViewGPS);
              (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
                  @Override
                  public void onClick(View v) {
@@ -141,7 +139,7 @@ public class MainFragment extends Fragment
 
 
          LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
-                 new IntentFilter(Constants.LOCATION_SERVICE));
+                 new IntentFilter(Constants.LOCATION_SERVICE_DATA));
 
              return rootFragment;
 
