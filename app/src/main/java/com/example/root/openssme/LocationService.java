@@ -57,6 +57,7 @@ public class LocationService extends Service implements LocationListener, Observ
     private Timer mTimer;
     private TimerTask mTimerTask;
     public int counter=0;
+    Runnable m_handlerTask ;
     private Notification mNotification;
     public static final String RECIVER_FILTER ="com.example.root.LocationService.RestartServer";
     private static final String NOTIFICATION_DELETED_ACTION = "com.example.root.LocationService.delete_notofication";
@@ -206,8 +207,6 @@ public class LocationService extends Service implements LocationListener, Observ
         super.onDestroy();
         Log.d(TAG, "onDestroy");
 
-        stoptimertask();
-
         // Disconnecting the client invalidates it.
         if (mGoogleConnection != null) {
             mGoogleConnection.disconnect();
@@ -218,30 +217,33 @@ public class LocationService extends Service implements LocationListener, Observ
 
         Intent broadcastIntent = new Intent(RECIVER_FILTER);
         sendBroadcast(broadcastIntent);
+
+        mHandler.removeCallbacks(m_handlerTask);
     }
 
 
 
     public void startTimer() {
-        //set a new Timer
-        mTimer = new Timer();
 
-        //initialize the TimerTask's job
+        //initialize the mHandler's job
         initializeTimerTask();
-
-        //schedule the timer, to wake up every 1 second
-        mTimer.schedule(mTimerTask, 1000, 1000); //
     }
 
     /**
      * it sets the timer to print the counter every x seconds
      */
     public void initializeTimerTask() {
-        mTimerTask = new TimerTask() {
+
+        m_handlerTask = new Runnable()
+        {
+            @Override
             public void run() {
                 Log.d(TAG, "in timer ++++  "+ (counter++));
-                    if (counter % 2 ==0)
-                        LocationBroadcast();
+                mHandler.postDelayed(m_handlerTask, 1000);
+
+
+                if (counter % 2 ==0)
+                    LocationBroadcast();
 
                 //there are no gates
                 if(ListGateComplexPref.getInstance().gates.size()<1){
@@ -261,22 +263,12 @@ public class LocationService extends Service implements LocationListener, Observ
                     DoWork();
 
                 }
+
             }
         };
+        m_handlerTask.run();
     }
 
-
-
-    /**
-     * not needed
-     */
-    public void stoptimertask() {
-        //stop the timer, if it's not already null
-        if (mTimer != null) {
-            mTimer.cancel();
-            mTimer = null;
-        }
-    }
 
     @Nullable
     @Override
@@ -450,16 +442,9 @@ public class LocationService extends Service implements LocationListener, Observ
                 double distance =  ListGateComplexPref.getInstance().gates.get(i).distance / 1000; //to Km
                 double time = (distance / mCurrentSpeed) * 60; //minutes
                 ListGateComplexPref.getInstance().gates.get(i).ETA = time;
-
-                Log.d(TAG,"===========CalcGatesDistancsAndETA function========");
-                Log.d(TAG,"Gate Name: " + ListGateComplexPref.getInstance().gates.get(i).gateName);
-                Log.d(TAG,"distance: " + distance);
-                Log.d(TAG,"minues: " + time);
-                Log.d(TAG,"Speed: " + mCurrentSpeed);
-
-
             }
             ListGateComplexPref.getInstance().sort();
+
 
         }
         //set the closest gate status (inside the radius) and the active (locker) params
@@ -489,7 +474,11 @@ public class LocationService extends Service implements LocationListener, Observ
         Log.d(TAG,"====Current Settings====");
         Log.d(TAG,"GPS Open Distance: "+Settings.getInstance().getGps_distance());
         Log.d(TAG,"Gate Radius Open Distance: "+Settings.getInstance().getOpen_distance());
-
+        Log.d(TAG,"===========Gate Details========");
+        Log.d(TAG,"Gate Name: " + ListGateComplexPref.getInstance().gates.get(0).gateName);
+        Log.d(TAG,"distance: " + ListGateComplexPref.getInstance().gates.get(0).distance);
+        Log.d(TAG,"ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA);
+        Log.d(TAG,"Speed: " + mCurrentSpeed);
 
 
         double ETA = ListGateComplexPref.getInstance().gates.get(0).ETA;
@@ -525,6 +514,8 @@ public class LocationService extends Service implements LocationListener, Observ
             //start background notification
             MakeTheCallOnBack();
 
+            PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),getApplicationContext());
+
         }
 
         if (nextUpdate!=mNextUpdate)
@@ -534,29 +525,21 @@ public class LocationService extends Service implements LocationListener, Observ
 
         }
 
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +"Gate: "+ ListGateComplexPref.getInstance().gates.get(0).gateName);
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+"Distance "+ ListGateComplexPref.getInstance().getClosestDistance());
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+"Speed "+ mCurrentSpeed);
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +" ETA: "+ ETA);
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+"Next Update "+ mNextUpdate);
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+"Is Active "+ ListGateComplexPref.getInstance().gates.get(0).active);
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+"Is Inside Radius "+ ListGateComplexPref.getInstance().gates.get(0).status);
 
     }
 
     private void calc_speed()
     {
-        Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +" ====calc_speed function=====");
         if (mLastTwoLocation[0]==null || mLastTwoLocation[1]==null) return;
         //Computation for speed
         double distance_between_points = mLastTwoLocation[0].distanceTo(mLastTwoLocation[1]);
         float loc_distance =(new Double(distance_between_points)).longValue();
-        Log.d(TAG,"cur_time: " + cur_time);
-        Log.d(TAG,"prev_time: " + prev_time);
-        Log.d(TAG,"loc_distance: " + loc_distance);
+//        Log.d(TAG,"cur_time: " + cur_time);
+//        Log.d(TAG,"prev_time: " + prev_time);
+//        Log.d(TAG,"loc_distance: " + loc_distance);
 
         mCurrentSpeed = loc_distance/(cur_time - prev_time) * 3.6; //to Km per hour
-        Log.d(TAG,"Speed: "+ mCurrentSpeed);
+//        Log.d(TAG,"Speed: "+ mCurrentSpeed);
 
 
         if (mCurrentSpeed<30 || mCurrentSpeed>200 || (Double.isNaN(mCurrentSpeed))){ //bad result ignore

@@ -30,7 +30,7 @@ public class Gate {
         this.distance = Double.MAX_VALUE;
         this.imagePath = imagePath;
         this.status = false; //close
-        this.active = false;
+        this.active = true;
     }
 
 

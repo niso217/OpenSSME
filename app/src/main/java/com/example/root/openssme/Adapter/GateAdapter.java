@@ -84,6 +84,8 @@ public class GateAdapter extends BaseAdapter {
                     ListGateComplexPref.getInstance().sort();
                     PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
                     notifyDataSetChanged();
+                    if (ListGateComplexPref.getInstance().gates.isEmpty())
+
                     Log.d("test","clicked");
                     return false;
                 }
