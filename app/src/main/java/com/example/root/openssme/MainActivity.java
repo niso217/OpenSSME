@@ -1,39 +1,33 @@
 package com.example.root.openssme;
 
-import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.ColorDrawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.DialogPreference;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.example.root.openssme.Fragments.GateListFragment;
+import com.example.root.openssme.Fragments.MainFragment;
+import com.example.root.openssme.Fragments.MapFragment;
+import com.example.root.openssme.Fragments.SettingsFragment;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.Utils.PermissionsUtil;
 import com.example.root.openssme.common.State;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
@@ -54,9 +48,6 @@ import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -288,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        stopService(new Intent(getBaseContext(), LocationService2.class));
+                        stopService(new Intent(getBaseContext(), LocationService.class));
                         finish();
                     }
 

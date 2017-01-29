@@ -43,6 +43,7 @@ public class Constants {
     public static final String GOOGLE_API = "google_api";
     public static final String GPS_PROVIDER = "gps_provider";
     public static final String NEXT_UPDATE = "next_update";
+    public static final String SPEED = "speed";
     public static final String LAST_UPDATE = "last_update";
     public static final String MAP_TYPE = "map_type";
     public static final String SERVICE_PROVIDER = "service_provider";
@@ -59,11 +60,19 @@ public class Constants {
     public static final String PROFILE = "profile";
     public static final String START_LOCATAION_UPDATE = "gps_distance";
     public static final String OPEN_DISTANCE = "open_distance";
-    public static final String LOCATION_SERVICE = "com.example.root.openssme.locationservice";
+    public static final String LOCATION_SERVICE = "com.example.root.openssme.LocationService";
     public static final String FACEBOOK = "FacebookLoginFragment";
     public static final String GPLUS = "GPlusLoginFragment";
     public static final String LOCATION = "location";
     public static final String DISTANCE = "duration";
 
 
+    public interface ACTION {
+        public static String MAIN_ACTION = "com.nkdroid.alertdialog.action.main";
+        public static String STARTFOREGROUND_ACTION = "com.nkdroid.alertdialog.action.startforeground";
+    }
+
+    public interface NOTIFICATION_ID {
+        public static int FOREGROUND_SERVICE = 101;
+    }
 }

@@ -59,6 +59,28 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Speed:"
+            android:id="@+id/textViews" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/textViewSpeed"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="10dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="Distance:"
             android:id="@+id/textView4" />
 
@@ -106,6 +128,8 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="Inside Gate Radius:"
             android:id="@+id/textView10" />
+
+
 
         <TextView
             android:layout_width="match_parent"

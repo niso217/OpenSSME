@@ -1,35 +1,26 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Fragments;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.root.openssme.Adapter.GateAdapter;
+import com.example.root.openssme.LocationService;
+import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.Utils.Constants;
-import com.example.root.openssme.common.GoogleConnection;
-import com.google.android.gms.maps.model.LatLng;
 
 
 /**
@@ -38,9 +29,13 @@ import com.google.android.gms.maps.model.LatLng;
 public class MainFragment extends Fragment
 
  {
-     private TextView Gate,ETA,Distance,Radius,LastUpdate,Google;
+     private TextView Gate,ETA,Distance,Radius,LastUpdate,Google,Speed;
      private CountDownTimer mCountDownTimer;
      private long mMillisUntilFinished;
+     private LocationService mLocationService;
+     private final String TAG = MainFragment.class.getSimpleName();
+
+     private Intent mServiceIntent;
      private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
          @Override
@@ -55,7 +50,9 @@ public class MainFragment extends Fragment
                          Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
                          Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100  + " Km");
                          Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-                         CountDown(LocationService2.mMillisUntilFinished);
+                         Speed.setText(intent.getStringExtra(Constants.SPEED));
+
+                         //CountDown(LocationService.mMillisUntilFinished);
 
 
                          break;
@@ -91,7 +88,7 @@ public class MainFragment extends Fragment
              Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
              Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
              Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-             CountDown(LocationService2.mMillisUntilFinished);
+             //CountDown(LocationService.mMillisUntilFinished);
 
 
 
@@ -116,7 +113,9 @@ public class MainFragment extends Fragment
 
              Gate = (TextView) (rootFragment).findViewById(R.id.textViewNG);
              ETA = (TextView) (rootFragment).findViewById(R.id.textViewETA);
-             Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
+            Speed = (TextView) (rootFragment).findViewById(R.id.textViewSpeed);
+
+         Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
              Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
              LastUpdate = (TextView) (rootFragment).findViewById(R.id.textViewLastUpdate);
              (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
@@ -124,6 +123,7 @@ public class MainFragment extends Fragment
                  public void onClick(View v) {
                      // unBindService();
                      // bindService();
+
                  }
              });
 
@@ -133,7 +133,7 @@ public class MainFragment extends Fragment
              Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
              Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
              Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-             CountDown(LocationService2.mMillisUntilFinished);
+             //CountDown(LocationService.mMillisUntilFinished);
 
 
 
@@ -182,10 +182,26 @@ public class MainFragment extends Fragment
 
     public void bindService() {
         if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
-            Intent intent = new Intent(getActivity(), LocationService2.class);
-            getActivity().startService(intent);
+
+            mLocationService = new LocationService();
+            mServiceIntent = new Intent(getContext(), mLocationService.getClass());
+            if (!isMyServiceRunning(mLocationService.getClass())) {
+                getContext().startService(mServiceIntent);
+            }
         }
     }
+
+     private boolean isMyServiceRunning(Class<?> serviceClass) {
+         ActivityManager manager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+             if (serviceClass.getName().equals(service.service.getClassName())) {
+                 Log.d(TAG, "is Connection Service Running: " + true);
+                 return true;
+             }
+         }
+         Log.d(TAG, "is Connection Service Running: " + false);
+         return false;
+     }
 
      @Override
      public void onDestroy() {

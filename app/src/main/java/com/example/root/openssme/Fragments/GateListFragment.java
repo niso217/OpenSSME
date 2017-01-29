@@ -1,4 +1,4 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Fragments;
 
 
 import android.content.BroadcastReceiver;
@@ -18,6 +18,7 @@ import android.widget.ListView;
 
 import com.android.volley.RequestQueue;
 import com.example.root.openssme.Adapter.GateAdapter;
+import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.Utils.Constants;

@@ -1,4 +1,4 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Fragments;
 
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
+
+import com.example.root.openssme.R;
 import com.example.root.openssme.Utils.PrefUtils;
 
 /**

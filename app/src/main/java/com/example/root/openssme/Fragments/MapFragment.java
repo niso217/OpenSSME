@@ -1,55 +1,27 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Fragments;
 
 
-import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.location.LocationManager;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.IBinder;
 import android.os.SystemClock;
-import android.preference.PreferenceManager;
-import android.provider.BaseColumns;
 import android.provider.ContactsContract;
-import android.provider.UserDictionary;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.InflateException;
@@ -59,26 +31,17 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
-import android.widget.AdapterView;
 import android.widget.Toast;
 
+import com.example.root.openssme.LocationService;
+import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
-import com.example.root.openssme.Utils.ComplexPreferences;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.PictUtil;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
@@ -609,8 +572,11 @@ public class MapFragment extends Fragment implements
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size()==1){
-            Intent LocationService = new Intent(getActivity(), LocationService2.class);
-            getActivity().startService(LocationService);
+//            Intent LocationService = new Intent(getActivity(), LocationService2.class);
+//            getActivity().startService(LocationService);
+            Intent startIntent = new Intent(getActivity(), LocationService.class);
+            startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+            getActivity().startService(startIntent);
         }
 
 
