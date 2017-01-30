@@ -20,6 +20,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -30,6 +31,7 @@ import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
 import com.example.root.openssme.Utils.Constants;
@@ -51,24 +53,22 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class LocationService extends Service implements LocationListener, Observer{
+public class LocationService extends Service implements LocationListener, Observer {
     private final String TAG = LocationService.class.getSimpleName();
-    private Timer mTimer;
-    private TimerTask mTimerTask;
-    public int counter=0;
-    Runnable m_handlerTask ;
-    private int mClosesetGateIndex;
+    public int counter = 0;
+    Runnable m_handlerTask;
     private Notification mNotification;
-    public static final String RECIVER_FILTER ="com.example.root.LocationService.RestartServer";
+    public static final String RECIVER_FILTER = "com.example.root.LocationService.RestartServer";
     private static final String NOTIFICATION_DELETED_ACTION = "com.example.root.LocationService.delete_notofication";
-    public static final String STOP_SERVICE ="server.http.android.androidhttpserver.StopService";
+    private static final String WIFI_STATE_CHANGED = "android.net.wifi.WIFI_STATE_CHANGED";
+    public static final String STOP_SERVICE = "server.http.android.androidhttpserver.StopService";
+
     public static final int DRIVING_SPEED = 100;
     private static boolean doTerminate;
-
     public static boolean mCodeBlocker;
     public static final int NOTIFICATION_ID = 100;
 
-
+    private String ClosetestGateName;
     public GoogleConnection mGoogleConnection;
     public LocationRequest mLocationRequest;
     private boolean mIsNotificationActive;
@@ -79,13 +79,13 @@ public class LocationService extends Service implements LocationListener, Observ
     private double mCurrentSpeed;
 
     private NotificationManager mNotificationManager;
-    private long mNextUpdate = 1000;
+    private long mNextUpdate = 30000;
     private Handler mHandler;
     private Handler mCallHandler;
+
     public LocationService() {
         super();
     }
-
 
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -95,12 +95,18 @@ public class LocationService extends Service implements LocationListener, Observ
 
             switch (intent.getAction()) {
                 case Intent.ACTION_CALL:
-
-                    MakeTheCall();
-                    startLocationUpdates();
+                    MakeTheCall(context);
                     break;
                 case NOTIFICATION_DELETED_ACTION:
                     break;
+                case WifiManager.WIFI_STATE_CHANGED_ACTION:
+                    int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, -1);
+                    if (WifiManager.WIFI_STATE_ENABLED == wifiState)
+                        StopLocationUpdates();
+                    else
+                        startLocationUpdates();
+                    break;
+
 
             }
         }
@@ -122,8 +128,7 @@ public class LocationService extends Service implements LocationListener, Observ
         return START_STICKY;
     }
 
-    private void Initialize()
-    {
+    private void Initialize() {
         mCodeBlocker = false;
         doTerminate = false;
         mHandler = new Handler();
@@ -139,30 +144,31 @@ public class LocationService extends Service implements LocationListener, Observ
         RegisterReciver();
 
 
-
     }
 
 
-    private void RegisterReciver(){
+    private void RegisterReciver() {
         IntentFilter filter = new IntentFilter(Intent.ACTION_CALL);
         filter.addAction(NOTIFICATION_DELETED_ACTION);
+        filter.addAction(WIFI_STATE_CHANGED);
+
+
         registerReceiver(receiver, filter);
     }
 
-    private void ChangeLocationRequest(long ETA)
-    {
+    private void ChangeLocationRequest(long ETA) {
 
         StopLocationUpdates();
         setupLocationRequestBalanced(ETA);
         startLocationUpdates();
     }
 
-    public  void StopLocationUpdates() {
+    public void StopLocationUpdates() {
         if (mIsLocationUpdatesOn) {
             if (mGoogleConnection.getGoogleApiClient().isConnected()) {
                 LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this);
                 mIsLocationUpdatesOn = false;
-                Log.d(TAG,"Location Updates: "+mIsLocationUpdatesOn);
+                Log.d(TAG, "Location Updates: " + mIsLocationUpdatesOn);
             }
         }
     }
@@ -175,29 +181,37 @@ public class LocationService extends Service implements LocationListener, Observ
                 .setFastestInterval(Interval);
     }
 
-    private void InitializeNotification()
-    {
-        Intent notificationIntent = new Intent(STOP_SERVICE);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+    private void InitializeNotification() {
 
-        RemoteViews notificationView = new RemoteViews(getApplicationContext().getPackageName(),R.layout.notification);
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setAction(Constants.MAIN_ACTION);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, 0);
+
+        RemoteViews notificationView = new RemoteViews(this.getPackageName(),R.layout.notification);
+
+        // And now, building and attaching the Play button.
+        Intent StopService = new Intent(this, NotificationStopService.class);
+        PendingIntent StopServiceIntent = pendingIntent.getBroadcast(this, 0, StopService, 0);
+        notificationView.setOnClickPendingIntent(R.id.btnStop, StopServiceIntent);
+
+        // And now, building and attaching the Skip button.
+        Intent CallGate = new Intent(this, NotificationCallGate.class);
+        PendingIntent CallGateIntent = pendingIntent.getBroadcast(this, 0, CallGate, 0);
+        notificationView.setOnClickPendingIntent(R.id.phoneIcon, CallGateIntent);
 
 
         Bitmap icon = BitmapFactory.decodeResource(getResources(),
                 R.drawable.gate);
 
-        Intent buttonCloseIntent = new Intent(getApplicationContext(), NotificationCloseButtonHandler.class);
-        buttonCloseIntent.putExtra("action", "close");
-
-
-        PendingIntent buttonClosePendingIntent = pendingIntent.getBroadcast(getApplicationContext(), 0, buttonCloseIntent, 0);
-        notificationView.setOnClickPendingIntent(R.id.btnStop, buttonClosePendingIntent);
 
         mNotification = new NotificationCompat.Builder(getApplicationContext())
-                .setContentTitle("Connection Service")
-                .setTicker("Connection Service")
-                .setContentText("Connection Service")
+                .setContentTitle("OpenSSME")
+                .setTicker("OpenSSME")
+                .setContentText("OpenSSME")
                 .setSmallIcon(R.drawable.gate)
                 .setLargeIcon(
                         Bitmap.createScaledBitmap(icon, 128, 128, false))
@@ -205,15 +219,51 @@ public class LocationService extends Service implements LocationListener, Observ
                 .setOngoing(true).build();
 
 
-
-        startForeground(101,
+        startForeground(Constants.FOREGROUND_SERVICE,
                 mNotification);
     }
 
-    public static class NotificationCloseButtonHandler extends BroadcastReceiver {
+    private void ChangeNotoficationContent() {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
+        contentView.setTextViewText(R.id.tv_status,ListGateComplexPref.getInstance().getClosestGate().gateName);
+        contentView.setTextViewText(R.id.tv_status,ListGateComplexPref.getInstance().getClosestGate().status.status());
+        contentView.setTextViewText(R.id.tv_gps,mIsLocationUpdatesOn? "On" : "Off");
+
+        mNotification.contentView = contentView;
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        mNotification.contentIntent = contentIntent;
+
+        mNotification.flags |= Notification.FLAG_NO_CLEAR; //Do not clear the notification
+        mNotification.defaults = 0; // Sound
+
+
+        mNotificationManager.notify(Constants.FOREGROUND_SERVICE, mNotification);
+
+
+    }
+
+    /**
+     * Called when user clicks the "play/pause" button on the on-going system Notification.
+     */
+    public static class NotificationStopService extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            context.stopService(new Intent(context, LocationService.class));
+            Intent stop = new Intent(context, LocationService.class);
+            context.stopService(stop);
+        }
+    }
+
+    /**
+     * Called when user clicks the "skip" button on the on-going system Notification.
+     */
+    public static class NotificationCallGate extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MakeTheCall(context);
         }
     }
 
@@ -234,10 +284,8 @@ public class LocationService extends Service implements LocationListener, Observ
 
     }
 
-    private void RestartService()
-    {
-        if (!doTerminate)
-        {
+    private void RestartService() {
+        if (!doTerminate) {
             Intent broadcastIntent = new Intent(RECIVER_FILTER);
             sendBroadcast(broadcastIntent);
         }
@@ -249,35 +297,35 @@ public class LocationService extends Service implements LocationListener, Observ
      */
     public void initializeTimerTask() {
 
-        m_handlerTask = new Runnable()
-        {
+        m_handlerTask = new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "in timer ++++  "+ (counter++));
+                Log.d(TAG, "in timer ++++  " + (counter++));
                 mHandler.postDelayed(m_handlerTask, 1000);
 
                 //there are no gates
-                if(ListGateComplexPref.getInstance().gates.size()==0 && mIsLocationUpdatesOn){
-                    Log.d(TAG,"No Gates Found, Stopping Location Updates");
+                if (ListGateComplexPref.getInstance().gates.size() == 0 && mIsLocationUpdatesOn) {
+                    Log.d(TAG, "No Gates Found, Stopping Location Updates");
                     StopLocationUpdates();
                     stopSelf();
+
                     return;
                 }
 
-                if (!mCodeBlocker && mCurrentLocation!=null)
-                {
-                    //calc all the gates location from the current location
+                if (!mCodeBlocker && mCurrentLocation != null) {
+
                     CalcGatesDistancsAndETA();
 
                     ClacDistancLogic();
 
-                    //calc the closest[0] gate ETA
+                    ChangeNotoficationContent();
+
                     DoWork();
+
 
 
                 }
                 DATABroadcast();
-
 
 
             }
@@ -292,29 +340,7 @@ public class LocationService extends Service implements LocationListener, Observ
         return null;
     }
 
-    private void ChangeNotoficationContent(boolean isConnected)
-    {
-        NotificationManager mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
-        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
-        //contentView.setImageViewResource(R.id.circle, isConnected ? R.drawable.on : R.drawable.off);
-        mNotification.contentView = contentView;
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        mNotification.contentIntent = contentIntent;
-
-        mNotification.flags |= Notification.FLAG_NO_CLEAR; //Do not clear the notification
-        if (isConnected)
-        mNotification.defaults |= Notification.DEFAULT_SOUND ; // Sound
-        else
-            mNotification.defaults = 0; // Sound
-
-
-        mNotificationManager.notify(101, mNotification);
-
-
-    }
 
     public void connectClient() {
 
@@ -329,7 +355,7 @@ public class LocationService extends Service implements LocationListener, Observ
     public void onLocationChanged(Location location) {
 
 
-        Log.d(TAG,"=====Location Changed=====");
+        Log.d(TAG, "=====Location Changed=====");
 
         mCurrentLocation = location;
 
@@ -349,13 +375,13 @@ public class LocationService extends Service implements LocationListener, Observ
 
 
             case OPENED:
-                Log.d(TAG, DateFormat.getDateTimeInstance().format(new Date()) +": "+ "OPENED");
+                Log.d(TAG, DateFormat.getDateTimeInstance().format(new Date()) + ": " + "OPENED");
                 startLocationUpdates();
                 // We are signed in!
                 // Retrieve some profile information to personalize our app for the user.
                 break;
             case CLOSED:
-                Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+ "CLOSED");
+                Log.d(TAG, DateFormat.getDateTimeInstance().format(new Date()) + ": " + "CLOSED");
 
 
                 break;
@@ -384,19 +410,19 @@ public class LocationService extends Service implements LocationListener, Observ
     }
 
 
-    private void MakeTheCall() {
+    public static void MakeTheCall(Context context) {
 
         Intent intent = new Intent(Intent.ACTION_CALL);
 
-        intent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().gates.get(0).phone));
+        intent.setData(Uri.parse("tel:" + ListGateComplexPref.getInstance().getClosestGate().phone));
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "No Phone Call Premission", Toast.LENGTH_LONG).show();
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "No Phone Call Premission", Toast.LENGTH_LONG).show();
             return;
         }
-        this.startActivity(intent);
+        context.startActivity(intent);
 
     }
 
@@ -426,51 +452,38 @@ public class LocationService extends Service implements LocationListener, Observ
         mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
 
 
-
-
     }
 
     private void CalcGatesDistancsAndETA() {
 
 
-            for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
-                Location GateLocation = LatLngToLocation(ListGateComplexPref.getInstance().gates.get(i).location);
-                ListGateComplexPref.getInstance().gates.get(i).distance = new Double(mCurrentLocation.distanceTo(GateLocation));
+        for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+            Location GateLocation = LatLngToLocation(ListGateComplexPref.getInstance().gates.get(i).location);
+            ListGateComplexPref.getInstance().gates.get(i).distance = new Double(mCurrentLocation.distanceTo(GateLocation));
 
-                double distance =  ListGateComplexPref.getInstance().gates.get(i).distance / 1000; //to Km
-                double time = (distance / DRIVING_SPEED) * 60; //minutes
-                ListGateComplexPref.getInstance().gates.get(i).ETA = time;
-            }
-            ListGateComplexPref.getInstance().sort();
-
-
+            double distance = ListGateComplexPref.getInstance().gates.get(i).distance / 1000; //to Km
+            double time = (distance / DRIVING_SPEED) * 60; //minutes
+            ListGateComplexPref.getInstance().gates.get(i).ETA = time;
+        }
+        ListGateComplexPref.getInstance().sort();
 
 
     }
 
-    private void ClacDistancLogic(){
-
-
-
+    private void ClacDistancLogic() {
         //is inside gate radius
-        if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance()){
-            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.HOME;
+        if (ListGateComplexPref.getInstance().getClosestGate().distance <= Settings.getInstance().getOpen_distance()) {
+            ListGateComplexPref.getInstance().getClosestGate().status = GateStatus.HOME;
 
-        }
-        else if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getGps_distance() * 1000)
-        {
-            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.ALMOST;
+        } else if (ListGateComplexPref.getInstance().getClosestGate().distance <= Settings.getInstance().getGps_distance() * 1000) {
+            ListGateComplexPref.getInstance().getClosestGate().status = GateStatus.ALMOST;
 
-        }
-        else
-            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.ONWAY;
-
+        } else
+            ListGateComplexPref.getInstance().getClosestGate().status = GateStatus.ONWAY;
 
         //active the gate
-        if (ListGateComplexPref.getInstance().gates.get(0).distance > Settings.getInstance().getOpen_distance() * 5)
-            ListGateComplexPref.getInstance().gates.get(0).active = true;
-
-
+        if (ListGateComplexPref.getInstance().getClosestGate().distance > Settings.getInstance().getOpen_distance() * 5)
+            ListGateComplexPref.getInstance().getClosestGate().active = true;
 
     }
 
@@ -478,66 +491,58 @@ public class LocationService extends Service implements LocationListener, Observ
 
         long nextUpdate = 30000;
 
-        if (ListGateComplexPref.getInstance().gates.get(0).active)
-        {
-        if (ListGateComplexPref.getInstance().getClosestETA() > Settings.getInstance().getGps_distance()) {
-            Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+ "=====Out Side GPS Open Distance=====");
-            nextUpdate = (long)((ListGateComplexPref.getInstance().gates.get(0).ETA / 2)  * 60  * 1000);
+        if (ListGateComplexPref.getInstance().getClosestGate().active) {
+
+            if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
+                Log.d(TAG,"=====Out Side GPS Open Distance=====");
+                nextUpdate = (long) ((ListGateComplexPref.getInstance().getClosestETA() / 2) * 60 * 1000);
+            }
+            //on the way x minutes before the gate, start massive GPS request
+            else if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ALMOST) {
+                Log.d(TAG, "=====Massive GPS Request=====");
+                nextUpdate = 3000;
+            }
+            //arrived to the gate
+            else if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.HOME) {
+
+                //lock this block of code
+                ListGateComplexPref.getInstance().getClosestGate().active = false;
+
+                Log.d(TAG, "===========OpenSSME===========");
+                Log.d(TAG, "Make The Call To " + ListGateComplexPref.getInstance().getClosestGate().phone);
+                //call the gate
+                MakeTheCall(this);
+                //start background notification
+                //MakeTheCallOnBack();
+
+                PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getApplicationContext());
 
 
+            }
+            if (nextUpdate != mNextUpdate) {
+                mNextUpdate = nextUpdate;
+                ChangeLocationRequest(mNextUpdate);
+
+            }
         }
-        //on the way x minutes before the gate, start massive GPS request
-        else if (ListGateComplexPref.getInstance().gates.get(0).status==GateStatus.ALMOST){
-            Log.d(TAG,"=====Massive GPS Request=====");
-            nextUpdate = 3000;
-        }
 
 
+        Log.d(TAG, "====Current Settings====");
+        Log.d(TAG, "GPS Open Distance: " + Settings.getInstance().getGps_distance());
+        Log.d(TAG, "Gate Radius Open Distance: " + Settings.getInstance().getOpen_distance());
+        Log.d(TAG, "Location Updates: " + mIsLocationUpdatesOn);
+        Log.d(TAG, "Next Location Update: " + mNextUpdate);
 
-        //arrived to the gate
-        if (ListGateComplexPref.getInstance().gates.get(0).status==GateStatus.HOME){
-
-            //lock this block of code
-            ListGateComplexPref.getInstance().gates.get(0).active = false;
-
-            Log.d(TAG,"===========OpenSSME===========");
-            Log.d(TAG,"Make The Call To " + ListGateComplexPref.getInstance().gates.get(0).phone);
-            //call the gate
-            MakeTheCall();
-            //start background notification
-            MakeTheCallOnBack();
-
-            PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),getApplicationContext());
-
-
-        }
-        }
-
-        if (nextUpdate!=mNextUpdate)
-        {
-            mNextUpdate = nextUpdate;
-            ChangeLocationRequest(mNextUpdate);
-
-        }
-        Log.d(TAG,"====Current Settings====");
-        Log.d(TAG,"GPS Open Distance: "+Settings.getInstance().getGps_distance());
-        Log.d(TAG,"Gate Radius Open Distance: "+Settings.getInstance().getOpen_distance());
-        Log.d(TAG,"Location Updates: "+mIsLocationUpdatesOn);
-        Log.d(TAG,"Next Location Update: " + mNextUpdate);
-
-        Log.d(TAG,"===========Gate Details========");
-        Log.d(TAG,"Gate Name: " + ListGateComplexPref.getInstance().gates.get(0).gateName);
-        Log.d(TAG,"distance: " + ListGateComplexPref.getInstance().gates.get(0).distance);
-        Log.d(TAG,"ETA: " + ListGateComplexPref.getInstance().gates.get(0).ETA);
-        Log.d(TAG,"Speed: " + mCurrentSpeed);
-
-
+        Log.d(TAG, "===========Gate Details========");
+        Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
+        Log.d(TAG, "distance: " + ListGateComplexPref.getInstance().getClosestGate().distance);
+        Log.d(TAG, "ETA: " + ListGateComplexPref.getInstance().getClosestGate().ETA);
+        Log.d(TAG, "Speed: " + mCurrentSpeed);
 
 
     }
 
-    private void LocationBroadcast()
-    {
+    private void LocationBroadcast() {
         Intent intent = new Intent(Constants.LOCATION_SERVICE);
         intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
         intent.putExtra(Constants.LOCATION, mCurrentLocation);
@@ -547,27 +552,24 @@ public class LocationService extends Service implements LocationListener, Observ
 
     private void DATABroadcast() {
 
-            Intent intent = new Intent(Constants.LOCATION_SERVICE_DATA);
-            intent.addFlags(Constants.DATA_UPDATE_FLAG);
+        Intent intent = new Intent(Constants.LOCATION_SERVICE_DATA);
+        intent.addFlags(Constants.DATA_UPDATE_FLAG);
 
-        if (!ListGateComplexPref.getInstance().gates.isEmpty())
-        {
-            intent.putExtra(Constants.DISTANCE, ((Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100)) +" Km");
-            intent.putExtra(Constants.GPS, mIsLocationUpdatesOn+"");
-            intent.putExtra(Constants.SPEED, mCurrentSpeed==0 ? "No Movement" : mCurrentSpeed+"");
-            intent.putExtra(Constants.GATE_NAME, ListGateComplexPref.getInstance().gates.get(0).gateName);
-            intent.putExtra(Constants.ETA, (Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA *100) /100)+"");
-            intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().gates.get(0).status.status());
+        if (!ListGateComplexPref.getInstance().gates.isEmpty()) {
+            intent.putExtra(Constants.DISTANCE, ((Math.floor(ListGateComplexPref.getInstance().getClosestGate().distance * 0.001 * 100) / 100)) + " Km");
+            intent.putExtra(Constants.GPS, mIsLocationUpdatesOn + "");
+            intent.putExtra(Constants.SPEED, mCurrentSpeed == 0 ? "No Movement" : mCurrentSpeed + "");
+            intent.putExtra(Constants.GATE_NAME, ListGateComplexPref.getInstance().getClosestGate().gateName);
+            intent.putExtra(Constants.ETA, (Math.floor(ListGateComplexPref.getInstance().getClosestGate().ETA * 100) / 100) + "");
+            intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().getClosestGate().status.status());
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
         }
 
 
-
     }
 
-    private Location LatLngToLocation(LatLng latlang)
-    {
+    private Location LatLngToLocation(LatLng latlang) {
         Location loc = new Location(LocationManager.GPS_PROVIDER);
         loc.setLatitude(latlang.latitude);
         loc.setLongitude(latlang.longitude);

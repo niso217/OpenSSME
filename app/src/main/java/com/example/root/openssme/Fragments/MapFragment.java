@@ -575,7 +575,7 @@ public class MapFragment extends Fragment implements
 //            Intent LocationService = new Intent(getActivity(), LocationService2.class);
 //            getActivity().startService(LocationService);
             Intent startIntent = new Intent(getActivity(), LocationService.class);
-            startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+            startIntent.setAction(Constants.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
         }
 

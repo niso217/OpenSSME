@@ -25,6 +25,11 @@ public class ListGateComplexPref {
 
     }
 
+    public Gate getClosestGate()
+    {
+        return gates.get(0);
+    }
+
 
     public void clear(){
         ourInstance = new ListGateComplexPref();

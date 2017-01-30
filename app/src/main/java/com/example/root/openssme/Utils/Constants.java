@@ -76,15 +76,10 @@ public class Constants {
     public static final String LOCATION = "location";
     public static final String DISTANCE = "duration";
 
+    public static final String MAIN_ACTION = "com.example.root.openssme.action.main";
+    public static final String STARTFOREGROUND_ACTION = "com.example.root.openssme.action.startforeground";
 
-    public interface ACTION {
-        public static String MAIN_ACTION = "com.nkdroid.alertdialog.action.main";
-        public static String STARTFOREGROUND_ACTION = "com.nkdroid.alertdialog.action.startforeground";
-    }
-
-    public interface NOTIFICATION_ID {
-        public static int FOREGROUND_SERVICE = 101;
-    }
+    public static final int FOREGROUND_SERVICE = 101;
 
     public enum GateStatus {
         HOME("Inside"),
