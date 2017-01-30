@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import com.example.root.openssme.R;
 import com.example.root.openssme.Utils.Constants;
 import com.google.android.gms.maps.model.LatLng;
+import com.example.root.openssme.Utils.Constants.GateStatus;
 
 /**
  * Created by nir on 02/05/16.
@@ -18,7 +19,7 @@ public class Gate {
     public Double ETA;
     public Double distance;
     public String imagePath;
-    public boolean status;
+    public GateStatus status;
     public boolean active;
 
 
@@ -29,7 +30,7 @@ public class Gate {
         this.ETA = Double.MAX_VALUE;
         this.distance = Double.MAX_VALUE;
         this.imagePath = imagePath;
-        this.status = false; //close
+        this.status = GateStatus.ALMOST; //close
         this.active = true;
     }
 

@@ -40,6 +40,8 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.example.root.openssme.Utils.Constants.GateStatus;
+
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -326,6 +328,7 @@ public class LocationService extends Service implements LocationListener, Observ
     @Override
     public void onLocationChanged(Location location) {
 
+
         Log.d(TAG,"=====Location Changed=====");
 
         mCurrentLocation = location;
@@ -451,14 +454,17 @@ public class LocationService extends Service implements LocationListener, Observ
 
         //is inside gate radius
         if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getOpen_distance()){
-            ListGateComplexPref.getInstance().gates.get(0).status = true;
+            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.HOME;
+
+        }
+        else if (ListGateComplexPref.getInstance().gates.get(0).distance <= Settings.getInstance().getGps_distance() * 1000)
+        {
+            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.ALMOST;
 
         }
         else
-        {
-            ListGateComplexPref.getInstance().gates.get(0).status = false;
+            ListGateComplexPref.getInstance().gates.get(0).status = GateStatus.ONWAY;
 
-        }
 
         //active the gate
         if (ListGateComplexPref.getInstance().gates.get(0).distance > Settings.getInstance().getOpen_distance() * 5)
@@ -472,7 +478,8 @@ public class LocationService extends Service implements LocationListener, Observ
 
         long nextUpdate = 30000;
 
-
+        if (ListGateComplexPref.getInstance().gates.get(0).active)
+        {
         if (ListGateComplexPref.getInstance().getClosestETA() > Settings.getInstance().getGps_distance()) {
             Log.d(TAG,DateFormat.getDateTimeInstance().format(new Date()) +": "+ "=====Out Side GPS Open Distance=====");
             nextUpdate = (long)((ListGateComplexPref.getInstance().gates.get(0).ETA / 2)  * 60  * 1000);
@@ -480,7 +487,7 @@ public class LocationService extends Service implements LocationListener, Observ
 
         }
         //on the way x minutes before the gate, start massive GPS request
-        else if (!ListGateComplexPref.getInstance().gates.get(0).status){
+        else if (ListGateComplexPref.getInstance().gates.get(0).status==GateStatus.ALMOST){
             Log.d(TAG,"=====Massive GPS Request=====");
             nextUpdate = 3000;
         }
@@ -488,7 +495,7 @@ public class LocationService extends Service implements LocationListener, Observ
 
 
         //arrived to the gate
-        if (ListGateComplexPref.getInstance().gates.get(0).status && ListGateComplexPref.getInstance().gates.get(0).active){
+        if (ListGateComplexPref.getInstance().gates.get(0).status==GateStatus.HOME){
 
             //lock this block of code
             ListGateComplexPref.getInstance().gates.get(0).active = false;
@@ -503,6 +510,7 @@ public class LocationService extends Service implements LocationListener, Observ
             PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),getApplicationContext());
 
 
+        }
         }
 
         if (nextUpdate!=mNextUpdate)
@@ -549,7 +557,7 @@ public class LocationService extends Service implements LocationListener, Observ
             intent.putExtra(Constants.SPEED, mCurrentSpeed==0 ? "No Movement" : mCurrentSpeed+"");
             intent.putExtra(Constants.GATE_NAME, ListGateComplexPref.getInstance().gates.get(0).gateName);
             intent.putExtra(Constants.ETA, (Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA *100) /100)+"");
-            intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().gates.get(0).status+"");
+            intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().gates.get(0).status.status());
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
         }
@@ -565,4 +573,6 @@ public class LocationService extends Service implements LocationListener, Observ
         loc.setLongitude(latlang.longitude);
         return loc;
     }
+
+
 }

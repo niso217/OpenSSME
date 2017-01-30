@@ -85,4 +85,21 @@ public class Constants {
     public interface NOTIFICATION_ID {
         public static int FOREGROUND_SERVICE = 101;
     }
+
+    public enum GateStatus {
+        HOME("Inside"),
+        ONWAY("On The Way..."),
+        ALMOST("Almost There..."),
+        UNKNOWN("");
+
+        private String status;
+
+        GateStatus(String status) {
+            this.status = status;
+        }
+
+        public String status() {
+            return status;
+        }
+    }
 }

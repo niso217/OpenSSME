@@ -88,7 +88,7 @@ public class MainFragment extends Fragment
              ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
              Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
              Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
-             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status.status() + "");
              //CountDown(LocationService.mMillisUntilFinished);
          }
 
