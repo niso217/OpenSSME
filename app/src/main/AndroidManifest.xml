@@ -47,16 +47,16 @@
         </activity>
 
         <receiver
-            android:name="com.example.root.openssme.Reciver.ServerRestarterBroadcastReceiver"
+            android:name=".Reciver.ServerRestarterBroadcastReceiver"
             android:enabled="true"
             android:exported="true"
             android:label="RestartServiceWhenStopped">
             <intent-filter>
-                <action android:name="server.http.android.androidhttpserver.RestartServer"/>
+                <action android:name="OpenSSME.LocationService.RestartServer"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".LocationService$NotificationCallGate" />
-        <receiver android:name=".LocationService$NotificationStopService" />
+        <receiver android:name=".OpenSSMEService$NotificationCallGate" />
+        <receiver android:name=".OpenSSMEService$NotificationStopService" />
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -83,7 +83,7 @@
         <!-- </intent-filter> -->
         <!-- </receiver> -->
         <service
-            android:name=".LocationService"
+            android:name=".OpenSSMEService"
             android:enabled="true" >
         </service>
 

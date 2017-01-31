@@ -52,7 +52,7 @@ public class ListGateComplexPref {
     }
 
     public double getClosestETA(){
-        return gates.get(0).ETA;
+        return gates.get(0).ETA * 60 * 1000;
     }
 
     public double getClosestDistance(){

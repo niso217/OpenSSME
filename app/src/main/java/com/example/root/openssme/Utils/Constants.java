@@ -22,15 +22,17 @@ public class Constants {
     public static final int DATA_UPDATE_FLAG= 12;
 
 
-    public static final long API_REFRESH_HOME= 1000 * 900;
-    public static final long API_REFRESH_GPS= 1000 * 5;
-    public static final long API_REFRESH_GO= 1000 * 30;
-
-    public static final long LEAVE_NOTIFICATION_IN= 1000 * 10;
-
-
     public static final long UPDATE_INTERVAL= 3000;
     public static final long FASTEST_INTERVAL= 3000;
+    public static final int DRIVING_SPEED = 100;
+    public static final long DEFAULT_LOCATION_INTERVAL = 30000;
+    public static final long DEFAULT_CHECK_WIFI_TASK = 20000;
+    public static final long DEFAULT_RUN_SERVICE_TASK = 2000;
+    public static final int DEFAULT_ACTIVE_COEFFICIENT = 2;
+
+
+
+
 
 
     //premissions
@@ -62,22 +64,24 @@ public class Constants {
 
 
 
-
+    public static final String RESTART_SERVICE = "OpenSSME.OpenSSMEService.RestartServer";
+    public static final String STOP_SERVICE = "OpenSSME.OpenSSMEService.StopService";
+    public static final String LOCATION_SERVICE = "OpenSSME.OpenSSMEService.Location";
+    public static final String LOCATION_SERVICE_DATA = "OpenSSME.OpenSSMEService.LocationServiceData";
+    public static final String STARTFOREGROUND_ACTION = "OpenSSME.OpenSSMEService.StartForeground";
+    public static final String MAIN_ACTION = "OpenSSME.Action.Main";
 
 
     public static final String PROFILE = "profile";
     public static final String START_LOCATAION_UPDATE = "gps_distance";
     public static final String OPEN_DISTANCE = "open_distance";
-    public static final String LOCATION_SERVICE = "com.example.root.openssme.LocationService";
-    public static final String LOCATION_SERVICE_DATA = "com.example.root.openssme.LocationServiceData";
+
 
     public static final String FACEBOOK = "FacebookLoginFragment";
     public static final String GPLUS = "GPlusLoginFragment";
     public static final String LOCATION = "location";
     public static final String DISTANCE = "duration";
 
-    public static final String MAIN_ACTION = "com.example.root.openssme.action.main";
-    public static final String STARTFOREGROUND_ACTION = "com.example.root.openssme.action.startforeground";
 
     public static final int FOREGROUND_SERVICE = 101;
 

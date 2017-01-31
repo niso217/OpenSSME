@@ -16,7 +16,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import com.example.root.openssme.LocationService;
+import com.example.root.openssme.OpenSSMEService;
 import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.Settings;
@@ -32,7 +32,7 @@ public class MainFragment extends Fragment
      private TextView Gate,ETA,Distance,Radius,GPS,Google,Speed;
      private CountDownTimer mCountDownTimer;
      private long mMillisUntilFinished;
-     private LocationService mLocationService;
+     private OpenSSMEService mLocationService;
      private final String TAG = MainFragment.class.getSimpleName();
 
      private Intent mServiceIntent;
@@ -46,14 +46,12 @@ public class MainFragment extends Fragment
                      case Constants.DATA_UPDATE_FLAG:
                          //recived location update
 
-                         ETA.setText(intent.getStringExtra(Constants.ETA) + " Minutes");
+                         ETA.setText(intent.getStringExtra(Constants.ETA));
                          Gate.setText(intent.getStringExtra(Constants.GATE_NAME));
                          Distance.setText(intent.getStringExtra(Constants.DISTANCE));
                          Radius.setText(intent.getStringExtra(Constants.GATE_RADIUS));
                          Speed.setText(intent.getStringExtra(Constants.SPEED));
                          GPS.setText(intent.getStringExtra(Constants.GPS));
-
-                         //CountDown(LocationService.mMillisUntilFinished);
 
 
                          break;
@@ -61,21 +59,6 @@ public class MainFragment extends Fragment
                  }
          }
      };
-
-     private void CountDown(long seconds){
-         if (mCountDownTimer!=null) mCountDownTimer.cancel();
-
-         mCountDownTimer = new CountDownTimer(seconds, 1000) {
-
-             public void onTick(long millisUntilFinished) {
-                 mMillisUntilFinished = millisUntilFinished;
-                 GPS.setText("" + millisUntilFinished / 1000);
-             }
-
-             public void onFinish() {
-             }
-         }.start();
-     }
 
 
 
@@ -85,11 +68,10 @@ public class MainFragment extends Fragment
 
          if (savedInstanceState != null && ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
 
-             ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
-             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
-             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
-             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status.status() + "");
-             //CountDown(LocationService.mMillisUntilFinished);
+//             ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
+//             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
+//             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+//             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status.status() + "");
          }
 
 
@@ -116,33 +98,22 @@ public class MainFragment extends Fragment
          Distance = (TextView) (rootFragment).findViewById(R.id.textViewDistance);
              Radius = (TextView) (rootFragment).findViewById(R.id.textViewRadius);
              GPS = (TextView) (rootFragment).findViewById(R.id.textViewGPS);
-             (rootFragment).findViewById(R.id.buttonRefresh).setOnClickListener(new View.OnClickListener() {
-                 @Override
-                 public void onClick(View v) {
-                     // unBindService();
-                     // bindService();
-
-                 }
-             });
-
-         if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
-
-             ETA.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).ETA) + " Minutes");
-             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
-             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
-             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
-             //CountDown(LocationService.mMillisUntilFinished);
 
 
-
-         }
-
+//         if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
+//
+//             ETA.setText(ListGateComplexPref.getInstance().gates.get(0).ETA+"");
+//             Gate.setText(ListGateComplexPref.getInstance().gates.get(0).gateName);
+//             Distance.setText(Math.floor(ListGateComplexPref.getInstance().gates.get(0).distance * 0.001 * 100) / 100 + " Km");
+//             Radius.setText(ListGateComplexPref.getInstance().gates.get(0).status + "");
+//
+//
+//         }
 
          LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
                  new IntentFilter(Constants.LOCATION_SERVICE_DATA));
 
              return rootFragment;
-
 
      }
 
@@ -154,21 +125,18 @@ public class MainFragment extends Fragment
 
      @Override
     public void onStart() {
-        bindService();
+         StartOpenSSMEService();
          super.onStart();
     }
 
      @Override
-     public void onPause() {
-         super.onPause();
+     public void onDestroy() {
+         if (mMessageReceiver != null) {
+             LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
+             mMessageReceiver = null;
+         }
+         super.onDestroy();
      }
-
-     @Override
-    public void onStop() {
-        super.onStop();
-
-
-    }
 
      private void ScreenSetup(){
          if (Settings.getInstance().isScreen()) {
@@ -178,10 +146,10 @@ public class MainFragment extends Fragment
              getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
      }
 
-    public void bindService() {
+    public void StartOpenSSMEService() {
         if (ListGateComplexPref.getInstance().gates!=null && ListGateComplexPref.getInstance().gates.size()>0) {
 
-            mLocationService = new LocationService();
+            mLocationService = new OpenSSMEService();
             mServiceIntent = new Intent(getContext(), mLocationService.getClass());
             if (!isMyServiceRunning(mLocationService.getClass())) {
                 getContext().startService(mServiceIntent);
@@ -201,12 +169,5 @@ public class MainFragment extends Fragment
          return false;
      }
 
-     @Override
-     public void onDestroy() {
-         if (mMessageReceiver != null) {
-             LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
-                     mMessageReceiver = null;
-         }
-         super.onDestroy();
-     }
+
  }

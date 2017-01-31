@@ -1,13 +1,6 @@
 package com.example.root.openssme.Adapter;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,19 +8,15 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.root.openssme.LocationService;
+import com.example.root.openssme.OpenSSMEService;
 import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.Utils.Constants;
-import com.example.root.openssme.Utils.PictUtil;
 import com.example.root.openssme.Utils.PrefUtils;
-import com.example.root.openssme.common.GoogleConnection;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by nir on 20/02/2016.
@@ -37,7 +26,7 @@ public class GateAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private Context context;
     private ArrayList<Gate> gates;
-    private LocationService mLocationService;
+    private OpenSSMEService mLocationService;
 
     public GateAdapter(Context context) {
 
@@ -82,14 +71,14 @@ public class GateAdapter extends BaseAdapter {
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    LocationService.mCodeBlocker = true;
+                    OpenSSMEService.mCodeBlocker = true;
                     ListGateComplexPref.getInstance().gates.remove(position);
                     ListGateComplexPref.getInstance().sort();
                     PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
                     notifyDataSetChanged();
                     if (!ListGateComplexPref.getInstance().gates.isEmpty())
                     {
-                        LocationService.mCodeBlocker = false;
+                        OpenSSMEService.mCodeBlocker = false;
 
                     }
                     return false;

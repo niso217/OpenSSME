@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements
     private View mAutocompleteFragment;
     private Fragment fragment;
     private int mCurrentViewId;
-    final public static int REQUEST_CODE = 123;
 
 
 
@@ -279,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        stopService(new Intent(getBaseContext(), LocationService.class));
+                        stopService(new Intent(getBaseContext(), OpenSSMEService.class));
                         finish();
                     }
 

@@ -33,7 +33,7 @@ import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.Toast;
 
-import com.example.root.openssme.LocationService;
+import com.example.root.openssme.OpenSSMEService;
 import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
@@ -123,7 +123,7 @@ public class MapFragment extends Fragment implements
 
 
         } else {
-            //get masseges from LocationService
+            //get masseges from OpenSSMEService
             msavedInstanceState = null;
             LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
                     new IntentFilter(Constants.LOCATION_SERVICE));
@@ -572,9 +572,9 @@ public class MapFragment extends Fragment implements
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size()==1){
-//            Intent LocationService = new Intent(getActivity(), LocationService2.class);
-//            getActivity().startService(LocationService);
-            Intent startIntent = new Intent(getActivity(), LocationService.class);
+//            Intent OpenSSMEService = new Intent(getActivity(), LocationService2.class);
+//            getActivity().startService(OpenSSMEService);
+            Intent startIntent = new Intent(getActivity(), OpenSSMEService.class);
             startIntent.setAction(Constants.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
         }

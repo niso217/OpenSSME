@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.root.openssme.LocationService;
+import com.example.root.openssme.OpenSSMEService;
 
 /**
  * Created by fabio on 24/01/2016.
@@ -16,7 +16,7 @@ public class ServerRestarterBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "Service Stops!!!!!");
-        context.startService(new Intent(context, LocationService.class));
+        context.startService(new Intent(context, OpenSSMEService.class));
     }
 
 }

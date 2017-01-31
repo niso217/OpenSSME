@@ -1,18 +1,13 @@
 package com.example.root.openssme;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
 
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
 import com.example.root.openssme.SocialNetwork.SocialNetworkHelper;
 import com.example.root.openssme.SocialNetwork.User;
-import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
 
@@ -120,7 +115,7 @@ public class MyApplication extends Application{
 
     public  void stopService()
     {
-        stopService(new Intent(getBaseContext(), LocationService.class));
+        stopService(new Intent(getBaseContext(), OpenSSMEService.class));
 
 
     }
