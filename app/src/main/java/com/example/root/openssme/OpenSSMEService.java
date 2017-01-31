@@ -88,13 +88,14 @@ public class OpenSSMEService extends Service {
         mCodeBlocker = false;
         doTerminate = false;
 
+        setUpNotificationManager();
+
+        RegisterReciver();
+
         InitNotification();
 
         Worker();
 
-        setUpNotificationManager();
-
-        RegisterReciver();
 
 
     }
@@ -151,7 +152,6 @@ public class OpenSSMEService extends Service {
     }
 
     private void ChangeNotoficationContent() {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
         contentView.setTextViewText(R.id.tv_name, ListGateComplexPref.getInstance().getClosestGate().gateName);

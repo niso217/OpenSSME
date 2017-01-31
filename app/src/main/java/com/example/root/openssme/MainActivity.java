@@ -499,10 +499,10 @@ public class MainActivity extends AppCompatActivity implements
             case Constants.REQ_SELECT_PHOTO:
 
                     if (User.getInstance().source.equals(Constants.GPLUS)) {
-                        MyApplication.getSocialNetworkHelper().GooglePostPhoto(this, data);
+                        OpenSSMEApplication.getSocialNetworkHelper().GooglePostPhoto(this, data);
                     }
                     if (User.getInstance().source.equals(Constants.FACEBOOK)) {
-                        MyApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
+                        OpenSSMEApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
                     }
 
         }
@@ -510,13 +510,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void postStatusUpdate() {
         if (User.getInstance().source.equals(Constants.GPLUS)) {
-            MyApplication.getSocialNetworkHelper().PostOnGoogle(this,
+            OpenSSMEApplication.getSocialNetworkHelper().PostOnGoogle(this,
                     getResources().getString(R.string.subject),
                     getResources().getString(R.string.body),
                     getResources().getString(R.string.url));
         }
         if (User.getInstance().source.equals(Constants.FACEBOOK)) {
-            MyApplication.getSocialNetworkHelper().PostOnFacebook(this,
+            OpenSSMEApplication.getSocialNetworkHelper().PostOnFacebook(this,
                     getResources().getString(R.string.subject),
                     getResources().getString(R.string.body),
                     getResources().getString(R.string.url));

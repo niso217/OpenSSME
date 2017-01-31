@@ -15,12 +15,12 @@ import java.io.File;
 import java.io.IOException;
 
 
-public class MyApplication extends Application{
+public class OpenSSMEApplication extends Application{
 
-    private static final String TAG = "MyApplication";
+    private static final String TAG = "OpenSSMEApplication";
     private SocialNetworkHelper mSocialNetworkHelper;
 
-    private static MyApplication mInstance;
+    private static OpenSSMEApplication mInstance;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -105,7 +105,7 @@ public class MyApplication extends Application{
     }
 
 
-    public static synchronized MyApplication getInstance() {
+    public static synchronized OpenSSMEApplication getInstance() {
         return mInstance;
     }
 

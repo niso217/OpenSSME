@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.example.root.openssme.LogInActivity;
 import com.google.android.gms.auth.api.Auth;
@@ -28,8 +27,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import java.util.Observable;
 import java.util.Observer;
 
-import com.example.root.openssme.MainActivity;
-import com.example.root.openssme.MyApplication;
 import com.example.root.openssme.R;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.common.GoogleConnection;
