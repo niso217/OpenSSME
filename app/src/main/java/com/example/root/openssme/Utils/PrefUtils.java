@@ -39,8 +39,8 @@ public class PrefUtils {
 
     public static void getSettings(Context ctx){
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
-        String gps_distance = pref.getString(Constants.START_LOCATAION_UPDATE,"3");
-        String open_distance = pref.getString(Constants.OPEN_DISTANCE,"150");
+        String gps_distance = pref.getString(Constants.START_LOCATAION_UPDATE,"6");
+        String open_distance = pref.getString(Constants.OPEN_DISTANCE,"400");
         String map_type = pref.getString(Constants.MAP_TYPE,"1");
         String profile = pref.getString(Constants.MAP_TYPE,"1");
         String service_provider = pref.getString(Constants.SERVICE_PROVIDER,"1");

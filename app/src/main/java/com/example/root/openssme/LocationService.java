@@ -19,6 +19,9 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
@@ -101,9 +104,7 @@ public class LocationService extends Service implements LocationListener, Observ
                     break;
                 case WifiManager.WIFI_STATE_CHANGED_ACTION:
                     int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, -1);
-                    if (WifiManager.WIFI_STATE_ENABLED == wifiState)
-                        StopLocationUpdates();
-                    else
+                    if (WifiManager.WIFI_STATE_ENABLED != wifiState)
                         startLocationUpdates();
                     break;
 
@@ -112,6 +113,27 @@ public class LocationService extends Service implements LocationListener, Observ
         }
     };
 
+
+    private boolean isWifiConnected() {
+        ConnectivityManager connectivityManager = ((ConnectivityManager) getSystemService
+                (Context.CONNECTIVITY_SERVICE));
+        boolean isWifiConnected = false;
+        Network[] networks = connectivityManager.getAllNetworks();
+        if (networks == null) {
+            isWifiConnected = false;
+        } else {
+            for (Network network : networks) {
+                NetworkInfo info = connectivityManager.getNetworkInfo(network);
+                if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
+                    if (info.isAvailable() && info.isConnected()) {
+                        isWifiConnected = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return isWifiConnected;
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -191,7 +213,7 @@ public class LocationService extends Service implements LocationListener, Observ
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                 notificationIntent, 0);
 
-        RemoteViews notificationView = new RemoteViews(this.getPackageName(),R.layout.notification);
+        RemoteViews notificationView = new RemoteViews(this.getPackageName(), R.layout.notification);
 
         // And now, building and attaching the Play button.
         Intent StopService = new Intent(this, NotificationStopService.class);
@@ -227,9 +249,9 @@ public class LocationService extends Service implements LocationListener, Observ
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
-        contentView.setTextViewText(R.id.tv_status,ListGateComplexPref.getInstance().getClosestGate().gateName);
-        contentView.setTextViewText(R.id.tv_status,ListGateComplexPref.getInstance().getClosestGate().status.status());
-        contentView.setTextViewText(R.id.tv_gps,mIsLocationUpdatesOn? "On" : "Off");
+        contentView.setTextViewText(R.id.tv_name, ListGateComplexPref.getInstance().getClosestGate().gateName);
+        contentView.setTextViewText(R.id.tv_status, ListGateComplexPref.getInstance().getClosestGate().status.status());
+        contentView.setTextViewText(R.id.tv_gps, mIsLocationUpdatesOn ? "On" : "Off");
 
         mNotification.contentView = contentView;
 
@@ -303,30 +325,37 @@ public class LocationService extends Service implements LocationListener, Observ
                 Log.d(TAG, "in timer ++++  " + (counter++));
                 mHandler.postDelayed(m_handlerTask, 1000);
 
-                //there are no gates
-                if (ListGateComplexPref.getInstance().gates.size() == 0 && mIsLocationUpdatesOn) {
-                    Log.d(TAG, "No Gates Found, Stopping Location Updates");
-                    StopLocationUpdates();
+                //there are no gates stop this service
+                if (ListGateComplexPref.getInstance().gates.size() == 0) {
+                    Log.d(TAG, "No Gates Found, Stopping Location Service");
                     stopSelf();
-
                     return;
                 }
 
-                if (!mCodeBlocker && mCurrentLocation != null) {
+                if (mCurrentLocation != null) {
 
-                    CalcGatesDistancsAndETA();
-
-                    ClacDistancLogic();
-
-                    ChangeNotoficationContent();
-
-                    DoWork();
+                    //probably not on the road, stop the location update
+                    if (mIsLocationUpdatesOn && isWifiConnected())
+                        StopLocationUpdates();
+                    if (!mIsLocationUpdatesOn && !isWifiConnected())
+                        startLocationUpdates();
 
 
+                    if (!mCodeBlocker) {
+
+                        CalcGatesDistancsAndETA();
+
+                        ClacDistancLogic();
+
+                        ChangeNotoficationContent();
+
+                        DoWork();
+
+
+                    }
+                    DATABroadcast();
 
                 }
-                DATABroadcast();
-
 
             }
         };
@@ -339,7 +368,6 @@ public class LocationService extends Service implements LocationListener, Observ
     public IBinder onBind(Intent intent) {
         return null;
     }
-
 
 
     public void connectClient() {
@@ -482,7 +510,7 @@ public class LocationService extends Service implements LocationListener, Observ
             ListGateComplexPref.getInstance().getClosestGate().status = GateStatus.ONWAY;
 
         //active the gate
-        if (ListGateComplexPref.getInstance().getClosestGate().distance > Settings.getInstance().getOpen_distance() * 5)
+        if (ListGateComplexPref.getInstance().getClosestGate().distance > Settings.getInstance().getOpen_distance() * 2)
             ListGateComplexPref.getInstance().getClosestGate().active = true;
 
     }
@@ -494,7 +522,7 @@ public class LocationService extends Service implements LocationListener, Observ
         if (ListGateComplexPref.getInstance().getClosestGate().active) {
 
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
-                Log.d(TAG,"=====Out Side GPS Open Distance=====");
+                Log.d(TAG, "=====Out Side GPS Open Distance=====");
                 nextUpdate = (long) ((ListGateComplexPref.getInstance().getClosestETA() / 2) * 60 * 1000);
             }
             //on the way x minutes before the gate, start massive GPS request
@@ -537,6 +565,7 @@ public class LocationService extends Service implements LocationListener, Observ
         Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
         Log.d(TAG, "distance: " + ListGateComplexPref.getInstance().getClosestGate().distance);
         Log.d(TAG, "ETA: " + ListGateComplexPref.getInstance().getClosestGate().ETA);
+        Log.d(TAG, "Active: " + ListGateComplexPref.getInstance().getClosestGate().active);
         Log.d(TAG, "Speed: " + mCurrentSpeed);
 
 
