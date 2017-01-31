@@ -71,16 +71,18 @@ public class GateAdapter extends BaseAdapter {
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    OpenSSMEService.mCodeBlocker = true;
-                    ListGateComplexPref.getInstance().gates.remove(position);
-                    ListGateComplexPref.getInstance().sort();
-                    PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
-                    notifyDataSetChanged();
-                    if (!ListGateComplexPref.getInstance().gates.isEmpty())
+                    if (position < ListGateComplexPref.getInstance().gates.size())
                     {
+                        OpenSSMEService.mCodeBlocker = true;
+                        ListGateComplexPref.getInstance().gates.remove(position);
+                        ListGateComplexPref.getInstance().sort();
+                        PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
+                        notifyDataSetChanged();
                         OpenSSMEService.mCodeBlocker = false;
 
+
                     }
+
                     return false;
                 }
 
