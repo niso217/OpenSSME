@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements
 
 
 
+
     //
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,35 +117,20 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-
         outState.putInt("mCurrentViewId",mCurrentViewId);
-
-
         super.onSaveInstanceState(outState);
     }
 
-    @Override
-    protected void onResume() {
-        Log.d(TAG,"onResume");
-
-        super.onResume();
-    }
 
     @Override
     protected void onStart() {
 
-
-
         Log.d(TAG,"onStart");
 
-        if (mGoogleConnection.getGoogleApiClient().isConnected())
+        if (!mGoogleConnection.getGoogleApiClient().isConnected())
         {
-            GPSResolver();
-        }
-        else {
             connectClient();
         }
-
 
         super.onStart();
     }
@@ -183,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements
 
             case OPENED:
                 // We are signed in!
-                GPSResolver();
+
                // requestLocationSettings();
                 Log.d(TAG, "Connected to Google Api Client");
                 break;
@@ -350,6 +336,11 @@ public class MainActivity extends AppCompatActivity implements
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
+
+                    if (mGoogleConnection.getGoogleApiClient().isConnected())
+                    {
+                        GPSResolver();
+                    }
                     if (fragment.getTag()!=CurrentFragment){
                         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                         ft.replace(R.id.frame, fragment, CurrentFragment);

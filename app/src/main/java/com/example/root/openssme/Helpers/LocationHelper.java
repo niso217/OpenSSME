@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
 
+import static android.content.Context.LOCATION_SERVICE;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 
@@ -49,7 +51,7 @@ public class LocationHelper implements LocationListener, Observer {
     private LocationRequest mLocationRequest;
     private Runnable mHandlerTask;
     private Handler mHandler;
-
+    private LocationManager mLocationManager;
     private Location mCurrentLocation;
     private LatLng mCurrentLatLng;
     private double mCurrentSpeed;
@@ -58,12 +60,10 @@ public class LocationHelper implements LocationListener, Observer {
     private double mCurrentAccuracy;
 
 
-
-
     public LocationHelper(Context context) {
 
         this.mContext = context;
-        
+
         mHandler = new Handler();
 
         mGoogleConnection = GoogleConnection.getInstance(context);
@@ -76,12 +76,12 @@ public class LocationHelper implements LocationListener, Observer {
         else
             connectClient();
 
+        InitLocationManager();
         reCheckWifiConnection();
 
     }
-    
-    private void reCheckWifiConnection()
-    {
+
+    private void reCheckWifiConnection() {
         mHandlerTask = new Runnable() {
             @Override
             public void run() {
@@ -89,7 +89,7 @@ public class LocationHelper implements LocationListener, Observer {
                 isWifiConnected();
             }
         };
-            mHandlerTask.run();
+        mHandlerTask.run();
     }
 
 
@@ -131,6 +131,15 @@ public class LocationHelper implements LocationListener, Observer {
         }
     }
 
+    private void InitLocationManager() {
+        mLocationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
+    }
+
+    private boolean IsGpsActive() {
+        return mLocationManager != null ? mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) : false;
+    }
+
+
     private void StartLocationUpdates() {
         if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected()) {
             if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -141,38 +150,38 @@ public class LocationHelper implements LocationListener, Observer {
                 @Override
                 public void onSuccess(Status status) {
                     mIsLocationUpdatesOn = true;
-                    Log.d(TAG, "Location Updates Is "+ mIsLocationUpdatesOn);
+                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
 
                 }
 
                 @Override
                 public void onFailure(Status status) {
                     mIsLocationUpdatesOn = false;
-                    Log.d(TAG, "Location Updates Is "+ mIsLocationUpdatesOn);
+                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
                 }
             });
         }
     }
 
     public void StopLocationUpdates() {
-            if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected()) {
-                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this).setResultCallback(new ResultCallbacks<Status>() {
-                    @Override
-                    public void onSuccess(Status status) {
-                        mIsLocationUpdatesOn = false;
-                        Log.d(TAG, "Location Updates Is "+ mIsLocationUpdatesOn);
+        if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this).setResultCallback(new ResultCallbacks<Status>() {
+                @Override
+                public void onSuccess(Status status) {
+                    mIsLocationUpdatesOn = false;
+                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
 
-                    }
+                }
 
-                    @Override
-                    public void onFailure(Status status) {
-                        mIsLocationUpdatesOn = true;
-                        Log.d(TAG, "Location Updates Is "+ mIsLocationUpdatesOn);
+                @Override
+                public void onFailure(Status status) {
+                    mIsLocationUpdatesOn = true;
+                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
 
-                    }
-                });
-            }
+                }
+            });
         }
+    }
 
 
     public void setupLocationRequestBalanced(long Interval) {
@@ -183,7 +192,7 @@ public class LocationHelper implements LocationListener, Observer {
     }
 
     public void ChangeLocationRequest(long ETA) {
-        Log.d(TAG, "=====Change Location Request To " + ETA+ "=====");
+        Log.d(TAG, "=====Change Location Request To " + ETA + "=====");
         StopLocationUpdates();
         setupLocationRequestBalanced(ETA);
         StartLocationUpdates();
@@ -193,17 +202,22 @@ public class LocationHelper implements LocationListener, Observer {
         ConnectivityManager connectivityManager = ((ConnectivityManager) mContext.getSystemService
                 (Context.CONNECTIVITY_SERVICE));
         Network[] networks = connectivityManager.getAllNetworks();
-        if (networks==null || networks.length==0) {
+        if (networks == null || networks.length == 0) {
             StartLocationUpdates();
             Log.d(TAG, "=====Wifi Is Off Starting Location Updates=====");
         } else {
             for (Network network : networks) {
                 NetworkInfo info = connectivityManager.getNetworkInfo(network);
                 if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
-                    if (info.isAvailable() && info.isConnected()) {
+                    if (info.isAvailable() && info.isConnected() && mIsLocationUpdatesOn) {
                         StopLocationUpdates();
                         Log.d(TAG, "=====Wifi Is On Stopping Location Updates=====");
                         break;
+                    }
+                } else {
+                    if (!mIsLocationUpdatesOn) {
+                        StartLocationUpdates();
+                        Log.d(TAG, "=====Wifi Is Off Starting Location Updates=====");
                     }
                 }
             }
@@ -218,9 +232,8 @@ public class LocationHelper implements LocationListener, Observer {
 
     }
 
-    
-    public void destroy()
-    {
+
+    public void destroy() {
         Log.d(TAG, "=====Kill Location Helper=====");
 
         if (mGoogleConnection.getGoogleApiClient() != null) {
@@ -232,15 +245,14 @@ public class LocationHelper implements LocationListener, Observer {
 
     }
 
-    public boolean isIsLocationUpdatesOn()
-    {
+    public boolean isIsLocationUpdatesOn() {
         return mIsLocationUpdatesOn;
     }
 
     public Location getLocation() {
         return mCurrentLocation;
     }
-    
+
     public LatLng getLatLng() {
         return mCurrentLatLng;
     }
