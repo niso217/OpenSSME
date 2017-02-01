@@ -139,7 +139,7 @@ public class OpenSSMEService extends Service {
                 .setContentText("Running. Tap to open.") // content text
                 .setTicker("Showing button notification") // status bar message
                 .setContentIntent(mActivityIntent)
-                .setColor(ContextCompat.getColor(this,R.color.PrimaryDarkColor))
+                .setColor(ContextCompat.getColor(this,R.color.teal))
                 .addAction(R.drawable.ic_call_black_18dp, "CALL " +ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
                 .addAction(R.drawable.ic_power_settings_new_black_18dp, "SWITCH OFF", mStopServiceIntent)
                 .setOngoing(true);
