@@ -61,10 +61,9 @@ public class GateListFragment extends Fragment {
 
         View rootFragment = inflater.inflate(R.layout.fragment_gate_list, null);
 
-        mAdapter = new GateAdapter(getContext());
         ListView employeeListView = (ListView) (rootFragment).findViewById(R.id.listView);
+        mAdapter = new GateAdapter(getContext(),employeeListView);
         employeeListView.setAdapter(mAdapter);
-
 
 
         // [END customize_button]

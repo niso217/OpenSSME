@@ -6,8 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.root.openssme.Listener.SwipeDismissListViewTouchListener;
 import com.example.root.openssme.OpenSSMEService;
 import com.example.root.openssme.R;
 import com.example.root.openssme.SocialNetwork.Gate;
@@ -27,8 +29,9 @@ public class GateAdapter extends BaseAdapter {
     private Context context;
     private ArrayList<Gate> gates;
     private OpenSSMEService mLocationService;
+    private ListView mListView;
 
-    public GateAdapter(Context context) {
+    public GateAdapter(Context context, ListView listView) {
 
         ListGateComplexPref.getInstance().sort();
 
@@ -36,12 +39,14 @@ public class GateAdapter extends BaseAdapter {
 
         inflater = LayoutInflater.from(context);
 
+        mListView = listView;
+
         this.context = context;
 
 
     }
 
-    public void UpdateBaseAdaper(ArrayList<Gate> gates){
+    public void UpdateBaseAdaper(ArrayList<Gate> gates) {
         this.gates = gates;
         notifyDataSetChanged();
     }
@@ -62,27 +67,33 @@ public class GateAdapter extends BaseAdapter {
         return position;
     }
 
+
     @Override
     public View getView(final int position, View view, ViewGroup parent) {
         Gate gate = (Gate) getItem(position);
         if (view == null) {
             view = inflater.inflate(R.layout.gate_list, null);
 
+            view.setOnTouchListener(new SwipeDismissListViewTouchListener(
+                    mListView,
+                    new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                        @Override
+                        public boolean canDismiss(int position) {
+                            return true;
+                        }
+
+                        @Override
+                        public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                            for (int position : reverseSortedPositions) {
+                                DeletePosition(position);
+                            }
+                        }
+                    }));
+
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    if (position < ListGateComplexPref.getInstance().gates.size())
-                    {
-                        OpenSSMEService.mCodeBlocker = true;
-                        ListGateComplexPref.getInstance().gates.remove(position);
-                        ListGateComplexPref.getInstance().sort();
-                        PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(),context);
-                        notifyDataSetChanged();
-                        OpenSSMEService.mCodeBlocker = false;
-
-
-                    }
-
+                    DeletePosition(position);
                     return false;
                 }
 
@@ -92,7 +103,6 @@ public class GateAdapter extends BaseAdapter {
 
         File photo = new File(gates.get(position).imagePath);
 
-
         TextView name = (TextView) view.findViewById(R.id.name);
         name.setText(gate.gateName);
         TextView phone = (TextView) view.findViewById(R.id.phone);
@@ -100,18 +110,30 @@ public class GateAdapter extends BaseAdapter {
         TextView distance = (TextView) view.findViewById(R.id.distance);
         distance.setText(Math.floor(gate.distance * 0.001 * 100) / 100 + " Km");
         TextView ETA = (TextView) view.findViewById(R.id.ETA);
-        ETA.setText(Math.floor(gate.ETA  *100) /100 + " Minutes");
+        ETA.setText(Math.floor(gate.ETA * 100) / 100 + " Minutes");
 
         ImageView movieurl = (ImageView) view.findViewById(R.id.imageView);
-            Picasso.with(context)
-                    .load(photo)
-                    .resize(200, 200)
-                    .centerCrop()
-                    .into(movieurl);
-
+        Picasso.with(context)
+                .load(photo)
+                .resize(200, 200)
+                .centerCrop()
+                .into(movieurl);
 
 
         return view;
+    }
+
+    private void DeletePosition(int position) {
+
+        if (position < ListGateComplexPref.getInstance().gates.size()) {
+            OpenSSMEService.mCodeBlocker = true;
+            ListGateComplexPref.getInstance().gates.remove(position);
+            ListGateComplexPref.getInstance().sort();
+            PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), context);
+            notifyDataSetChanged();
+            OpenSSMEService.mCodeBlocker = false;
+
+        }
     }
 
 
