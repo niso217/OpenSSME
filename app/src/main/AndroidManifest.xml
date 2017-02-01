@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_LOGS" />
+    <action android:name="android.location.PROVIDERS_CHANGED" />
 
     <application
         android:name=".OpenSSMEApplication"
@@ -53,6 +54,12 @@
             android:label="RestartServiceWhenStopped">
             <intent-filter>
                 <action android:name="OpenSSME.LocationService.RestartServer"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".Helpers.LocationHelper">
+            <intent-filter>
+                <action android:name="android.location.PROVIDERS_CHANGED" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
         <receiver android:name=".OpenSSMEService$NotificationCallGate" />

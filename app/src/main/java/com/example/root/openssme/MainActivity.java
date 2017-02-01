@@ -2,8 +2,11 @@ package com.example.root.openssme;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.ColorDrawable;
@@ -51,6 +54,10 @@ import com.example.root.openssme.common.GoogleConnection;
 import java.util.Observable;
 import java.util.Observer;
 
+import static com.example.root.openssme.Utils.Constants.GPS_PROVIDER;
+import static com.example.root.openssme.Utils.Constants.GPS_STATUS;
+import static com.example.root.openssme.Utils.Constants.PROVIDERS_CHANGED;
+
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
 
@@ -79,7 +86,16 @@ public class MainActivity extends AppCompatActivity implements
 
 
 
-
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case PROVIDERS_CHANGED:
+                    GPSResolver();
+                    break;
+            }
+        }
+    };
 
     //
     @Override
@@ -113,6 +129,8 @@ public class MainActivity extends AppCompatActivity implements
             displayView(mCurrentViewId);
         }
 
+        RegisterReciver();
+
     }
 
     @Override
@@ -121,18 +139,22 @@ public class MainActivity extends AppCompatActivity implements
         super.onSaveInstanceState(outState);
     }
 
-
     @Override
-    protected void onStart() {
+    protected void onResume() {
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
 
-        Log.d(TAG,"onStart");
+                if (!mGoogleConnection.getGoogleApiClient().isConnected())
+                {
+                    connectClient();
 
-        if (!mGoogleConnection.getGoogleApiClient().isConnected())
-        {
-            connectClient();
-        }
-
-        super.onStart();
+                }
+                //else
+                    //GPSResolver();
+            }
+        });
+        super.onResume();
     }
 
 
@@ -146,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements
             mGoogleConnection.disconnect();
             mGoogleConnection.deleteObserver(this);
         }
-
+        unregisterReceiver(receiver);
         super.onDestroy();
     }
 
@@ -169,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements
 
             case OPENED:
                 // We are signed in!
-
+                //GPSResolver();
                // requestLocationSettings();
                 Log.d(TAG, "Connected to Google Api Client");
                 break;
@@ -177,6 +199,11 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "Disconnected from Google Api Client");
                 break;
         }
+    }
+
+    private void RegisterReciver() {
+        IntentFilter filter = new IntentFilter(PROVIDERS_CHANGED);
+        registerReceiver(receiver, filter);
     }
 
     private void Initialize(){
@@ -337,10 +364,6 @@ public class MainActivity extends AppCompatActivity implements
                 @Override
                 public void run() {
 
-                    if (mGoogleConnection.getGoogleApiClient().isConnected())
-                    {
-                        GPSResolver();
-                    }
                     if (fragment.getTag()!=CurrentFragment){
                         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                         ft.replace(R.id.frame, fragment, CurrentFragment);
@@ -358,8 +381,12 @@ public class MainActivity extends AppCompatActivity implements
                         }
 
                     }
+                    GPSResolver();
+
                 }
+
             }, 500);
+
 
         }
 
@@ -438,9 +465,9 @@ public class MainActivity extends AppCompatActivity implements
 
     private void GPSResolver() {
 
+
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
-
         // **************************
         builder.setAlwaysShow(true); // this is the key ingredient
         // **************************
@@ -513,8 +540,6 @@ public class MainActivity extends AppCompatActivity implements
                     getResources().getString(R.string.url));
         }
     }
-
-
 
 
 

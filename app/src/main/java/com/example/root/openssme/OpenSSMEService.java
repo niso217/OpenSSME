@@ -16,13 +16,16 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -54,6 +57,7 @@ public class OpenSSMEService extends Service {
     private NotificationManager mNotificationManager;
     private long mGPSUpdateInterval = DEFAULT_LOCATION_INTERVAL;
     private LocationHelper mLocationHelper;
+    private PendingIntent mActivityIntent,mCallGateIntent,mStopServiceIntent;
 
     public OpenSSMEService() {
         super();
@@ -88,11 +92,13 @@ public class OpenSSMEService extends Service {
         mCodeBlocker = false;
         doTerminate = false;
 
+        InitNotificationIntent();
+
         setUpNotificationManager();
 
         RegisterReciver();
 
-        InitNotification();
+        InitServiceNotification();
 
         Worker();
 
@@ -110,69 +116,54 @@ public class OpenSSMEService extends Service {
         registerReceiver(receiver, filter);
     }
 
-    private void InitNotification() {
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setAction(Constants.MAIN_ACTION);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
-
-        RemoteViews notificationView = new RemoteViews(this.getPackageName(), R.layout.notification);
+    private void InitNotificationIntent()
+    {
+        Intent intent = new Intent(this, MainActivity.class);
+         mActivityIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         //building and attaching the stop button.
         Intent StopService = new Intent(this, NotificationStopService.class);
-        PendingIntent StopServiceIntent = pendingIntent.getBroadcast(this, 0, StopService, 0);
-        notificationView.setOnClickPendingIntent(R.id.btnStop, StopServiceIntent);
+         mStopServiceIntent = mActivityIntent.getBroadcast(this, 0, StopService, 0);
 
         // building and attaching the phone Icon ImageView.
         Intent CallGate = new Intent(this, NotificationCallGate.class);
-        PendingIntent CallGateIntent = pendingIntent.getBroadcast(this, 0, CallGate, 0);
-        notificationView.setOnClickPendingIntent(R.id.phoneIcon, CallGateIntent);
-
-
-        Bitmap icon = BitmapFactory.decodeResource(getResources(),
-                R.drawable.gate);
-
-
-        mNotification = new NotificationCompat.Builder(getApplicationContext())
-                .setContentTitle("OpenSSME")
-                .setTicker("OpenSSME")
-                .setContentText("OpenSSME")
-                .setSmallIcon(R.drawable.gate)
-                .setLargeIcon(
-                        Bitmap.createScaledBitmap(icon, 128, 128, false))
-                .setContent(notificationView)
-                .setOngoing(true).build();
-
-
-        startForeground(Constants.FOREGROUND_SERVICE,
-                mNotification);
+         mCallGateIntent = mActivityIntent.getBroadcast(this, 0, CallGate, 0);
     }
 
-    private void ChangeNotoficationContent() {
-
-        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
-        contentView.setTextViewText(R.id.tv_name, ListGateComplexPref.getInstance().getClosestGate().gateName);
-        contentView.setTextViewText(R.id.tv_status, ListGateComplexPref.getInstance().getClosestGate().status.status());
-        contentView.setTextViewText(R.id.tv_gps, mLocationHelper.isIsLocationUpdatesOn() ? "On" : "Off");
-
-        mNotification.contentView = contentView;
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        mNotification.contentIntent = contentIntent;
-
-        mNotification.flags |= Notification.FLAG_NO_CLEAR; //Do not clear the notification
-        mNotification.defaults = 0; // Sound
-
-
-        mNotificationManager.notify(Constants.FOREGROUND_SERVICE, mNotification);
-
-
+    private NotificationCompat.Builder BuildNotification()
+    {
+        // Building the notification
+        return new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.gate) // notification icon
+                .setContentTitle("OpenSSME") // notification title
+                .setContentText("Running. Tap to open.") // content text
+                .setTicker("Showing button notification") // status bar message
+                .setContentIntent(mActivityIntent)
+                .setColor(ContextCompat.getColor(this,R.color.PrimaryDarkColor))
+                .addAction(R.drawable.ic_call_black_18dp, "CALL " +ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
+                .addAction(R.drawable.ic_power_settings_new_black_18dp, "SWITCH OFF", mStopServiceIntent)
+                .setOngoing(true);
     }
 
+    void InitServiceNotification(){
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+
+            startForeground(Constants.FOREGROUND_SERVICE,
+                    BuildNotification().build());
+
+        } else {
+            Toast.makeText(this, "You need a higher version", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void UpdateNotification()
+    {
+        mNotificationManager.notify(
+                Constants.FOREGROUND_SERVICE,
+                BuildNotification().build());
+
+    }
     /**
      * Called when user clicks the "play/pause" button on the on-going system Notification.
      */
@@ -239,7 +230,7 @@ public class OpenSSMEService extends Service {
 
                         ActiveGate();
 
-                        ChangeNotoficationContent();
+                        UpdateNotification();
 
                         UpdateIntervalAlgorithm();
 
@@ -389,21 +380,11 @@ public class OpenSSMEService extends Service {
         return Math.floor(value*100) / 100;
     }
 
-    private  String timeConversion(int totalSeconds) {
-
-        final int MINUTES_IN_AN_HOUR = 60;
-        final int SECONDS_IN_A_MINUTE = 60;
-
-        int seconds = totalSeconds % SECONDS_IN_A_MINUTE;
-        int totalMinutes = totalSeconds / SECONDS_IN_A_MINUTE;
-        int minutes = totalMinutes % MINUTES_IN_AN_HOUR;
-        int hours = totalMinutes / MINUTES_IN_AN_HOUR;
-
-        return hours + ":" + minutes + ":" + seconds;
-    }
 
     private String secondsToString(int pTime) {
         return String.format("%02d:%02d", pTime / 60, pTime % 60);
     }
+
+
 
 }

@@ -43,6 +43,7 @@ public class Constants {
     public static final String READ_CONTACTS = "android.permission.READ_CONTACTS";
     public static final String READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     public static final String WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
+    public static final String PROVIDERS_CHANGED = "android.location.PROVIDERS_CHANGED";
 
 
     public static final String GPS = "location_update";
@@ -57,7 +58,7 @@ public class Constants {
     public static final String FOLLOW_ME = "follow_me";
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
-    public static final String GPS_SERVICE = "gps_service";
+    public static final String GPS_STATUS = "gps_status";
     public static final String ETA = "eta";
     public static final String GATE_RADIUS = "gate_radius";
 

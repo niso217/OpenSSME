@@ -1,6 +1,7 @@
 package com.example.root.openssme.Helpers;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -36,18 +37,20 @@ import java.util.Observer;
 import static android.content.Context.LOCATION_SERVICE;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
+import static com.example.root.openssme.Utils.Constants.PROVIDERS_CHANGED;
 
 /**
  * Created by nirb on 31/01/2017.
  */
 
 
-public class LocationHelper implements LocationListener, Observer {
+public class LocationHelper extends BroadcastReceiver implements LocationListener, Observer {
 
     private GoogleConnection mGoogleConnection;
     private final String TAG = LocationHelper.class.getSimpleName();
     private Context mContext;
     private boolean mIsLocationUpdatesOn;
+    public  boolean mIsGPSOn;
     private LocationRequest mLocationRequest;
     private Runnable mHandlerTask;
     private Handler mHandler;
@@ -78,6 +81,12 @@ public class LocationHelper implements LocationListener, Observer {
 
         InitLocationManager();
         reCheckWifiConnection();
+        mIsGPSOn = IsGpsActive();
+
+    }
+
+    public LocationHelper()
+    {
 
     }
 
@@ -229,7 +238,12 @@ public class LocationHelper implements LocationListener, Observer {
         intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
         intent.putExtra(Constants.LOCATION, getLocation());
         LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+    }
 
+    private void GPSChangedBroadcast() {
+        Intent intent = new Intent(PROVIDERS_CHANGED);
+        intent.putExtra(Constants.GPS_STATUS, mIsGPSOn);
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
     }
 
 
@@ -276,5 +290,14 @@ public class LocationHelper implements LocationListener, Observer {
 
     public GoogleConnection getGoogleConnection() {
         return mGoogleConnection;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent.getAction().matches(PROVIDERS_CHANGED))
+        {
+            mIsGPSOn = IsGpsActive();
+            GPSChangedBroadcast();
+        }
     }
 }

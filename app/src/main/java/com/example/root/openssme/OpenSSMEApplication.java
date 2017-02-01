@@ -3,6 +3,7 @@ package com.example.root.openssme;
 import android.app.Application;
 import android.content.Intent;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
 
 import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
@@ -14,40 +15,54 @@ import com.example.root.openssme.common.GoogleConnection;
 import java.io.File;
 import java.io.IOException;
 
+import static com.example.root.openssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
+
 
 public class OpenSSMEApplication extends Application{
 
     private static final String TAG = "OpenSSMEApplication";
     private SocialNetworkHelper mSocialNetworkHelper;
+    private Runnable mHandlerTask;
+
+
 
     private static OpenSSMEApplication mInstance;
     @Override
     public void onCreate() {
         super.onCreate();
 
-        ReadLogs();
-
         mInstance = this;
-        mSocialNetworkHelper = new SocialNetworkHelper(this);
 
-        //get the current shared prefernce settings and store to settings object
-        PrefUtils.getSettings(this);
+        mHandlerTask = new Runnable() {
+            @Override
+            public void run() {
+                ReadLogs();
 
-        //initialize user from share pref saved user params
-        User mUser = PrefUtils.getCurrentUser(getApplicationContext());
-        if (mUser != null) {
-            Log.d(TAG,"new sign in");
-            User.getInstance().copy(mUser);
-        }
-        if (!GoogleConnection.getInstance(this).getGoogleApiClient().isConnected()){
-            GoogleConnection.getInstance(this).getGoogleApiClient().connect();
-        }
-        //initialize user from share pref saved user params
-        ListGateComplexPref mListGateComplexPref = PrefUtils.getCurrentGate(getApplicationContext());
-        if (mListGateComplexPref != null) {
-            Log.d(TAG,"Retrived Array of Gate");
-            ListGateComplexPref.getInstance().copy(mListGateComplexPref);
-        }
+                mSocialNetworkHelper = new SocialNetworkHelper(getApplicationContext());
+
+                //get the current shared prefernce settings and store to settings object
+                PrefUtils.getSettings(getApplicationContext());
+
+                //initialize user from share pref saved user params
+                User mUser = PrefUtils.getCurrentUser(getApplicationContext());
+                if (mUser != null) {
+                    Log.d(TAG,"new sign in");
+                    User.getInstance().copy(mUser);
+                }
+                if (!GoogleConnection.getInstance(getApplicationContext()).getGoogleApiClient().isConnected()){
+                    GoogleConnection.getInstance(getApplicationContext()).getGoogleApiClient().connect();
+                }
+                //initialize user from share pref saved user params
+                ListGateComplexPref mListGateComplexPref = PrefUtils.getCurrentGate(getApplicationContext());
+                if (mListGateComplexPref != null) {
+                    Log.d(TAG,"Retrived Array of Gate");
+                    ListGateComplexPref.getInstance().copy(mListGateComplexPref);
+                }
+            }
+        };
+        mHandlerTask.run();
+
+
 
 
     }
