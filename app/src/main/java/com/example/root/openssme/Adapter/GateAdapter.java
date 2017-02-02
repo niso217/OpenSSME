@@ -10,10 +10,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.root.openssme.Listener.SwipeDismissListViewTouchListener;
-import com.example.root.openssme.OpenSSMEService;
+import com.example.root.openssme.Service.OpenSSMEService;
 import com.example.root.openssme.R;
-import com.example.root.openssme.SocialNetwork.Gate;
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
+import com.example.root.openssme.Objects.Gate;
+import com.example.root.openssme.Objects.ListGateComplexPref;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.squareup.picasso.Picasso;
 

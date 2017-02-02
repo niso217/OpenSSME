@@ -1,15 +1,12 @@
 package com.example.root.openssme.Utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
-import android.widget.Toast;
 
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.Settings;
-import com.example.root.openssme.SocialNetwork.User;
+import com.example.root.openssme.Objects.ListGateComplexPref;
+import com.example.root.openssme.Objects.Settings;
+import com.example.root.openssme.Objects.User;
 
 /**
  * Created by nir on 16/03/2016.

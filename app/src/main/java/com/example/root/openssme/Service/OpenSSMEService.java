@@ -1,4 +1,4 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Service;
 
 /**
  * Created by nirb on 07/12/2016.
@@ -14,9 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -28,12 +25,13 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.example.root.openssme.Activity.MainActivity;
 import com.example.root.openssme.Helpers.LocationHelper;
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.Settings;
+import com.example.root.openssme.R;
+import com.example.root.openssme.Objects.ListGateComplexPref;
+import com.example.root.openssme.Objects.Settings;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.Constants.GateStatus;
@@ -238,12 +236,16 @@ public class OpenSSMEService extends Service {
 
                         DATABroadcast();
 
+                        ListViewBroadcast();
+
                     }
                 }
             }
         };
         mHandlerTask.run();
     }
+
+
 
 
     @Nullable
@@ -373,6 +375,12 @@ public class OpenSSMEService extends Service {
         intent.putExtra(Constants.ETA, secondsToString(eta.intValue()));
         intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().getClosestGate().status.status());
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void ListViewBroadcast() {
+        Intent intent = new Intent(Constants.DATA_CHANGED);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
     }
 
     private double Floor(double value)

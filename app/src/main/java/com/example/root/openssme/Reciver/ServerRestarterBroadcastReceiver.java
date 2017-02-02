@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.root.openssme.OpenSSMEService;
+import com.example.root.openssme.Service.OpenSSMEService;
 
 /**
  * Created by fabio on 24/01/2016.

@@ -1,4 +1,4 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Activity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -27,11 +27,16 @@ import android.view.Window;
 import android.widget.TextView;
 
 import com.example.root.openssme.Fragments.GateListFragment;
+import com.example.root.openssme.Fragments.GateListFragmentNew;
 import com.example.root.openssme.Fragments.MainFragment;
 import com.example.root.openssme.Fragments.MapFragment;
 import com.example.root.openssme.Fragments.SettingsFragment;
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.common.State;
+import com.example.root.openssme.Objects.Settings;
+import com.example.root.openssme.OpenSSMEApplication;
+import com.example.root.openssme.Service.OpenSSMEService;
+import com.example.root.openssme.R;
+import com.example.root.openssme.Objects.ListGateComplexPref;
+import com.example.root.openssme.Common.State;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.api.PendingResult;
@@ -46,16 +51,14 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.squareup.picasso.Picasso;
 
 import de.hdodenhof.circleimageview.CircleImageView;
-import com.example.root.openssme.SocialNetwork.User;
+import com.example.root.openssme.Objects.User;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
-import com.example.root.openssme.common.GoogleConnection;
+import com.example.root.openssme.Common.GoogleConnection;
 
 import java.util.Observable;
 import java.util.Observer;
 
-import static com.example.root.openssme.Utils.Constants.GPS_PROVIDER;
-import static com.example.root.openssme.Utils.Constants.GPS_STATUS;
 import static com.example.root.openssme.Utils.Constants.PROVIDERS_CHANGED;
 
 public class MainActivity extends AppCompatActivity implements
@@ -325,7 +328,9 @@ public class MainActivity extends AppCompatActivity implements
             case R.id.gate_list:
                 fragment = getSupportFragmentManager().findFragmentByTag(GATE_LIST_FRAGMENT);
                 if (fragment==null){
-                    fragment = new GateListFragment();
+                    //fragment = new GateListFragment();
+                    fragment = new GateListFragmentNew();
+
                 }
                 title  = "My Gates";
                 viewIsAtHome = false;
@@ -372,11 +377,11 @@ public class MainActivity extends AppCompatActivity implements
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)){
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
-                        if (com.example.root.openssme.SocialNetwork.Settings.getInstance().isFirst_run())
+                        if (Settings.getInstance().isFirst_run())
                         {
                             onCoachMark();
                             PrefUtils.setSettings(getApplicationContext());
-                            com.example.root.openssme.SocialNetwork.Settings.getInstance().setFirst_run(false);
+                            Settings.getInstance().setFirst_run(false);
 
                         }
 

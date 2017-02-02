@@ -1,4 +1,4 @@
-package com.example.root.openssme.SocialNetwork;
+package com.example.root.openssme.Objects;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -24,6 +24,7 @@ public class Gate {
     public String imagePath;
     public GateStatus status;
     public boolean active;
+
 
 
     public Gate(String gateName, String phone, LatLng location,String imagePath) {

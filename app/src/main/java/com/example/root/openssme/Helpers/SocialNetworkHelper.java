@@ -1,4 +1,4 @@
-package com.example.root.openssme.SocialNetwork;
+package com.example.root.openssme.Helpers;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -6,18 +6,14 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.Log;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
-import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.share.ShareApi;
 import com.facebook.share.Sharer;
@@ -26,17 +22,12 @@ import com.facebook.share.model.SharePhoto;
 import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareDialog;
 import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.iid.InstanceID;
 import com.google.android.gms.plus.PlusShare;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import com.example.root.openssme.R;
-import com.example.root.openssme.common.GoogleConnection;
+import com.example.root.openssme.Common.GoogleConnection;
 
 /**
  * Created by nir on 19/03/2016.

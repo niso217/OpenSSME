@@ -69,6 +69,8 @@ public class Constants {
     public static final String STOP_SERVICE = "OpenSSME.OpenSSMEService.StopService";
     public static final String LOCATION_SERVICE = "OpenSSME.OpenSSMEService.Location";
     public static final String LOCATION_SERVICE_DATA = "OpenSSME.OpenSSMEService.LocationServiceData";
+    public static final String DATA_CHANGED = "OpenSSME.OpenSSMEService.DATA_CHANGED";
+
     public static final String STARTFOREGROUND_ACTION = "OpenSSME.OpenSSMEService.StartForeground";
     public static final String MAIN_ACTION = "OpenSSME.Action.Main";
 

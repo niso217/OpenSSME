@@ -1,6 +1,4 @@
-package com.example.root.openssme.SocialNetwork;
-
-import android.content.Context;
+package com.example.root.openssme.Objects;
 
 /**
  * Created by niso2 on 01/06/2016.

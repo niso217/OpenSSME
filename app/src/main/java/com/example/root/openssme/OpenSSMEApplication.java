@@ -3,19 +3,17 @@ package com.example.root.openssme;
 import android.app.Application;
 import android.content.Intent;
 import android.os.Environment;
-import android.os.Handler;
 import android.util.Log;
 
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.SocialNetworkHelper;
-import com.example.root.openssme.SocialNetwork.User;
+import com.example.root.openssme.Service.OpenSSMEService;
+import com.example.root.openssme.Objects.ListGateComplexPref;
+import com.example.root.openssme.Helpers.SocialNetworkHelper;
+import com.example.root.openssme.Objects.User;
 import com.example.root.openssme.Utils.PrefUtils;
-import com.example.root.openssme.common.GoogleConnection;
+import com.example.root.openssme.Common.GoogleConnection;
 
 import java.io.File;
 import java.io.IOException;
-
-import static com.example.root.openssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 
 
 public class OpenSSMEApplication extends Application{

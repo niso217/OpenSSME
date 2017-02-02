@@ -33,11 +33,11 @@ import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.Toast;
 
-import com.example.root.openssme.OpenSSMEService;
+import com.example.root.openssme.Service.OpenSSMEService;
 import com.example.root.openssme.R;
-import com.example.root.openssme.SocialNetwork.Gate;
-import com.example.root.openssme.SocialNetwork.ListGateComplexPref;
-import com.example.root.openssme.SocialNetwork.Settings;
+import com.example.root.openssme.Objects.Gate;
+import com.example.root.openssme.Objects.ListGateComplexPref;
+import com.example.root.openssme.Objects.Settings;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.PictUtil;
 import com.google.android.gms.common.api.Status;

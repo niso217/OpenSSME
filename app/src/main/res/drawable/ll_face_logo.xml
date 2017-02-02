@@ -6,6 +6,6 @@
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@drawable/gate_3"/>
+            android:src="@drawable/openssme_logo"/>
     </item>
 </layer-list>

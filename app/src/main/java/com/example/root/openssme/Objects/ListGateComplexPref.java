@@ -1,9 +1,8 @@
-package com.example.root.openssme.SocialNetwork;
+package com.example.root.openssme.Objects;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by root on 02/05/16.

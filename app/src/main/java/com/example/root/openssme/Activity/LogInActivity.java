@@ -1,10 +1,9 @@
-package com.example.root.openssme;
+package com.example.root.openssme.Activity;
 
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -20,25 +19,14 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.example.root.openssme.R;
 import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PermissionsUtil;
 import com.example.root.openssme.Utils.PrefUtils;
-import com.example.root.openssme.common.GoogleConnection;
-import com.example.root.openssme.common.State;
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
+import com.example.root.openssme.Common.GoogleConnection;
+import com.example.root.openssme.Common.State;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package com.example.root.openssme.common;
+package com.example.root.openssme.Common;
 
 /**
  * Created by nir on 22/04/2016.

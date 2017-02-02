@@ -1,4 +1,4 @@
-package com.example.root.openssme.SocialNetwork;
+package com.example.root.openssme.Objects;
 
 /**
  * Created by nir on 16/03/2016.

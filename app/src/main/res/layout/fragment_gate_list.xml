@@ -6,9 +6,19 @@
 
     <!-- TODO: Update blank fragment layout -->
 
-    <ListView
-        android:layout_width="match_parent"
+    <!--<ListView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:id="@+id/listView"-->
+        <!--android:layout_gravity="center" />-->
+
+    <ExpandableListView
+        android:id="@+id/expandableListView"
         android:layout_height="match_parent"
-        android:id="@+id/listView"
-        android:layout_gravity="center" />
+        android:layout_width="match_parent"
+        android:groupIndicator="@null"
+        android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
+        android:divider="@android:color/darker_gray"
+        android:childDivider="#00000000"
+        android:dividerHeight="0.5dp" />
 </FrameLayout>

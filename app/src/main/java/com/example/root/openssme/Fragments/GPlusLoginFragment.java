@@ -1,4 +1,4 @@
-package com.example.root.openssme.SocialNetwork;
+package com.example.root.openssme.Fragments;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -15,7 +15,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.root.openssme.LogInActivity;
+import com.example.root.openssme.Activity.LogInActivity;
+import com.example.root.openssme.Objects.User;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -29,8 +30,8 @@ import java.util.Observer;
 
 import com.example.root.openssme.R;
 import com.example.root.openssme.Utils.PrefUtils;
-import com.example.root.openssme.common.GoogleConnection;
-import com.example.root.openssme.common.State;
+import com.example.root.openssme.Common.GoogleConnection;
+import com.example.root.openssme.Common.State;
 
 public class GPlusLoginFragment extends Fragment implements
         Observer,
