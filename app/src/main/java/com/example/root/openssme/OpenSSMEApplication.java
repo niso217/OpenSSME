@@ -86,7 +86,7 @@ public class OpenSSMEApplication extends Application{
             // clear the previous logcat and then write the new one to the file
             try {
                 Process process = Runtime.getRuntime().exec( "logcat -c");
-                process = Runtime.getRuntime().exec( "logcat -f " + logFile + " *:S LocationService2:D MainActivity:D");
+                process = Runtime.getRuntime().exec( "logcat -f " + logFile + " *:S OpenSSMEService:D");
             } catch ( IOException e ) {
                 e.printStackTrace();
             }

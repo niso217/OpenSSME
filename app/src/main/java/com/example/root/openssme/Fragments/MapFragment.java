@@ -106,7 +106,7 @@ public class MapFragment extends Fragment implements
         super.onActivityCreated(savedInstanceState);
 
         //keep screen on when follow me is true
-        if (Settings.getInstance().isFollow_me()){
+        if (Settings.getInstance().isFollow_me()) {
             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         }
@@ -130,7 +130,6 @@ public class MapFragment extends Fragment implements
         }
 
     }
-
 
 
     @Override
@@ -160,14 +159,12 @@ public class MapFragment extends Fragment implements
     }
 
 
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         mapView.onDestroy();
 
     }
-
 
 
     @Override
@@ -181,13 +178,13 @@ public class MapFragment extends Fragment implements
 
         super.onDestroyView();
         Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));
-        if (fragment != null){
+        if (fragment != null) {
             getActivity().getSupportFragmentManager().beginTransaction()
                     .remove(fragment)
                     .commit();
         }
 
-}
+    }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -198,7 +195,7 @@ public class MapFragment extends Fragment implements
                 case Constants.LOCATION_UPDATE_FLAG:
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
-                        if (map!=null && Settings.getInstance().isFollow_me()){
+                        if (map != null && Settings.getInstance().isFollow_me()) {
                             onLocationChanged(intent);
                         }
                         SetUpCircle();
@@ -239,17 +236,17 @@ public class MapFragment extends Fragment implements
         restoreMarkerArrayToMap();
 
         for (int i = 0; i < mMarkers.size(); i++) {
-            if (mMarkers.get(i) != null && mMarkers.get(i).getPosition()!=null) {
+            if (mMarkers.get(i) != null && mMarkers.get(i).getPosition() != null) {
                 Marker temp = map.addMarker(mMarkers.get(i));
                 Location marker = LocationToLatLng(temp.getPosition());
                 if (mCurrentMarker != null && temp != null) {
-                    if (mCurrentMarker.distanceTo(marker)<0.0001)
+                    if (mCurrentMarker.distanceTo(marker) < 0.0001)
                         temp.showInfoWindow();
-                    }
                 }
-
             }
+
         }
+    }
 
 
     private void ChangeMapType() {
@@ -274,7 +271,6 @@ public class MapFragment extends Fragment implements
     }
 
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -296,7 +292,7 @@ public class MapFragment extends Fragment implements
         } catch (InflateException e) {
             //Log.e(TAG, "Inflate exception");
         }
-        if (autocompleteFragment==null) {
+        if (autocompleteFragment == null) {
             autocompleteFragment = (PlaceAutocompleteFragment)
                     getActivity().getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
@@ -307,28 +303,28 @@ public class MapFragment extends Fragment implements
     }
 
 
-
     @Override
     public void onPlaceSelected(Place place) {
 
-        if (map!=null) {
+        if (map != null) {
             Toast.makeText(getContext(), place.getAddress(), Toast.LENGTH_LONG).show();
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(place.getLatLng()).zoom(15).build();
 
-             Marker PlaceMarker = map.addMarker(new MarkerOptions()
+            Marker PlaceMarker = map.addMarker(new MarkerOptions()
                     .position(place.getLatLng())
-                     .draggable(true)
-                    .title(place.getAddress()+"")
-                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-
+                    .draggable(true)
+                    .snippet(place.getAddress() + "")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
             map.animateCamera(CameraUpdateFactory
                     .newCameraPosition(cameraPosition));
+
+            PlaceMarker.showInfoWindow();
+
         }
 
     }
-
 
 
     @Override
@@ -336,11 +332,10 @@ public class MapFragment extends Fragment implements
 
     }
 
-    private void ScreenSetup(){
+    private void ScreenSetup() {
         if (Settings.getInstance().isScreen()) {
             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
-        else
+        } else
             getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -366,10 +361,10 @@ public class MapFragment extends Fragment implements
     public void onLocationChanged(Intent Intent) {
 
         Bundle b = Intent.getExtras();
-        Location location = (Location)b.get(android.location.LocationManager.KEY_LOCATION_CHANGED);
+        Location location = (Location) b.get(android.location.LocationManager.KEY_LOCATION_CHANGED);
         //zoom to current position:
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(location.getLatitude(),location.getLongitude())).zoom(map.getCameraPosition().zoom).build();
+                .target(new LatLng(location.getLatitude(), location.getLongitude())).zoom(map.getCameraPosition().zoom).build();
 
         map.animateCamera(CameraUpdateFactory
                 .newCameraPosition(cameraPosition));
@@ -377,9 +372,9 @@ public class MapFragment extends Fragment implements
     }
 
 
-    private void SetUpCircle(){
+    private void SetUpCircle() {
 
-        if (ListGateComplexPref.getInstance().gates.size()>0 && map!=null) {
+        if (ListGateComplexPref.getInstance().gates.size() > 0 && map != null) {
             if (mCircle == null) {
                 mCircle = map.addCircle(new CircleOptions()
                         .center(ListGateComplexPref.getInstance().gates.get(0).location)
@@ -399,16 +394,16 @@ public class MapFragment extends Fragment implements
     @Override
     public void onMapLongClick(LatLng latLng) {
         mOnClickLatLang = latLng;
-         SetContactPickerIntent();
+        SetContactPickerIntent();
 
     }
 
     @Override
     public void onClick(View v) {
 
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.current_location:
-                if (map!=null) {
+                if (map != null) {
                     mOnClickLatLang = new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude());
                     SetContactPickerIntent();
                 }
@@ -445,8 +440,8 @@ public class MapFragment extends Fragment implements
 
     }
 
-    private void SetContactPickerIntent(){
-        Intent contact =  new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+    private void SetContactPickerIntent() {
+        Intent contact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
         startActivityForResult(contact, Constants.PICK_CONTACT);
     }
 
@@ -456,7 +451,7 @@ public class MapFragment extends Fragment implements
         // Decide what to do based on the original request code
         switch (requestCode) {
             case Constants.PICK_CONTACT:
-                if (resultCode == Activity.RESULT_OK){
+                if (resultCode == Activity.RESULT_OK) {
                     retrieveContactNumber(data);
                 }
                 break;
@@ -477,7 +472,7 @@ public class MapFragment extends Fragment implements
     }
 
     private void retrieveContactNumber(Intent intent) {
-        String  contactID = "";
+        String contactID = "";
         String contactName = "";
         String contactNumber = "";
         Bitmap photo = null;
@@ -485,12 +480,12 @@ public class MapFragment extends Fragment implements
 
         // getting contacts ID
         Cursor cursorContact = getContext().getContentResolver().query(intent.getData(),
-                new String[]{ContactsContract.Contacts._ID,ContactsContract.Contacts.DISPLAY_NAME},
+                new String[]{ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME},
                 null, null, null);
 
         if (cursorContact.moveToFirst()) {
 
-             contactID = cursorContact.getString(cursorContact.getColumnIndex(ContactsContract.Contacts._ID));
+            contactID = cursorContact.getString(cursorContact.getColumnIndex(ContactsContract.Contacts._ID));
             contactName = cursorContact.getString(cursorContact.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
 
         }
@@ -513,10 +508,15 @@ public class MapFragment extends Fragment implements
                 contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(Phone.NUMBER));
             }
 
+            if (contactNumber.equals("")) {
+                Log.d(TAG, "Phone Number Is Invalid");
+                Toast.makeText(getContext(), "Phone Number Is Invalid", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             cursorPhone.close();
-        }
-        catch (Exception e){
-            Toast.makeText(getContext(),"Contact with no phone number",Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Contact with no phone number", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -531,14 +531,13 @@ public class MapFragment extends Fragment implements
                 inputStream.close();
             }
 
-            PictUtil.saveToCacheFile(photo,contactID);
+            PictUtil.saveToCacheFile(photo, contactID);
 
-            if (photo==null){
-                photo = BitmapFactory.decodeResource(getContext().getResources(),R.drawable.gate);
-                PictUtil.saveToCacheFile(photo,contactID);
+            if (photo == null) {
+                photo = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.gate);
+                PictUtil.saveToCacheFile(photo, contactID);
 
             }
-
 
 
         } catch (IOException e) {
@@ -552,17 +551,19 @@ public class MapFragment extends Fragment implements
         String imagePath = PictUtil.getCacheFilename(contactID);
 
         //add new fate to the ListGateComplexPref
-        ListGateComplexPref.getInstance().gates.add(new Gate(contactName,contactNumber,mOnClickLatLang,imagePath));
+        ListGateComplexPref.getInstance().gates.add(new Gate(contactName, contactNumber, mOnClickLatLang, imagePath));
         //add the new ListGateComplexPref to shared pref
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getActivity());
 
         BitmapDescriptor defaultMarker = BitmapDescriptorFactory.fromBitmap(photo);
 
         MarkerOptions markerOptions = new MarkerOptions().position(mOnClickLatLang)
-                .title(contactName).snippet(contactNumber).icon(defaultMarker);
+                .title(contactName)
+                .snippet(contactNumber)
+                .icon(defaultMarker);
 
         // Creates and adds marker to the map
-        if (map!=null){
+        if (map != null) {
             Marker marker = map.addMarker(markerOptions);
             dropPinEffect(marker);
             SetUpCircle();
@@ -571,7 +572,7 @@ public class MapFragment extends Fragment implements
         mMarkers.add(markerOptions);
 
         //fist gate just added, start the service
-        if (ListGateComplexPref.getInstance().gates.size()==1){
+        if (ListGateComplexPref.getInstance().gates.size() == 1) {
 //            Intent OpenSSMEService = new Intent(getActivity(), LocationService2.class);
 //            getActivity().startService(OpenSSMEService);
             Intent startIntent = new Intent(getActivity(), OpenSSMEService.class);
@@ -615,12 +616,9 @@ public class MapFragment extends Fragment implements
     }
 
 
-
-
     @Override
     public void onInfoWindowClick(Marker marker) {
-        if (marker.isDraggable())
-        {
+        if (marker.isDraggable()) {
 
             mOnClickLatLang = marker.getPosition();
             marker.remove();
@@ -629,7 +627,7 @@ public class MapFragment extends Fragment implements
 
     }
 
-    private Location LocationToLatLng(LatLng latlng){
+    private Location LocationToLatLng(LatLng latlng) {
         Location MarkerLocation = new Location("dummy");
         MarkerLocation.setLatitude(latlng.latitude);
         MarkerLocation.setLatitude(latlng.longitude);
@@ -643,7 +641,7 @@ public class MapFragment extends Fragment implements
         return false;
     }
 
-    public void onCoachMark(){
+    public void onCoachMark() {
 
         final Dialog dialog = new Dialog(getContext());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -662,7 +660,6 @@ public class MapFragment extends Fragment implements
         });
         dialog.show();
     }
-
 
 
 };

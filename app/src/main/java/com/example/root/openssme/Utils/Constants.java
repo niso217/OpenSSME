@@ -29,6 +29,8 @@ public class Constants {
     public static final long DEFAULT_CHECK_WIFI_TASK = 20000;
     public static final long DEFAULT_RUN_SERVICE_TASK = 2000;
     public static final int DEFAULT_ACTIVE_COEFFICIENT = 2;
+    public static final int GOOGLE_MATRIX_API_REQ_TIME = 60 * 5;
+
 
 
 
@@ -61,6 +63,7 @@ public class Constants {
     public static final String GPS_STATUS = "gps_status";
     public static final String ETA = "eta";
     public static final String GATE_RADIUS = "gate_radius";
+    public static final String STRING_DIVIDER = "_OpenSSME_";
 
 
 

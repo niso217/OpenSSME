@@ -101,7 +101,6 @@ public class GateAdapter extends BaseAdapter {
         }
 
 
-        File photo = new File(gates.get(position).imagePath);
 
         TextView name = (TextView) view.findViewById(R.id.name);
         name.setText(gate.gateName);
@@ -111,6 +110,8 @@ public class GateAdapter extends BaseAdapter {
         distance.setText(Math.floor(gate.distance * 0.001 * 100) / 100 + " Km");
         TextView ETA = (TextView) view.findViewById(R.id.ETA);
         ETA.setText(Math.floor(gate.ETA * 100) / 100 + " Minutes");
+
+        File photo = new File(gates.get(position).imagePath);
 
         ImageView movieurl = (ImageView) view.findViewById(R.id.imageView);
         Picasso.with(context)

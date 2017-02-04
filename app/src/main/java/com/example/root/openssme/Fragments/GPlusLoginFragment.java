@@ -100,6 +100,14 @@ public class GPlusLoginFragment extends Fragment implements
         Log.i(TAG, "onDestroy()");
         mGoogleConnection.disconnect();
         mGoogleConnection.deleteObserver(this);
+        UnRegisterReceiver();
+    }
+
+    private void UnRegisterReceiver() {
+        if (mMessageReceiver != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
+            mMessageReceiver = null;
+        }
     }
 
     // [START onActivityResult]
@@ -209,6 +217,8 @@ public class GPlusLoginFragment extends Fragment implements
             }
         }
     };
+
+
 
     //Connection Failed
     private void startResolutionForResult(Intent intent){

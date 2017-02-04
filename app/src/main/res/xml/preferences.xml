@@ -4,14 +4,6 @@
         android:title="Update Information"
         android:key="update_category">
 
-        <android.support.v7.preference.ListPreference
-            android:key="service_provider"
-            android:title="Sampling Location"
-            android:summary="Pick the service you would like to use before entering the gate zone"
-            android:defaultValue="1"
-            android:entries="@array/Service"
-            android:entryValues="@array/ServiceValues"
-            />
 
         <android.support.v7.preference.ListPreference
             android:key="gps_distance"
@@ -31,14 +23,6 @@
             android:entryValues="@array/openDistanceValues"
             />
 
-        <android.support.v7.preference.ListPreference
-            android:key="profile"
-            android:title="Transportation Type"
-            android:summary="How will you get to your destination"
-            android:defaultValue="driving"
-            android:entries="@array/Profile"
-            android:entryValues="@array/ProfileValues"
-            />
 
         <android.support.v7.preference.SwitchPreferenceCompat
             android:key="screen"

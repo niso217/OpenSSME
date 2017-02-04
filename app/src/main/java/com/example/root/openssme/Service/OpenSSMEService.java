@@ -28,7 +28,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.root.openssme.Activity.MainActivity;
+import com.example.root.openssme.Helpers.GoogleMatrixRequest;
 import com.example.root.openssme.Helpers.LocationHelper;
+import com.example.root.openssme.Objects.Gate;
+import com.example.root.openssme.Objects.GoogleMatrixResponse;
 import com.example.root.openssme.R;
 import com.example.root.openssme.Objects.ListGateComplexPref;
 import com.example.root.openssme.Objects.Settings;
@@ -36,17 +39,21 @@ import com.example.root.openssme.Utils.Constants;
 import com.example.root.openssme.Utils.PrefUtils;
 import com.example.root.openssme.Utils.Constants.GateStatus;
 
+import java.util.Iterator;
+import java.util.List;
+
 import static com.example.root.openssme.Utils.Constants.DEFAULT_ACTIVE_COEFFICIENT;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 import static com.example.root.openssme.Utils.Constants.DEFAULT_RUN_SERVICE_TASK;
 import static com.example.root.openssme.Utils.Constants.DRIVING_SPEED;
+import static com.example.root.openssme.Utils.Constants.GOOGLE_MATRIX_API_REQ_TIME;
 import static com.example.root.openssme.Utils.Constants.RESTART_SERVICE;
 import static com.example.root.openssme.Utils.Constants.UPDATE_INTERVAL;
 
 
-public class OpenSSMEService extends Service {
+public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo {
     private final String TAG = OpenSSMEService.class.getSimpleName();
-    private int counter;
+    private int counter = -5;
     private Runnable mHandlerTask;
     private Handler mHandler;
     private Notification mNotification;
@@ -55,7 +62,7 @@ public class OpenSSMEService extends Service {
     private NotificationManager mNotificationManager;
     private long mGPSUpdateInterval = DEFAULT_LOCATION_INTERVAL;
     private LocationHelper mLocationHelper;
-    private PendingIntent mActivityIntent,mCallGateIntent,mStopServiceIntent;
+    private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
 
     public OpenSSMEService() {
         super();
@@ -101,7 +108,6 @@ public class OpenSSMEService extends Service {
         Worker();
 
 
-
     }
 
     private void setUpNotificationManager() {
@@ -114,22 +120,20 @@ public class OpenSSMEService extends Service {
         registerReceiver(receiver, filter);
     }
 
-    private void InitNotificationIntent()
-    {
+    private void InitNotificationIntent() {
         Intent intent = new Intent(this, MainActivity.class);
-         mActivityIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        mActivityIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         //building and attaching the stop button.
         Intent StopService = new Intent(this, NotificationStopService.class);
-         mStopServiceIntent = mActivityIntent.getBroadcast(this, 0, StopService, 0);
+        mStopServiceIntent = mActivityIntent.getBroadcast(this, 0, StopService, 0);
 
         // building and attaching the phone Icon ImageView.
         Intent CallGate = new Intent(this, NotificationCallGate.class);
-         mCallGateIntent = mActivityIntent.getBroadcast(this, 0, CallGate, 0);
+        mCallGateIntent = mActivityIntent.getBroadcast(this, 0, CallGate, 0);
     }
 
-    private NotificationCompat.Builder BuildNotification()
-    {
+    private NotificationCompat.Builder BuildNotification() {
         // Building the notification
         return new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.gate) // notification icon
@@ -137,13 +141,13 @@ public class OpenSSMEService extends Service {
                 .setContentText("Running. Tap to open.") // content text
                 .setTicker("Showing button notification") // status bar message
                 .setContentIntent(mActivityIntent)
-                .setColor(ContextCompat.getColor(this,R.color.teal))
-                .addAction(R.drawable.ic_call_black_18dp, "CALL " +ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
+                .setColor(ContextCompat.getColor(this, R.color.teal))
+                .addAction(R.drawable.ic_call_black_18dp, "CALL " + ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
                 .addAction(R.drawable.ic_power_settings_new_black_18dp, "SWITCH OFF", mStopServiceIntent)
                 .setOngoing(true);
     }
 
-    void InitServiceNotification(){
+    void InitServiceNotification() {
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 
@@ -155,13 +159,13 @@ public class OpenSSMEService extends Service {
         }
     }
 
-    private void UpdateNotification()
-    {
+    private void UpdateNotification() {
         mNotificationManager.notify(
                 Constants.FOREGROUND_SERVICE,
                 BuildNotification().build());
 
     }
+
     /**
      * Called when user clicks the "play/pause" button on the on-going system Notification.
      */
@@ -238,14 +242,15 @@ public class OpenSSMEService extends Service {
 
                         ListViewBroadcast();
 
+                        if (counter% GOOGLE_MATRIX_API_REQ_TIME ==0)
+                        DistanceMatrixRequest();
+
                     }
                 }
             }
         };
         mHandlerTask.run();
     }
-
-
 
 
     @Nullable
@@ -274,8 +279,7 @@ public class OpenSSMEService extends Service {
 
     private void CalcGatesDistanceAndETA() {
 
-        for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++)
-        {
+        for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
             Location GateLocation = ListGateComplexPref.getInstance().gates.get(i).Location;
             ListGateComplexPref.getInstance().gates.get(i).distance = new Double(mLocationHelper.getLocation().distanceTo(GateLocation));
             double distance = ListGateComplexPref.getInstance().gates.get(i).distance / 1000; //to Km
@@ -371,7 +375,7 @@ public class OpenSSMEService extends Service {
         intent.putExtra(Constants.GPS, mLocationHelper.isIsLocationUpdatesOn() + "");
         intent.putExtra(Constants.SPEED, mLocationHelper.getSpeed() == 0 ? "No Movement" : Floor(mLocationHelper.getSpeed()) + " km/h");
         intent.putExtra(Constants.GATE_NAME, ListGateComplexPref.getInstance().getClosestGate().gateName);
-        Double eta = (ListGateComplexPref.getInstance().getClosestGate().ETA*60);
+        Double eta = (ListGateComplexPref.getInstance().getClosestGate().ETA * 60);
         intent.putExtra(Constants.ETA, secondsToString(eta.intValue()));
         intent.putExtra(Constants.GATE_RADIUS, ListGateComplexPref.getInstance().getClosestGate().status.status());
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -383,9 +387,8 @@ public class OpenSSMEService extends Service {
 
     }
 
-    private double Floor(double value)
-    {
-        return Math.floor(value*100) / 100;
+    private double Floor(double value) {
+        return Math.floor(value * 100) / 100;
     }
 
 
@@ -393,6 +396,37 @@ public class OpenSSMEService extends Service {
         return String.format("%02d:%02d", pTime / 60, pTime % 60);
     }
 
+    private void DistanceMatrixRequest() {
+        String destinations = "";
+        String origins = mLocationHelper.getLatitude() + "," + mLocationHelper.getLongitude();
+        Iterator<Gate> iterator = ListGateComplexPref.getInstance().gates.iterator();
+
+        while (iterator.hasNext()) {
+            Gate current = iterator.next();
+            destinations += "|" + current.location.latitude + "," + current.location.longitude;
+        }
+        String url = "https://maps.googleapis.com/maps/api/distancematrix/json?" +
+                "units=metric&" +
+                "origins=" + origins + "&" +
+                "destinations=" + destinations.substring(1) + "&" +
+                "key=" + getResources().getString(R.string.google_app_id);
+        new GoogleMatrixRequest(OpenSSMEService.this).execute(url);
+    }
+
+    @Override
+    public void setGoogleMatrixResponse(GoogleMatrixResponse response) {
+        List<String> distance = response.getDistance();
+        List<String> duration = response.getDuration();
+
+        if (distance.size() == duration.size() && distance.size() == ListGateComplexPref.getInstance().gates.size()) {
+            for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+                ListGateComplexPref.getInstance().gates.get(i).setGoogleDistance(distance.get(i));
+                ListGateComplexPref.getInstance().gates.get(i).setGoogleETA(duration.get(i));
+            }
+
+        }
+
+    }
 
 
 }

@@ -8,9 +8,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -20,20 +20,27 @@ import com.example.root.openssme.Objects.ListGateComplexPref;
 import com.example.root.openssme.R;
 import com.example.root.openssme.Service.OpenSSMEService;
 import com.example.root.openssme.Utils.PrefUtils;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+
+import static com.example.root.openssme.Utils.Constants.STRING_DIVIDER;
 
 public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
 
+    private final String TAG = CustomExpandableListAdapter.class.getSimpleName();
+
     private Context context;
     private List<String> expandableListTitle;
-    private HashMap<String, List<String>> expandableListDetail;
+    private LinkedHashMap<String, List<String>> expandableListDetail;
     private ExpandableListView mExpandableListView;
 
     public CustomExpandableListAdapter(Context context, List<String> expandableListTitle,
-                                       HashMap<String, List<String>> expandableListDetail,ExpandableListView listView) {
+                                       LinkedHashMap<String, List<String>> expandableListDetail,ExpandableListView listView) {
         this.context = context;
         this.expandableListTitle = expandableListTitle;
         this.expandableListDetail = expandableListDetail;
@@ -60,8 +67,22 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.list_item, null);
         }
-        TextView expandedListTextView = (TextView) convertView
-                .findViewById(R.id.expandedListItem);
+        TextView expandedListTextView = (TextView) convertView.findViewById(R.id.expandedListItem);
+        ImageView expandedListImageView = (ImageView) convertView.findViewById(R.id.imageView);
+
+        switch(expandedListPosition)
+        {
+            case 0:
+                expandedListImageView.setImageResource(R.drawable.ic_call_black_48dp);
+                break;
+            case 1:
+                expandedListImageView.setImageResource(R.drawable.ic_query_builder_black_48dp);
+                break;
+            case 2:
+                expandedListImageView.setImageResource(R.drawable.ic_near_me_black_48dp);
+                break;
+        }
+
         expandedListTextView.setText(expandedListText);
 
         convertView.setEnabled(false);
@@ -94,7 +115,13 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
     public View getGroupView(final int listPosition, final boolean isExpanded,
                              View convertView, ViewGroup parent) {
 
-        String listTitle = ListGateComplexPref.getInstance().gates.get(listPosition).gateName;
+        String data = (String) getGroup(listPosition);
+        String [] data_array = data.split(STRING_DIVIDER);
+        String title = data_array[0];
+        String image_path = data_array[1];
+
+
+
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context.
                     getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -105,14 +132,19 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
                     new SwipeDismissListViewTouchListener.DismissCallbacks() {
                         @Override
                         public boolean canDismiss(int position) {
-                            return true;
-
+                            long packedPosition = mExpandableListView.getExpandableListPosition(position);
+                            int itemType = ExpandableListView.getPackedPositionType(packedPosition);
+                            /*  if group item clicked */
+                            if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+                                return true;
+                            }
+                            return false;
                         }
 
                         @Override
                         public void onDismiss(ListView listView, int[] reverseSortedPositions) {
                             for (final int position : reverseSortedPositions) {
-
+                                Log.d(TAG,"onDismiss " + position);
                                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                                 builder.setMessage("Do you want to remove?");
                                 builder.setCancelable(false);
@@ -131,8 +163,6 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
                                 AlertDialog alertDialog = builder.create();
                                 alertDialog.show();
                             }
-                                //mExpandableListView.getSelectedPosition();
-                                //DeletePosition(position);
                             }
                         }));
 
@@ -140,7 +170,15 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
         }
         TextView listTitleTextView = (TextView) convertView.findViewById(R.id.listTitle);
         listTitleTextView.setTypeface(null, Typeface.BOLD);
-        listTitleTextView.setText(listTitle);
+        listTitleTextView.setText(title);
+
+
+        ImageView image = (ImageView) convertView.findViewById(R.id.imageView);
+        Picasso.with(context)
+                .load(new File(image_path))
+                .resize(200, 200)
+                .centerCrop()
+                .into(image);
 
 
 
@@ -167,6 +205,10 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
             OpenSSMEService.mCodeBlocker = false;
 
         }
+        notifyChange();
+    }
+
+    public void notifyChange(){
         expandableListDetail = ExpandableListDataPump.getData();
         expandableListTitle = new ArrayList(expandableListDetail.keySet());
         notifyDataSetChanged();

@@ -25,6 +25,7 @@ import com.example.root.openssme.Utils.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class GateListFragmentNew extends Fragment implements
@@ -32,11 +33,10 @@ public class GateListFragmentNew extends Fragment implements
         ExpandableListView.OnGroupCollapseListener,
         ExpandableListView.OnChildClickListener {
 
-    private GateAdapter mAdapter;
     ExpandableListView expandableListView;
-    ExpandableListAdapter expandableListAdapter;
+    CustomExpandableListAdapter expandableListAdapter;
     List<String> expandableListTitle;
-    HashMap<String, List<String>> expandableListDetail;
+    LinkedHashMap<String, List<String>> expandableListDetail;
     private int lastExpandedPosition = -1;
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -44,10 +44,16 @@ public class GateListFragmentNew extends Fragment implements
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            //expandableListAdapter
+            expandableListAdapter.notifyChange();
 
         }
     };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        UnRegisterReceiver();
+    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -98,5 +104,12 @@ public class GateListFragmentNew extends Fragment implements
             expandableListView.collapseGroup(lastExpandedPosition);
         }
         lastExpandedPosition = groupPosition;
+    }
+
+    private void UnRegisterReceiver() {
+        if (mMessageReceiver != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
+            mMessageReceiver = null;
+        }
     }
 }

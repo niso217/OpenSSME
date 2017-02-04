@@ -3,23 +3,28 @@ package com.example.root.openssme.Objects;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import static com.example.root.openssme.Utils.Constants.STRING_DIVIDER;
+
 public class ExpandableListDataPump {
-    public static HashMap<String, List<String>> getData() {
+    public static LinkedHashMap<String, List<String>> getData() {
         ListGateComplexPref.getInstance().sort();
-        HashMap<String, List<String>> expandableListDetail = new HashMap();
+        LinkedHashMap<String, List<String>> expandableListDetail = new LinkedHashMap();
         Iterator<Gate> iterator = ListGateComplexPref.getInstance().gates.iterator();
-        int index = 0;
         while (iterator.hasNext()) {
-            Gate current = iterator.next();
             List<String> details = new ArrayList();
+            Gate current = iterator.next();
             details.add(current.phone);
-            details.add(current.ETA.toString());
-            details.add(current.distance.toString());
-            details.add(current.status.status());
-            expandableListDetail.put(index++ +"", details);
+            details.add(current.getETA());
+            details.add(current.getDistance());
+            expandableListDetail.put(current.gateName + STRING_DIVIDER + current.getImagePath(), details);
         }
         return expandableListDetail;
     }
+
+
+
+
 }

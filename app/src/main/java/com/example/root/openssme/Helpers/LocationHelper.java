@@ -57,6 +57,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     private double mCurrentAccuracy;
 
 
+
     public LocationHelper(Context context) {
 
         this.mContext = context;
