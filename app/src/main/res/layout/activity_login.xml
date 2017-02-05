@@ -34,7 +34,7 @@
             />
 
         <fragment
-            android:name="com.example.root.openssme.Fragments.FacebookLoginFragment"
+            android:name="com.open.ssme.Fragments.FacebookLoginFragment"
             android:id="@+id/facebook"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
             tools:layout="@layout/fragment_google" />
 
         <fragment
-            android:name="com.example.root.openssme.Fragments.GPlusLoginFragment"
+            android:name="com.open.ssme.Fragments.GPlusLoginFragment"
             android:id="@+id/google"
             android:layout_width="200dp"
             android:layout_height="wrap_content"

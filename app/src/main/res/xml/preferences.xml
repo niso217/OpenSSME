@@ -9,7 +9,7 @@
             android:key="gps_distance"
             android:title="GPS Activation Distance"
             android:summary="Define the distance to start the GPS tracking"
-            android:defaultValue="6"
+            android:defaultValue="3"
             android:entries="@array/GPSDistance"
             android:entryValues="@array/GPSDistanceValues"
             />

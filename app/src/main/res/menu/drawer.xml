@@ -4,22 +4,16 @@
     <group android:checkableBehavior="single">
 
         <item
-            android:id="@+id/main"
+            android:id="@+id/gate_list"
             android:checked="false"
-            android:icon="@drawable/ic_home_black_24dp"
-            android:title="@string/main" />
+            android:icon="@drawable/ic_favorite_black_24dp"
+            android:title="@string/events" />
 
         <item
             android:id="@+id/map"
             android:checked="false"
             android:icon="@drawable/ic_map_black_24dp"
             android:title="@string/map" />
-
-        <item
-            android:id="@+id/gate_list"
-            android:checked="false"
-            android:icon="@drawable/ic_favorite_black_24dp"
-            android:title="@string/events" />
 
         <item
             android:id="@+id/share"

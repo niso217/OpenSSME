@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.root.openssme">
+    package="com.open.ssme">
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -21,6 +21,7 @@
         android:name=".OpenSSMEApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:launchMode="singleTask"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -46,9 +47,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".Activity.MainActivity" />
+
 
         <receiver
-            android:name=".Reciver.ServerRestarterBroadcastReceiver"
+            android:name=".Reciver.ServiceRestartBroadcastReceiver"
             android:enabled="true"
             android:exported="true"
             android:label="RestartServiceWhenStopped">
@@ -70,25 +73,7 @@
             android:authorities="com.facebook.app.FacebookContentProvider1009540352472461"
             android:exported="true" />
 
-        <activity android:name=".Activity.MainActivity" />
 
-
-        <!--
-             The API key for Google Maps-based APIs is defined as a string resource.
-             (See the file "res/values/google_maps_api.xml").
-             Note that the API key is linked to the encryption key used to sign the APK.
-             You need a different API key for each encryption key, including the release key that is used to
-             sign the APK for publishing.
-             You can define the keys for the debug and release targets in src/debug/ and src/release/.
-        -->
-
-
-        <!-- <receiver android:name=".Reciver.LocationReciver"> -->
-        <!-- <intent-filter> -->
-        <!-- <action android:name="android.location.PROVIDERS_CHANGED" /> -->
-        <!-- <category android:name="android.intent.category.DEFAULT" /> -->
-        <!-- </intent-filter> -->
-        <!-- </receiver> -->
         <service
             android:name=".Service.OpenSSMEService"
             android:enabled="true" >

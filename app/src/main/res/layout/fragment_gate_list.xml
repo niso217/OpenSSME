@@ -1,16 +1,35 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.root.openssme.Fragments.GateListFragment">
+    tools:context="com.open.ssme.Fragments.GateListFragment">
 
-    <!-- TODO: Update blank fragment layout -->
 
-    <!--<ListView-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:id="@+id/listView"-->
-        <!--android:layout_gravity="center" />-->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:id="@+id/emptyElement"
+        android:visibility="gone"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/no_gates"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_gates"
+            android:textStyle="bold"
+            android:textSize="36sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal" />
+    </LinearLayout>
+
 
     <ExpandableListView
         android:id="@+id/expandableListView"
@@ -20,4 +39,4 @@
         android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
         android:divider="@android:color/darker_gray"
         android:dividerHeight="0.5dp" />
-</FrameLayout>
+</RelativeLayout>
