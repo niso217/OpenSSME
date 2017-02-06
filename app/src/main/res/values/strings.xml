@@ -14,9 +14,9 @@
     <string name="successfully_posted_post">Post ID: %1$s</string>
     <string name="error">Error</string>
 
-    <string name="facebook_app_id">1009540352472461</string>
-    <string name="google_api_key">AIzaSyA79drh2Sltdqy4l97nL-5DEgIeuT-QpqM</string>
-    <string name="server_client_id">903106005199-un195uq6r5lac1b9bsl2scsihr6msh3u.apps.googleusercontent.com</string>
+    <string name="facebook_app_id">facebook_app_id</string>
+    <string name="google_api_key">google_api_key</string>
+    <string name="server_client_id">server_client_id</string>
 
     <string name="main">Main</string>
     <string name="map">Map</string>
@@ -33,7 +33,7 @@
 
     <string name="subject">OpenSSME!</string>
     <string name="body"> Just Opened My Gate With This Cool App</string>
-    <string name="url">https://play.google.com/store/</string>
+    <string name="url">https://play.google.com/store/apps/details?id=com.open.ssme</string>
 
     <!-- LogInActivity-->
     <string name="permission_denied">Permission Denied</string>
