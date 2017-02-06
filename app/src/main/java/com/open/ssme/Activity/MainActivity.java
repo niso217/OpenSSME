@@ -361,10 +361,10 @@ public class MainActivity extends AppCompatActivity implements
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
-                        if (Settings.getInstance().isFirst_run()) {
+                        if (ListGateComplexPref.getInstance().gates.size()==0) {
                             onCoachMark();
-                            PrefUtils.setSettings(getApplicationContext());
-                            Settings.getInstance().setFirst_run(false);
+                            //PrefUtils.setSettings(getApplicationContext());
+                            //Settings.getInstance().setFirst_run(false);
 
                         }
 
