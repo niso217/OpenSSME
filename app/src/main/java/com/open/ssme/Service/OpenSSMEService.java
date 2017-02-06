@@ -141,11 +141,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     private NotificationCompat.Builder BuildNotification() {
         // Building the notification
         return new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.gate) // notification icon
+                .setSmallIcon(R.drawable.openssme_logo) // notification icon
                 .setContentTitle(getString(R.string.app_name)) // notification title
                 .setContentText(getString(R.string.running)) // content text
                 .setContentIntent(mActivityIntent)
-                .setColor(ContextCompat.getColor(this, R.color.teal))
+                .setColor(ContextCompat.getColor(this, R.color.PrimaryColor))
                 .addAction(R.drawable.ic_call_black_18dp, getString(R.string.call)+" "+ ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
                 .addAction(R.drawable.ic_power_settings_new_black_18dp, getString(R.string.switch_off), mStopServiceIntent)
                 .setOngoing(true);
