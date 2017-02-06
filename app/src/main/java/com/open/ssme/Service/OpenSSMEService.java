@@ -388,7 +388,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 "units=metric&" +
                 "origins=" + origins + "&" +
                 "destinations=" + destinations.substring(1) + "&" +
-                "key=" + getResources().getString(R.string.google_app_id);
+                "key=" + getResources().getString(R.string.google_api_key);
         new GoogleMatrixRequest(OpenSSMEService.this).execute(url);
     }
 

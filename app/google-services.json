@@ -1,0 +1,71 @@
+{
+  "project_info": {
+    "project_number": "903106005199",
+    "project_id": "openssme-1298"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903106005199:android:e5e0522772447d33",
+        "android_client_info": {
+          "package_name": "com.example.root.openssme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "903106005199-un195uq6r5lac1b9bsl2scsihr6msh3u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA79drh2Sltdqy4l97nL-5DEgIeuT-QpqM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903106005199:android:e9b2d665ff98ec50",
+        "android_client_info": {
+          "package_name": "com.open.ssme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "903106005199-un195uq6r5lac1b9bsl2scsihr6msh3u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA79drh2Sltdqy4l97nL-5DEgIeuT-QpqM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

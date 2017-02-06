@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <android.support.v7.preference.PreferenceCategory
-        android:title="Update Information"
-        android:key="update_category">
+        android:key="update_category"
+        android:title="@string/settings"
+        >
 
 
         <android.support.v7.preference.ListPreference
             android:key="gps_distance"
-            android:title="GPS Activation Distance"
-            android:summary="Define the distance to start the GPS tracking"
+            android:title="@string/gps_distance_title"
+            android:summary="@string/gps_distance_summary"
             android:defaultValue="3"
             android:entries="@array/GPSDistance"
             android:entryValues="@array/GPSDistanceValues"
@@ -16,8 +17,8 @@
 
         <android.support.v7.preference.ListPreference
             android:key="open_distance"
-            android:title="Open Gate Distance"
-            android:summary="Define the distance the call to the gate will be performed"
+            android:title="@string/open_distance_title"
+            android:summary="@string/open_distance_summary"
             android:defaultValue="400"
             android:entries="@array/openDistance"
             android:entryValues="@array/openDistanceValues"
@@ -26,8 +27,8 @@
 
         <android.support.v7.preference.SwitchPreferenceCompat
             android:key="screen"
-            android:title="Screen On"
-            android:summary="keep the screen turned on"
+            android:title="@string/screen_title"
+            android:summary="@string/screen_summary"
             android:defaultValue="false"
             />
 
@@ -41,13 +42,13 @@
     </android.support.v7.preference.PreferenceCategory>
 
     <android.support.v7.preference.PreferenceCategory
-        android:title="Map"
+        android:title="@string/map"
         android:key="map_category">
 
     <android.support.v7.preference.ListPreference
         android:key="map_type"
-        android:title="Map Types"
-        android:summary="types of maps you can display using the Google Maps"
+        android:title="@string/map_type_title"
+        android:summary="@string/map_type_summary"
         android:defaultValue="1"
         android:entries="@array/MapType"
         android:entryValues="@array/MapTypeValues"
@@ -55,8 +56,8 @@
 
         <android.support.v7.preference.SwitchPreferenceCompat
             android:key="follow_me"
-            android:title="Follow Me"
-            android:summary="follow your current location"
+            android:title="@string/follow_me_title"
+            android:summary="@string/follow_me_summary"
             android:defaultValue="false"
             />
 

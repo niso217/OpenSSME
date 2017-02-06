@@ -1,8 +1,7 @@
 <resources>
     <string name="app_name">OpenSSME</string>
     <string name="action_settings">Settings</string>
-    <string name="facebook_app_id">1009540352472461</string>
-    <string name="google_app_id">AIzaSyAMZMzBBwA0Yg7OcFMX46oDKfnR0z6zI3M</string>
+
 
 
     <string name="map_type_hybrid">Hybrid</string>
@@ -10,32 +9,14 @@
     <string name="map_type_satellite">Satellite</string>
     <string name="map_type_terrain">Terrain</string>
 
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
-    <string name="loading">Loading…</string>
-    <string name="post_cancel">Discart this post?</string>
-
-
-    <string name="facebook_app_name">HelloFBSample</string>
-    <string name="cancelled">Cancelled</string>
-    <string name="permission_not_granted">Unable to perform selected action because permissions were not granted.</string>
     <string name="ok">OK</string>
-    <string name="hello_user">Hello %1$s!</string>
     <string name="success">Success</string>
     <string name="successfully_posted_post">Post ID: %1$s</string>
     <string name="error">Error</string>
-    <string name="status_update">Updating status for %1$s at %2$s</string>
-    <string name="photo_post">Photo Post</string>
-    <string name="you_picked">You picked:</string>
-    <string name="no_friends_selected">&lt;No friends selected&gt;</string>
-    <string name="no_place_selected">&lt;No place selected&gt;</string>
-    <string name="pick_seattle_place">Pick a Seattle Place</string>
-    <string name="app_id">355198514515820</string>
-    <string name="exception">Exception: %1$s</string>
-    <string name="server_client_id">903106005199-9fp9hudjjgl0gsle4rbeqv9nn5pjqvdo.apps.googleusercontent.com</string>
-    <string name="google_sender_id">903106005199</string>
+
+    <string name="facebook_app_id">1009540352472461</string>
+    <string name="google_api_key">AIzaSyA79drh2Sltdqy4l97nL-5DEgIeuT-QpqM</string>
+    <string name="server_client_id">903106005199-ib0kbcolpla4flko74ki51cjplgsbrhc.apps.googleusercontent.com</string>
 
     <string name="main">Main</string>
     <string name="map">Map</string>
@@ -69,7 +50,7 @@
     <string name="do_shut_down">Do you want to shut down OpenSSME?</string>
     <string name="cancel">"Cancel"</string>
     <string name="log_out">Log Out</string>
-    <string name="do_log_out">Do you want to log lut</string>
+    <string name="do_log_out">Do you want to log out</string>
 
 
     <!-- GateFragment  -->
@@ -91,6 +72,23 @@
 
 
     <string name="no_gates">No Gates</string>
+
+    <!-- Settings  -->
+    <string name="gps_distance_title">GPS Activation Distance</string>
+    <string name="gps_distance_summary">Define the distance to start the GPS tracking</string>'
+
+    <string name="open_distance_title">Open Gate Distance</string>
+    <string name="open_distance_summary">Define the distance the call to the gate will be performed</string>
+
+    <string name="screen_title">Screen On</string>
+    <string name="screen_summary">keep the screen turned on</string>
+
+    <string name="map_type_title">Map Types</string>
+    <string name="map_type_summary">types of maps you can display using the Google Maps</string>
+
+    <string name="follow_me_title">Follow Me</string>
+    <string name="follow_me_summary">follow your current location</string>
+
 
 
 
