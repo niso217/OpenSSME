@@ -48,7 +48,7 @@
     <string name="my_gates">My Gates</string>
     <string name="shut_down">Shut Down</string>
     <string name="do_shut_down">Do you want to shut down OpenSSME?</string>
-    <string name="cancel">"Cancel"</string>
+    <string name="cancel">Cancel</string>
     <string name="log_out">Log Out</string>
     <string name="do_log_out">Do you want to log out</string>
 
@@ -61,7 +61,7 @@
 
     <!-- MAPFragment  -->
     <string name="map_error">Error on map</string>
-    <string name="phone_invalid">Phone Number Invalid</string>
+    <string name="phone_invalid">Phone number invalid</string>
     <string name="no_phone">Contact has no phone number</string>
 
     <!-- OpenSSMEService  -->
@@ -75,19 +75,19 @@
 
     <!-- Settings  -->
     <string name="gps_distance_title">GPS Activation Distance</string>
-    <string name="gps_distance_summary">Define the distance to start the GPS tracking</string>'
+    <string name="gps_distance_summary">distance to start the GPS tracking</string>
 
     <string name="open_distance_title">Open Gate Distance</string>
-    <string name="open_distance_summary">Define the distance the call to the gate will be performed</string>
+    <string name="open_distance_summary">distance to make the phone call</string>
 
     <string name="screen_title">Screen On</string>
-    <string name="screen_summary">keep the screen turned on</string>
+    <string name="screen_summary">keep the screen on</string>
 
     <string name="map_type_title">Map Types</string>
-    <string name="map_type_summary">types of maps you can display using the Google Maps</string>
+    <string name="map_type_summary">types of map to display</string>
 
     <string name="follow_me_title">Follow Me</string>
-    <string name="follow_me_summary">follow your current location</string>
+    <string name="follow_me_summary">follow current location in the map</string>
 
 
 
