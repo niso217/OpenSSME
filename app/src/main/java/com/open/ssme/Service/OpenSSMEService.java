@@ -282,7 +282,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         }
         context.startActivity(intent);
 
-        Terminate(context);
+        if (Settings.getInstance().isTerminate())
+            Terminate(context);
 
     }
 
@@ -410,13 +411,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         List<String> distance = new ArrayList<>();
         List<String> duration = new ArrayList<>();
 
-        try{
-        distance = response.getDistance();
-        duration = response.getDuration();
-        }
-        catch (Exception e)
-        {
-            Log.d(TAG,e.getMessage());
+        try {
+            distance = response.getDistance();
+            duration = response.getDuration();
+        } catch (Exception e) {
+            Log.d(TAG, e.getMessage());
         }
 
         if (distance.size() == duration.size() && distance.size() == ListGateComplexPref.getInstance().gates.size()) {
