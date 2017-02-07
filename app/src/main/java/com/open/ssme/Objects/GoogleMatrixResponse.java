@@ -9,7 +9,7 @@ import java.util.List;
 
 public class GoogleMatrixResponse {
 
-    private String status;
+    public String status;
     private String[] destination_addresses;
     private String[] origin_addresses;
     private Item[] rows;

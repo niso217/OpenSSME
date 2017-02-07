@@ -213,7 +213,6 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        ScreenSetup();
         super.onCreate(savedInstanceState);
     }
 
@@ -342,13 +341,6 @@ public class MapFragment extends Fragment implements
     @Override
     public void onError(Status status) {
 
-    }
-
-    private void ScreenSetup() {
-        if (Settings.getInstance().isScreen()) {
-            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        } else
-            getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
 

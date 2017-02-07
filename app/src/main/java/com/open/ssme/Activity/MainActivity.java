@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.open.ssme.Fragments.GateListFragment;
@@ -142,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         StartOpenSSMEService();
         connectClient();
+        ScreenSetup();
         super.onResume();
     }
 
@@ -549,6 +551,13 @@ public class MainActivity extends AppCompatActivity implements
                     getResources().getString(R.string.body),
                     getResources().getString(R.string.url));
         }
+    }
+
+    private void ScreenSetup() {
+        if (Settings.getInstance().isScreen()) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else
+            getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
 
