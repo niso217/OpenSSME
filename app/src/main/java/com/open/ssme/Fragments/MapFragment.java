@@ -1,6 +1,7 @@
 package com.open.ssme.Fragments;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -33,6 +34,8 @@ import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.Toast;
 
+import com.google.android.gms.location.LocationServices;
+import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.R;
 import com.open.ssme.Objects.Gate;
@@ -201,9 +204,10 @@ public class MapFragment extends Fragment implements
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
                         if (map != null) {
-                            onLocationChanged(intent);
+                            //onLocationChanged(intent);
+                            SetUpCircle();
+
                         }
-                        SetUpCircle();
                     }
                     break;
 
@@ -408,8 +412,18 @@ public class MapFragment extends Fragment implements
         switch (v.getId()) {
             case R.id.current_location:
                 if (map != null) {
-                    mOnClickLatLang = new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude());
+                    GoogleConnection mGoogleConnection = GoogleConnection.getInstance(getContext());
+                    if (mGoogleConnection.getGoogleApiClient().isConnected()){
+                        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            return;
+                        }
+                        double latitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLatitude();
+                        double longitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLongitude();
+
+                    mOnClickLatLang = new LatLng(latitude, longitude);
                     SetContactPickerIntent();
+                    }
                 }
                 break;
             case R.id.help:

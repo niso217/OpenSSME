@@ -163,6 +163,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
                     mIsLocationUpdatesOn = false;
                     Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
                 }
+
             });
         }
     }
