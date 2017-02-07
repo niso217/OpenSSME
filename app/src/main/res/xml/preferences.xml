@@ -55,9 +55,9 @@
         />
 
         <android.support.v7.preference.SwitchPreferenceCompat
-            android:key="follow_me"
-            android:title="@string/follow_me_title"
-            android:summary="@string/follow_me_summary"
+            android:key="terminate"
+            android:title="@string/terminate_title"
+            android:summary="@string/terminate_summary"
             android:defaultValue="false"
             />
 

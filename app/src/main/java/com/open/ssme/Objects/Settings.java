@@ -10,9 +10,17 @@ public class Settings {
     private int map_type;
     private int service_provider;
     private String profile;
-    private boolean follow_me;
     private boolean screen;
+    private boolean terminate;
     private boolean first_run;
+
+    public boolean isTerminate() {
+        return terminate;
+    }
+
+    public void setTerminate(boolean terminate) {
+        this.terminate = terminate;
+    }
 
     public boolean isFirst_run() {
         return first_run;
@@ -28,14 +36,6 @@ public class Settings {
 
     public void setScreen(boolean screen) {
         this.screen = screen;
-    }
-
-    public boolean isFollow_me() {
-        return follow_me;
-    }
-
-    public void setFollow_me(boolean follow_me) {
-        this.follow_me = follow_me;
     }
 
     public int getService_provider() {

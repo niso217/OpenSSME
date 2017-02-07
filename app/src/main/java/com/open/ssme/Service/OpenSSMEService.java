@@ -16,6 +16,9 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -40,6 +43,7 @@ import com.open.ssme.Utils.Constants;
 import com.open.ssme.Utils.PrefUtils;
 import com.open.ssme.Utils.Constants.GateStatus;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,6 +87,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
                 case Intent.ACTION_CALL:
+                    PlayNotificationSound(context);
                     MakeTheCall(context);
                     break;
             }
@@ -126,7 +131,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         notificationIntent.addCategory(Intent.ACTION_MAIN);
         notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         notificationIntent.setClass(this, MainActivity.class);
-        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         mActivityIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
@@ -147,7 +152,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 .setContentText(getString(R.string.running)) // content text
                 .setContentIntent(mActivityIntent)
                 .setColor(ContextCompat.getColor(this, R.color.PrimaryColor))
-                .addAction(R.drawable.ic_call_black_18dp, getString(R.string.call)+" "+ ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
+                .addAction(R.drawable.ic_call_black_18dp, getString(R.string.call) + " " + ListGateComplexPref.getInstance().getClosestGate().gateName, mCallGateIntent)
                 .addAction(R.drawable.ic_power_settings_new_black_18dp, getString(R.string.switch_off), mStopServiceIntent)
                 .setOngoing(true);
     }
@@ -217,7 +222,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 //there are no gates stop this service
                 if (ListGateComplexPref.getInstance().gates.size() == 0) {
                     Log.d(TAG, "No Gates Found, Stopping Location Service");
-                    stopSelf();
+                    Terminate(getApplicationContext());
                     return;
                 }
 
@@ -249,6 +254,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         mHandlerTask.run();
     }
 
+    private static void Terminate(Context context) {
+        doTerminate = true;
+        Intent stop = new Intent(context, OpenSSMEService.class);
+        context.stopService(stop);
+    }
 
     @Nullable
     @Override
@@ -270,6 +280,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
             return;
         }
         context.startActivity(intent);
+
+        Terminate(context);
 
     }
 
@@ -375,7 +387,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     }
 
 
-
     private void DistanceMatrixRequest() {
         String destinations = "";
         String origins = mLocationHelper.getLatitude() + "," + mLocationHelper.getLongitude();
@@ -406,6 +417,34 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
         }
 
+    }
+
+    private static void PlayNotificationSound(Context context) {
+        Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        MediaPlayer mediaPlayer = new MediaPlayer();
+
+        try {
+            mediaPlayer.setDataSource(context, defaultRingtoneUri);
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+            mediaPlayer.prepare();
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    mp.release();
+                }
+            });
+            mediaPlayer.start();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

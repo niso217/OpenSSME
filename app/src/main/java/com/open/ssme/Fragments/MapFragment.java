@@ -115,12 +115,6 @@ public class MapFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        //keep screen on when follow me is true
-        if (Settings.getInstance().isFollow_me()) {
-            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        }
-
         if (savedInstanceState != null) {
             msavedInstanceState = savedInstanceState;
             zoom = savedInstanceState.getFloat(MAP_ZOOM);
@@ -165,6 +159,7 @@ public class MapFragment extends Fragment implements
     @Override
     public void onResume() {
         mapView.onResume();
+        getMyLocation(true);
         super.onResume();
     }
 
@@ -205,7 +200,7 @@ public class MapFragment extends Fragment implements
                 case Constants.LOCATION_UPDATE_FLAG:
                     //recived location update
                     if (intent.hasExtra(Constants.LOCATION)) {
-                        if (map != null && Settings.getInstance().isFollow_me()) {
+                        if (map != null) {
                             onLocationChanged(intent);
                         }
                         SetUpCircle();
@@ -233,7 +228,8 @@ public class MapFragment extends Fragment implements
 
         SetUpCircle();
 
-        getMyLocation();
+        getMyLocation(true);
+
 
         //restoring the map state
         if (latlng != null && zoom != null && tilt != null && bearing != null) {
@@ -312,6 +308,11 @@ public class MapFragment extends Fragment implements
         return rootView;
     }
 
+    @Override
+    public void onPause() {
+        getMyLocation(false);
+        super.onPause();
+    }
 
     @Override
     public void onPlaceSelected(Place place) {
@@ -325,6 +326,7 @@ public class MapFragment extends Fragment implements
                     .position(place.getLatLng())
                     .draggable(true)
                     .snippet(place.getAddress() + "")
+                    .title(getString(R.string.click_to_add))
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
             map.animateCamera(CameraUpdateFactory
@@ -350,7 +352,7 @@ public class MapFragment extends Fragment implements
     }
 
 
-    void getMyLocation() {
+    void getMyLocation(boolean location_updates) {
         if (map != null) {
             // Now that map has loaded, let's get our location!
             if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -359,7 +361,7 @@ public class MapFragment extends Fragment implements
 
             } else {
                 // permission has been granted, continue as usual
-                map.setMyLocationEnabled(true);
+                map.setMyLocationEnabled(location_updates);
                 map.setOnMapLongClickListener(this);
 
 

@@ -15,7 +15,7 @@
     <string name="error">Error</string>
 
     <string name="facebook_app_id">facebook_app_id</string>
-    <string name="google_api_key">google_api_key</string>
+    <string name="google_api_key">google_api_key-5DEgIeuT-QpqM</string>
     <string name="server_client_id">server_client_id</string>
 
     <string name="main">Main</string>
@@ -63,6 +63,8 @@
     <string name="map_error">Error on map</string>
     <string name="phone_invalid">Phone number invalid</string>
     <string name="no_phone">Contact has no phone number</string>
+    <string name="click_to_add">Click To Select Contact</string>
+
 
     <!-- OpenSSMEService  -->
     <string name="running">Running. Tap to open.</string>
@@ -86,8 +88,8 @@
     <string name="map_type_title">Map Types</string>
     <string name="map_type_summary">types of map to display</string>
 
-    <string name="follow_me_title">Follow Me</string>
-    <string name="follow_me_summary">follow current location in the map</string>
+    <string name="terminate_title">Terminate</string>
+    <string name="terminate_summary">close the application after gate open</string>
 
 
 

@@ -93,7 +93,7 @@ public class Constants {
 
 
     public static final String MAP_TYPE = "map_type";
-    public static final String FOLLOW_ME = "follow_me";
+    public static final String TERMINATE = "terminate";
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
     public static final String GPS_STATUS = "gps_status";

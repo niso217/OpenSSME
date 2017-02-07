@@ -48,7 +48,7 @@ public class PrefUtils {
         String open_distance = pref.getString(Constants.OPEN_DISTANCE,DEFAULT_OPEN_DISTANCE);
         String map_type = pref.getString(Constants.MAP_TYPE,DEFAULT_MAP_TYPE);
         String profile = pref.getString(Constants.MAP_TYPE,DEFAULT_MAP_TYPE);
-        boolean follow = pref.getBoolean(Constants.FOLLOW_ME,false);
+        boolean terminate = pref.getBoolean(Constants.TERMINATE,false);
         boolean screen = pref.getBoolean(Constants.SCREEN,false);
         boolean first_run = pref.getBoolean(Constants.FIRST_RUN,true);
 
@@ -58,7 +58,7 @@ public class PrefUtils {
         Settings.getInstance().setOpen_distance(Integer.parseInt(open_distance));
         Settings.getInstance().setMap_type(Integer.parseInt(map_type));
         Settings.getInstance().setProfile(profile);
-        Settings.getInstance().setFollow_me(follow);
+        Settings.getInstance().setTerminate(terminate);
         Settings.getInstance().setScreen(screen);
         Settings.getInstance().setFirst_run(first_run);
 
