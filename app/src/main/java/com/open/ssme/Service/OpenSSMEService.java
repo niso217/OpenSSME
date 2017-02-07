@@ -177,9 +177,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public static class NotificationStopService extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            doTerminate = true;
-            Intent stop = new Intent(context, OpenSSMEService.class);
-            context.stopService(stop);
+            Terminate(context);
         }
     }
 
@@ -282,9 +280,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         }
         context.startActivity(intent);
 
-        if (Settings.getInstance().isTerminate())
-            Terminate(context);
-
     }
 
 
@@ -375,6 +370,10 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "=====OpenSSME=====");
         Log.d(TAG, "Make The Call To " + ListGateComplexPref.getInstance().getClosestGate().phone);
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getApplicationContext());
+
+        if (Settings.getInstance().isTerminate())
+            Terminate(this);
+
     }
 
 
