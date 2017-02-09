@@ -67,7 +67,6 @@ import static com.open.ssme.Utils.Constants.SETTINGS_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
-
         Observer
 
 {
@@ -84,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements
     private Fragment fragment;
     private int mCurrentViewId;
     private OpenSSMEService mLocationService;
+    private Bundle mSavedInstanceState;
 
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -91,7 +91,8 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
                 case PROVIDERS_CHANGED:
-                    GPSResolver();
+                    if (isMyServiceRunning(mLocationService.getClass()))
+                        GPSResolver();
                     break;
             }
         }
@@ -103,34 +104,14 @@ public class MainActivity extends AppCompatActivity implements
 
         Log.d(TAG, "onCreate");
 
-
         super.onCreate(savedInstanceState);
-
 
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
 
-        setupLocationRequestBalanced();
-
-        setContentView(R.layout.activity_main);
+        mSavedInstanceState = savedInstanceState;
 
         Init();
-
-
-        if (savedInstanceState == null) {
-            if (ListGateComplexPref.getInstance().gates.size() > 0)
-                displayView(mCurrentViewId = R.id.gate_list);
-            else
-                displayView(mCurrentViewId = R.id.map);
-
-
-        } else {
-            mCurrentViewId = savedInstanceState.getInt("mCurrentViewId");
-            displayView(mCurrentViewId);
-        }
-
-        RegisterReciver();
-
     }
 
     @Override
@@ -141,8 +122,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onResume() {
-        StartOpenSSMEService();
         connectClient();
+        StartOpenSSMEService();
         ScreenSetup();
         super.onResume();
     }
@@ -159,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         unregisterReceiver(receiver);
         super.onDestroy();
+
     }
 
 
@@ -167,6 +149,20 @@ public class MainActivity extends AppCompatActivity implements
         // Connect the client.
         if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
             mGoogleConnection.connect();
+        }
+    }
+
+    private void SetUpDisplayView(){
+        if (mSavedInstanceState == null) {
+            if (ListGateComplexPref.getInstance().gates.size() > 0)
+                displayView(mCurrentViewId = R.id.gate_list);
+            else
+                displayView(mCurrentViewId = R.id.map);
+
+
+        } else {
+            mCurrentViewId = mSavedInstanceState.getInt("mCurrentViewId");
+            displayView(mCurrentViewId);
         }
     }
 
@@ -179,13 +175,12 @@ public class MainActivity extends AppCompatActivity implements
         switch ((State) data) {
 
             case OPENED:
-                // We are signed in!
-                //GPSResolver();
-                // requestLocationSettings();
                 Log.d(TAG, "Connected to Google Api Client");
+                SetUpDisplayView();
                 break;
             case CLOSED:
                 Log.d(TAG, "Disconnected from Google Api Client");
+                CloseApplication();
                 break;
         }
     }
@@ -196,6 +191,10 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void Init() {
+
+        setupLocationRequestBalanced();
+
+        setContentView(R.layout.activity_main);
 
         mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
 
@@ -255,6 +254,9 @@ public class MainActivity extends AppCompatActivity implements
 
         //calling sync state is necessay or else your hamburger icon wont show up
         actionBarDrawerToggle.syncState();
+
+        RegisterReciver();
+
     }
 
 
@@ -280,13 +282,33 @@ public class MainActivity extends AppCompatActivity implements
                 .setPositiveButton(getResources().getString(R.string.shut_down), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        stopService(new Intent(getBaseContext(), OpenSSMEService.class));
-                        finish();
+                        ExitApplication();
                     }
 
                 })
                 .setNegativeButton(getResources().getString(R.string.cancel), null)
                 .show();
+    }
+
+    private void CloseApplication(){
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle(getResources().getString(R.string.error))
+                .setMessage(getResources().getString(R.string.error_info))
+                .setPositiveButton(getResources().getString(R.string.shut_down), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ExitApplication();
+                    }
+
+                })
+                .show();
+    }
+
+    private void ExitApplication()
+    {
+        stopService(new Intent(getBaseContext(), OpenSSMEService.class));
+        ExitActivity.exitApplication(getApplicationContext());
     }
 
     public void displayView(int ViewId) {
@@ -363,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
                         mAutocompleteFragment.setVisibility(View.VISIBLE);
-                        if (ListGateComplexPref.getInstance().gates.size()==0) {
+                        if (ListGateComplexPref.getInstance().gates.size() == 0) {
                             onCoachMark();
                             //PrefUtils.setSettings(getApplicationContext());
                             //Settings.getInstance().setFirst_run(false);

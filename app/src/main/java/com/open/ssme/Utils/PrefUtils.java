@@ -51,6 +51,7 @@ public class PrefUtils {
         boolean terminate = pref.getBoolean(Constants.TERMINATE,false);
         boolean screen = pref.getBoolean(Constants.SCREEN,false);
         boolean first_run = pref.getBoolean(Constants.FIRST_RUN,true);
+        boolean social = pref.getBoolean(Constants.SOCIAL,false);
 
 
 
@@ -61,6 +62,7 @@ public class PrefUtils {
         Settings.getInstance().setTerminate(terminate);
         Settings.getInstance().setScreen(screen);
         Settings.getInstance().setFirst_run(first_run);
+        Settings.getInstance().setSocial(social);
 
 
     }

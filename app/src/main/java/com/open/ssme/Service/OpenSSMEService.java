@@ -221,7 +221,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 //there are no gates stop this service
                 if (ListGateComplexPref.getInstance().gates.size() == 0) {
                     Log.d(TAG, "No Gates Found, Stopping Location Service");
-                    Terminate(getApplicationContext());
+                    stopSelf();
                     return;
                 }
 
@@ -243,8 +243,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
                         ListViewBroadcast();
 
-                        if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
-                            DistanceMatrixRequest();
+                        //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
+                            //DistanceMatrixRequest();
 
                     }
                 }
@@ -372,7 +372,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getApplicationContext());
 
         if (Settings.getInstance().isTerminate())
-            Terminate(this);
+            stopSelf();
 
     }
 

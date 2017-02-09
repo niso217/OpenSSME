@@ -23,10 +23,10 @@ import java.util.Observable;
 
 import com.open.ssme.R;
 
+import static com.open.ssme.Utils.Constants.GOOGLE_CONNECTION;
+
 public class GoogleConnection extends Observable
         implements ConnectionCallbacks, OnConnectionFailedListener {
-
-    public static final String GOOGLE_CONNECTION = "com.open.ssme.googleconnection";
 
     private static GoogleConnection sGoogleConnection;
     private static final String TAG = "GoogleConnection";

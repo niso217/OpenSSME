@@ -96,6 +96,11 @@ public class Constants {
     public static final String TERMINATE = "terminate";
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
+    public static final String SOCIAL = "social";
+    public static final String PDUS = "pdus";
+    public static final String FORMAT = "format";
+
+
     public static final String GPS_STATUS = "gps_status";
     public static final String STRING_DIVIDER = "_OpenSSME_";
 
@@ -109,6 +114,8 @@ public class Constants {
     public static final String DATA_CHANGED = "OpenSSME.OpenSSMEService.DATA_CHANGED";
 
     public static final String STARTFOREGROUND_ACTION = "OpenSSME.OpenSSMEService.StartForeground";
+    public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
+
 
 
     public static final String START_LOCATAION_UPDATE = "gps_distance";
@@ -118,6 +125,11 @@ public class Constants {
     public static final String FACEBOOK = "FacebookLoginFragment";
     public static final String GPLUS = "GPlusLoginFragment";
     public static final String LOCATION = "location";
+
+    //SMS Reciver
+
+    public static final String KEY_SMS_ORIGIN = "openssme";
+
 
 
     public static final int FOREGROUND_SERVICE = 101;
@@ -138,4 +150,17 @@ public class Constants {
             return status;
         }
     }
-}
+
+
+    public enum LocationType {
+        LOCATION_UPDATE(1), SINGLE_UPDATE(2);
+        private final int value;
+
+        private LocationType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }}

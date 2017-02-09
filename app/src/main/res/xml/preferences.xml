@@ -38,6 +38,12 @@
             android:summary="@string/terminate_summary"
             android:defaultValue="false"
             />
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="social"
+            android:title="@string/social_title"
+            android:summary="@string/social_summary"
+            android:defaultValue="false"
+            />
 
         <android.support.v7.preference.SwitchPreferenceCompat
             android:key="first_run"

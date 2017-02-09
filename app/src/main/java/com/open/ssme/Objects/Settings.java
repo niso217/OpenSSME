@@ -13,6 +13,15 @@ public class Settings {
     private boolean screen;
     private boolean terminate;
     private boolean first_run;
+    private boolean social;
+
+    public boolean isSocial() {
+        return social;
+    }
+
+    public void setSocial(boolean social) {
+        this.social = social;
+    }
 
     public boolean isTerminate() {
         return terminate;

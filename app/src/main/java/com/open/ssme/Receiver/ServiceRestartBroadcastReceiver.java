@@ -1,4 +1,4 @@
-package com.open.ssme.Reciver;
+package com.open.ssme.Receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
