@@ -22,64 +22,18 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class SingleShotLocationProvider {
     private static final String TAG = SingleShotLocationProvider.class.getSimpleName();
-    private static LocationListener mLocationListener;
+    private static LocationListener standardListener;
+    private static boolean locationUpdateReceived = false;
+    private static boolean timedOut = false;
 
-    public static interface LocationCallback {
-        public void onNewLocationAvailable(Location location);
-    }
 
-    // calls back to calling thread, note this is for low grain: if you want higher precision, swap the
-    // contents of the else and if. Also be sure to check gps permission/settings are allowed.
-    // call usually takes <10ms
-    public static void requestSingleUpdate(final Context context, final LocationCallback callback) {
-        final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        if (isWifiConnected(context)){
-            if (mLocationListener!=null)
-            locationManager.removeUpdates(mLocationListener);
-
-            callback.onNewLocationAvailable(null);
-
-        }
-        else {
-            boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-            if (isGPSEnabled) {
-                Criteria criteria = new Criteria();
-                criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mLocationListener = new LocationListener() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        callback.onNewLocationAvailable(new Location(LatLngToLocation(new LatLng(location.getLatitude(), location.getLongitude()))));
-                    }
-
-                    @Override
-                    public void onStatusChanged(String provider, int status, Bundle extras) {
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String provider) {
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String provider) {
-                    }
-                }, null);
-            }
-        }
+    public static interface LocationCallback extends android.location.LocationListener {
+        public void timedOut();
+        public void WifiOn();
 
     }
 
-    private static Location LatLngToLocation(LatLng latlang) {
-        Location loc = new Location(LocationManager.GPS_PROVIDER);
-        loc.setLatitude(latlang.latitude);
-        loc.setLongitude(latlang.longitude);
-        return loc;
-    }
-
-    private static boolean isWifiConnected(Context context) {
+    public static boolean isWifiConnected(Context context) {
         ConnectivityManager connectivityManager = ((ConnectivityManager) context.getSystemService
                 (Context.CONNECTIVITY_SERVICE));
         Network[] networks = connectivityManager.getAllNetworks();
@@ -92,7 +46,6 @@ public class SingleShotLocationProvider {
                 NetworkInfo info = connectivityManager.getNetworkInfo(network);
                 if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
                     if (info.isAvailable() && info.isConnected()) {
-                        Log.d(TAG, "=====Wifi Is On Stopping Location Updates=====");
                         return true;
                     }
                 }
@@ -103,7 +56,78 @@ public class SingleShotLocationProvider {
         return false;
 
     }
+
+    public static void getSingleUpdate(final Context context, long timeOut, final LocationCallback listener) {
+
+        final LocationManager locationManager = (LocationManager) context.getSystemService(context.LOCATION_SERVICE);
+        if (isWifiConnected(context)) {
+            listener.WifiOn();
+            if (standardListener != null)
+                locationManager.removeUpdates(standardListener);
+        } else {
+            boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (isGPSEnabled) {
+                locationUpdateReceived = false;
+                timedOut = false;
+
+                standardListener = new LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        if (!timedOut) {
+                            listener.onLocationChanged(location);
+                            locationUpdateReceived = true;
+                        }
+                    }
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {
+                        if (!timedOut) {
+                            listener.onStatusChanged(provider, status, extras);
+                        }
+                    }
+                    @Override
+                    public void onProviderEnabled(String provider) {
+                        if (!timedOut) {
+                            listener.onProviderEnabled(provider);
+                        }
+
+                    }
+                    @Override
+                    public void onProviderDisabled(String provider) {
+                        if (!timedOut) {
+                            listener.onProviderDisabled(provider);
+                        }
+
+                    }
+                };
+
+                final android.os.Handler timeoutHandler = new android.os.Handler();
+                Runnable timeoutRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!locationUpdateReceived) {
+                            /**
+                             * Timed out
+                             */
+                            timedOut = true;
+                            listener.timedOut();
+                            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                                return;
+                            }
+                            locationManager.removeUpdates(standardListener);
+                        } else {
+                            /**
+                             * Successfully retrieved within timeout
+                             */
+                        }
+                    }
+                };
+                timeoutHandler.removeCallbacks(timeoutRunnable);
+                timeoutHandler.postDelayed(timeoutRunnable, timeOut);
+                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, standardListener, null);
+
+            }
+        }
+    }
 }
-
-
-

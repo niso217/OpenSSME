@@ -35,6 +35,7 @@ import com.open.ssme.Activity.ExitActivity;
 import com.open.ssme.Activity.MainActivity;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
 import com.open.ssme.Helpers.LocationHelper;
+import com.open.ssme.Helpers.SingleShotLocationProvider;
 import com.open.ssme.Objects.Gate;
 import com.open.ssme.Objects.GoogleMatrixResponse;
 import com.open.ssme.R;
@@ -50,6 +51,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.open.ssme.Utils.Constants.DEFAULT_ACTIVE_COEFFICIENT;
+import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 import static com.open.ssme.Utils.Constants.DEFAULT_RUN_SERVICE_TASK;
 import static com.open.ssme.Utils.Constants.DISTANCE_MATRIX_SUFFIX;
@@ -67,10 +69,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     private static boolean doTerminate;
     public static boolean mCodeBlocker;
     private NotificationManager mNotificationManager;
-    private long mGPSUpdateInterval = DEFAULT_LOCATION_INTERVAL;
+    private long mGPSUpdateInterval = 0;
     private Constants.LocationType mCurrentLocationType = Constants.LocationType.SINGLE_UPDATE;
     private LocationHelper mLocationHelper;
     private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
+    private boolean mIsWifiOn;
 
     public OpenSSMEService() {
         super();
@@ -247,6 +250,9 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                         //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
                         //DistanceMatrixRequest();
 
+                        if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
+                            mIsWifiOn = SingleShotLocationProvider.isWifiConnected(getApplicationContext());
+
                     }
                 }
             }
@@ -325,7 +331,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         long nextUpdateInterval = DEFAULT_LOCATION_INTERVAL;
         Constants.LocationType type = Constants.LocationType.SINGLE_UPDATE;
 
-        if (ListGateComplexPref.getInstance().getClosestGate().active) {
+        if (ListGateComplexPref.getInstance().getClosestGate().active  && !mIsWifiOn) {
 
             //away, set the next update to to ETA / 2
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
@@ -344,8 +350,9 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 OpenSSME();
             }
 
-            SetUpInterval(nextUpdateInterval, type);
         }
+        SetUpInterval(nextUpdateInterval, type);
+
     }
 
     private void WriteToLog() {

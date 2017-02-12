@@ -7,7 +7,7 @@
             android:id="@+id/gate_list"
             android:checked="false"
             android:icon="@drawable/ic_favorite_black_24dp"
-            android:title="@string/events" />
+            android:title="@string/my_gates" />
 
         <item
             android:id="@+id/map"

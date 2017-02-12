@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -32,6 +33,7 @@ import java.util.TimerTask;
 import static android.content.Context.LOCATION_SERVICE;
 import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
+import static com.open.ssme.Utils.Constants.LOCATION_UPDATE_TIME_OUT;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
 
 /**
@@ -48,27 +50,18 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     private boolean mIsSingleLocationUpdatesOn;
     public boolean mIsGPSOn;
     private LocationRequest mLocationRequest;
-    private Runnable mHandlerWifiTask;
-    private Handler mWifiHandler;
-    private Runnable mHandlerLocationTask;
     private Handler mLocationHandler;
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
-    private Location mLastKnownLocation;
     private LatLng mCurrentLatLng;
     private double mCurrentSpeed;
     private double mCurrentLongitude;
     private double mCurrentLatitude;
     private double mCurrentAccuracy;
-    private long mReCheckLocation = DEFAULT_LOCATION_INTERVAL;
-    private Constants.LocationType mLocationType = Constants.LocationType.SINGLE_UPDATE;
-
 
     public LocationHelper(Context context) {
 
         this.mContext = context;
-
-        mWifiHandler = new Handler();
 
         mGoogleConnection = GoogleConnection.getInstance(context);
         setupLocationRequestBalanced(DEFAULT_LOCATION_INTERVAL);
@@ -82,24 +75,26 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
 
-    private void reCheckLocation() {
+    private void reCheckLocation(final long ETA) {
         mLocationHandler = new Handler();
 
         mLocationHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "=====Single Location Request=====");
                 SingeLocationRequest();
-                mLocationHandler.postDelayed(this,mReCheckLocation);
+                mLocationHandler.postDelayed(this, ETA);
+                Log.d(TAG, "=====ReCheck Location In " + ETA / 1000 + " Seconds=====");
             }
-        }, mReCheckLocation);
+        }, ETA);
+
+        Log.d(TAG, "=====ReCheck Location In " + ETA / 1000 + " Seconds=====");
 
     }
 
 
     @Override
     public void onLocationChanged(Location location) {
-        SetLocationData(location);
+            SetLocationData(location);
     }
 
 
@@ -157,19 +152,45 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
     public void SingeLocationRequest() {
-        SingleShotLocationProvider.requestSingleUpdate(mContext,
+        SingleShotLocationProvider.getSingleUpdate(mContext, LOCATION_UPDATE_TIME_OUT,
                 new SingleShotLocationProvider.LocationCallback() {
                     @Override
-                    public void onNewLocationAvailable(Location location) {
+                    public void onLocationChanged(Location location) {
                         if (location != null) {
                             mIsSingleLocationUpdatesOn = true;
                             SetLocationData(location);
+                            Log.d(TAG, "=====Successful Single Location Request!!!!===== ");
                         }
-                        else
-                            mIsSingleLocationUpdatesOn = false;
+                    }
+
+                    @Override
+                    public void onStatusChanged(String s, int i, Bundle bundle) {
 
                     }
+
+                    @Override
+                    public void onProviderEnabled(String s) {
+
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String s) {
+
+                    }
+
+                    @Override
+                    public void timedOut() {
+                        mIsSingleLocationUpdatesOn = true;
+                        Log.d(TAG, "=====Single Location Request TimeOut After " + LOCATION_UPDATE_TIME_OUT / 1000 + " Seconds=====");
+                    }
+
+                    @Override
+                    public void WifiOn() {
+                        Log.d(TAG, "=====Wifi Is On Stopping Location Updates=====");
+                    }
                 });
+        Log.d(TAG, "=====Single Location Request===== ");
+
     }
 
 
@@ -181,16 +202,15 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
     public void ChangeLocationRequest(long ETA, Constants.LocationType type) {
-        Log.d(TAG, "=====Change Location Request To " + ETA + "=====");
+        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, With " + type.toString() + " Method=====");
 
         if (mGoogleConnection.getGoogleApiClient().isConnected()) {
+
             if (type == Constants.LocationType.SINGLE_UPDATE) {
                 StopAllLocationServices();
-                this.mReCheckLocation = ETA;
-                reCheckLocation();
-            }
+                reCheckLocation(ETA);
 
-            if (type == Constants.LocationType.LOCATION_UPDATE) {
+            } else {
                 StopAllLocationServices();
                 setupLocationRequestBalanced(ETA);
                 StartLocationUpdates();
@@ -199,9 +219,8 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
 
-
     private void SetLocationData(Location location) {
-        Log.d(TAG, "=====Location Changed=====");
+        Log.d(TAG, "=====Location Changed " + getLocationType() + "=====");
         mCurrentLocation = location;
         mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         mCurrentLatitude = location.getLatitude();
@@ -237,21 +256,19 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         }
     }
 
-    private void StopAllLocationServices(){
+    private void StopAllLocationServices() {
         removeLocationHandlerCallbacks();
         StopLocationUpdates();
+    }
+
+    private String getLocationType() {
+        return isLocationUpdatesOn() == true ? Constants.LocationType.LOCATION_UPDATE.name() : Constants.LocationType.SINGLE_UPDATE.name();
     }
 
     public void destroy() {
         Log.d(TAG, "=====Kill Location Helper=====");
-        removeLocationHandlerCallbacks();
-        mWifiHandler.removeCallbacks(mHandlerWifiTask);
-        StopLocationUpdates();
+        StopAllLocationServices();
 
-    }
-
-    public Location getLastKnownLocation() {
-        return mLastKnownLocation;
     }
 
     public boolean isLocationUpdatesOn() {

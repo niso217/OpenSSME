@@ -60,6 +60,7 @@ import com.open.ssme.Common.GoogleConnection;
 import java.util.Observable;
 import java.util.Observer;
 
+import static com.open.ssme.Utils.Constants.CURRENT_VIEW_ID;
 import static com.open.ssme.Utils.Constants.GATE_LIST_FRAGMENT;
 import static com.open.ssme.Utils.Constants.MAP_FRAGMENT;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements
     public GoogleConnection mGoogleConnection;
     private View mAutocompleteFragment;
     private Fragment fragment;
-    private int mCurrentViewId;
+    private int mCurrentViewId = R.id.gate_list;;
     private OpenSSMEService mLocationService;
     private Bundle mSavedInstanceState;
 
@@ -116,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt("mCurrentViewId", mCurrentViewId);
+        outState.putInt(CURRENT_VIEW_ID, mCurrentViewId);
         super.onSaveInstanceState(outState);
     }
 
@@ -163,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements
 
 
         } else {
-            mCurrentViewId = mSavedInstanceState.getInt("mCurrentViewId");
+            mCurrentViewId = mSavedInstanceState.getInt(CURRENT_VIEW_ID);
             displayView(mCurrentViewId);
         }
     }
@@ -193,8 +194,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void Init() {
-
-        mCurrentViewId = R.id.gate_list;
 
         setupLocationRequestBalanced();
 

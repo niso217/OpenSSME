@@ -20,7 +20,6 @@
 
     <string name="main">Main</string>
     <string name="map">Map</string>
-    <string name="events">My Gates</string>
     <string name="share">Share</string>
     <string name="closeDrawer">Navigation View</string>
     <string name="openDrawer">Navigation View Closed</string>
