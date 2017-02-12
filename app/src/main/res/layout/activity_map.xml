@@ -36,5 +36,11 @@
 		android:layout_below="@+id/current_location"
 		android:layout_alignStart="@+id/current_location" />
 
+	<fragment
+		android:id="@+id/autocomplete_fragment"
+		android:name="com.open.ssme.Fragments.CustomPlaceAutoCompleteFragment"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content" />
+
 
 </RelativeLayout>

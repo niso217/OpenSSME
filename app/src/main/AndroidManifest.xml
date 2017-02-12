@@ -54,8 +54,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".Activity.MainActivity" />
-        <activity android:name=".Activity.ExitActivity" />
-
+        <activity
+            android:name=".Activity.ExitActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:autoRemoveFromRecents="true"/>
 
         <receiver
             android:name=".Receiver.ServiceRestartBroadcastReceiver"

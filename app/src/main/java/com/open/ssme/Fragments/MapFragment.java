@@ -4,6 +4,7 @@ package com.open.ssme.Fragments;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -23,6 +24,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.InflateException;
@@ -32,6 +34,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -185,10 +188,16 @@ public class MapFragment extends Fragment implements
     public void onDestroyView() {
 
         super.onDestroyView();
-        Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));
-        if (fragment != null) {
-            getActivity().getSupportFragmentManager().beginTransaction()
-                    .remove(fragment)
+        android.app.Fragment mapFragment = getActivity().getFragmentManager().findFragmentById(R.id.map);
+        if (mapFragment != null) {
+            getActivity().getFragmentManager().beginTransaction()
+                    .remove(mapFragment)
+                    .commit();
+        }
+        android.app.Fragment autoComplete = getActivity().getFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+        if (autoComplete != null) {
+            getActivity().getFragmentManager().beginTransaction()
+                    .remove(autoComplete)
                     .commit();
         }
 
@@ -294,6 +303,21 @@ public class MapFragment extends Fragment implements
             if (mapView != null) {
                 mapView.getMapAsync(this);
 
+                if (mapView != null &&
+                        mapView.findViewById(Integer.parseInt("1")) != null) {
+                    // Get the button view
+                    View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+                    // and next place it, on bottom right (as Google Maps app)
+                    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
+                            locationButton.getLayoutParams();
+                    // position on right bottom
+                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+                    layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+                    layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
+
+                    layoutParams.setMargins(0, 0, 141, 10);
+                }
+
 
             } else {
                 Toast.makeText(getContext(), getContext().getResources().getString(R.string.map_error), Toast.LENGTH_SHORT).show();
@@ -303,7 +327,7 @@ public class MapFragment extends Fragment implements
         }
         if (autocompleteFragment == null) {
             autocompleteFragment = (PlaceAutocompleteFragment)
-                    getActivity().getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+                    getActivity().getFragmentManager().findFragmentById(R.id.autocomplete_fragment);
 
             autocompleteFragment.setOnPlaceSelectedListener(this);
         }

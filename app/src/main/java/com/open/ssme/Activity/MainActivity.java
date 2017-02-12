@@ -22,6 +22,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -82,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements
     public GoogleConnection mGoogleConnection;
     private View mAutocompleteFragment;
     private Fragment fragment;
-    private int mCurrentViewId = R.id.gate_list;;
+    private int mCurrentViewId = R.id.gate_list;
     private OpenSSMEService mLocationService;
     private Bundle mSavedInstanceState;
 
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
                 case PROVIDERS_CHANGED:
-                    if (mLocationService!= null && isMyServiceRunning(mLocationService.getClass()))
+                    if (mLocationService != null && isMyServiceRunning(mLocationService.getClass()))
                         GPSResolver();
                     break;
             }
@@ -144,23 +145,42 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.main_settings:
+                navigationView.setCheckedItem(R.id.settings);
+                displayView(R.id.settings);
+                Log.d(TAG, "");
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 
     public void connectClient() {
 
         // Connect the client.
         if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
             mGoogleConnection.connect();
-        }
-        else
+        } else
             SetUpDisplayView();
     }
 
-    private void SetUpDisplayView(){
+    private void SetUpDisplayView() {
         if (mSavedInstanceState == null) {
             if (ListGateComplexPref.getInstance().gates.size() > 0)
                 displayView(mCurrentViewId);
             else
-                displayView(mCurrentViewId = R.id.map);
+                displayView(mCurrentViewId = R.id.menu_map);
 
 
         } else {
@@ -199,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_main);
 
-        mAutocompleteFragment = findViewById(R.id.place_autocomplete_fragment);
+        //mAutocompleteFragment = findViewById(R.id.autocomplete_fragment);
 
 
         // Initializing Toolbar and setting it as the actionbar
@@ -293,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements
                 .show();
     }
 
-    private void CloseApplication(){
+    private void CloseApplication() {
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(getResources().getString(R.string.error))
@@ -308,8 +328,7 @@ public class MainActivity extends AppCompatActivity implements
                 .show();
     }
 
-    private void ExitApplication()
-    {
+    private void ExitApplication() {
         stopService(new Intent(getBaseContext(), OpenSSMEService.class));
         ExitActivity.exitApplication(getApplicationContext());
     }
@@ -336,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements
 
         String title = getString(R.string.app_name);
 
-        mAutocompleteFragment.setVisibility(View.GONE);
+        //mAutocompleteFragment.setVisibility(View.GONE);
 
         switch (ViewId) {
             case R.id.gate_list:
@@ -351,12 +370,13 @@ public class MainActivity extends AppCompatActivity implements
 
 
                 break;
-            case R.id.map:
+            case R.id.menu_map:
                 fragment = getSupportFragmentManager().findFragmentByTag(MAP_FRAGMENT);
                 if (fragment == null) {
                     fragment = new MapFragment();
                 }
-                title = getResources().getString(R.string.add_gate);
+                //title = getResources().getString(R.string.add_gate);
+                title = "";
                 CurrentFragment = MAP_FRAGMENT;
                 break;
 
@@ -387,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements
                     }
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
-                        mAutocompleteFragment.setVisibility(View.VISIBLE);
+                      //  mAutocompleteFragment.setVisibility(View.VISIBLE);
                         if (ListGateComplexPref.getInstance().gates.size() == 0) {
                             onCoachMark();
                             //PrefUtils.setSettings(getApplicationContext());
