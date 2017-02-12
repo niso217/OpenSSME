@@ -14,6 +14,15 @@ public class Settings {
     private boolean terminate;
     private boolean first_run;
     private boolean social;
+    private boolean sound;
+
+    public boolean isSound() {
+        return sound;
+    }
+
+    public void setSound(boolean sound) {
+        this.sound = sound;
+    }
 
     public boolean isSocial() {
         return social;

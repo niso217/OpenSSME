@@ -97,6 +97,7 @@ public class Constants {
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
     public static final String SOCIAL = "social";
+    public static final String SOUND = "sound";
     public static final String PDUS = "pdus";
     public static final String FORMAT = "format";
 

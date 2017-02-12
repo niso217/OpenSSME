@@ -52,6 +52,7 @@ public class PrefUtils {
         boolean screen = pref.getBoolean(Constants.SCREEN,false);
         boolean first_run = pref.getBoolean(Constants.FIRST_RUN,true);
         boolean social = pref.getBoolean(Constants.SOCIAL,false);
+        boolean sound = pref.getBoolean(Constants.SOUND,false);
 
 
 
@@ -63,6 +64,7 @@ public class PrefUtils {
         Settings.getInstance().setScreen(screen);
         Settings.getInstance().setFirst_run(first_run);
         Settings.getInstance().setSocial(social);
+        Settings.getInstance().setSound(sound);
 
 
     }

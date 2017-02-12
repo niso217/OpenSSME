@@ -95,6 +95,8 @@
     <string name="social_title">Social</string>
     <string name="social_summary">Receive sms from contacts with message body "OpenSSME" to open the gate that close to you</string>
 
+    <string name="sound_title">Notification Sound</string>
+    <string name="sound_summary">alert sound when calling gate</string>
 
 
 

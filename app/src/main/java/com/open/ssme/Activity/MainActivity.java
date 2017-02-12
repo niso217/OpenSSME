@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
                 case PROVIDERS_CHANGED:
-                    if (isMyServiceRunning(mLocationService.getClass()))
+                    if (mLocationService!= null && isMyServiceRunning(mLocationService.getClass()))
                         GPSResolver();
                     break;
             }
@@ -150,12 +150,14 @@ public class MainActivity extends AppCompatActivity implements
         if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
             mGoogleConnection.connect();
         }
+        else
+            SetUpDisplayView();
     }
 
     private void SetUpDisplayView(){
         if (mSavedInstanceState == null) {
             if (ListGateComplexPref.getInstance().gates.size() > 0)
-                displayView(mCurrentViewId = R.id.gate_list);
+                displayView(mCurrentViewId);
             else
                 displayView(mCurrentViewId = R.id.map);
 
@@ -180,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements
                 break;
             case CLOSED:
                 Log.d(TAG, "Disconnected from Google Api Client");
-                CloseApplication();
+                //CloseApplication();
                 break;
         }
     }
@@ -191,6 +193,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void Init() {
+
+        mCurrentViewId = R.id.gate_list;
 
         setupLocationRequestBalanced();
 

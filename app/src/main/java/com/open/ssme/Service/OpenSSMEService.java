@@ -31,6 +31,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.open.ssme.Activity.ExitActivity;
 import com.open.ssme.Activity.MainActivity;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
 import com.open.ssme.Helpers.LocationHelper;
@@ -67,6 +68,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public static boolean mCodeBlocker;
     private NotificationManager mNotificationManager;
     private long mGPSUpdateInterval = DEFAULT_LOCATION_INTERVAL;
+    private Constants.LocationType mCurrentLocationType = Constants.LocationType.SINGLE_UPDATE;
     private LocationHelper mLocationHelper;
     private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
 
@@ -88,7 +90,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
                 case Intent.ACTION_CALL:
-                    PlayNotificationSound(context);
                     MakeTheCall(context);
                     break;
             }
@@ -244,7 +245,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                         ListViewBroadcast();
 
                         //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
-                            //DistanceMatrixRequest();
+                        //DistanceMatrixRequest();
 
                     }
                 }
@@ -267,6 +268,9 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
 
     public static void MakeTheCall(Context context) {
+
+        if (Settings.getInstance().isSound())
+            PlayNotificationSound(context);
 
         Intent intent = new Intent(Intent.ACTION_CALL);
 
@@ -319,6 +323,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public void UpdateIntervalAlgorithm() {
 
         long nextUpdateInterval = DEFAULT_LOCATION_INTERVAL;
+        Constants.LocationType type = Constants.LocationType.SINGLE_UPDATE;
 
         if (ListGateComplexPref.getInstance().getClosestGate().active) {
 
@@ -326,18 +331,20 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
                 Log.d(TAG, "=====Out Side GPS Open Distance=====");
                 nextUpdateInterval = (long) ((ListGateComplexPref.getInstance().getClosestETA() / DEFAULT_ACTIVE_COEFFICIENT));
+                type = Constants.LocationType.SINGLE_UPDATE;
             }
             //on the way x minutes before the gate, start massive GPS request
             else if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ALMOST) {
                 Log.d(TAG, "=====Massive GPS Request=====");
                 nextUpdateInterval = UPDATE_INTERVAL;
+                type = Constants.LocationType.LOCATION_UPDATE;
             }
             //arrived to the gate, deactivate gate
             else {
                 OpenSSME();
             }
 
-            SetUpInterval(nextUpdateInterval);
+            SetUpInterval(nextUpdateInterval, type);
         }
     }
 
@@ -346,7 +353,10 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "GPS Open Distance: " + Settings.getInstance().getGps_distance());
         Log.d(TAG, "Gate Radius Open Distance: " + Settings.getInstance().getOpen_distance());
         Log.d(TAG, "====Location====");
-        Log.d(TAG, "Location Updates: " + mLocationHelper.isIsLocationUpdatesOn());
+        Log.d(TAG, "Single Location Updates: " + mLocationHelper.isSingleLocationUpdatesOn());
+        Log.d(TAG, "Location Updates: " + mLocationHelper.isLocationUpdatesOn());
+        Log.d(TAG, mCurrentLocationType.getValue() == 1 ? "Location Type: Location Update" : "Location Type: Single Update");
+
         Log.d(TAG, "=====Gate Details=====");
         Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
         Log.d(TAG, "Distance To Gate: " + Floor(ListGateComplexPref.getInstance().getClosestGate().distance));
@@ -356,10 +366,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "Speed: " + mLocationHelper.getSpeed());
     }
 
-    private void SetUpInterval(long interval) {
+    private void SetUpInterval(long interval, Constants.LocationType type) {
+        mCurrentLocationType = type;
         if (interval != mGPSUpdateInterval) {
             mGPSUpdateInterval = interval;
-            mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval);
+            mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, type);
 
         }
     }
@@ -371,11 +382,17 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "Make The Call To " + ListGateComplexPref.getInstance().getClosestGate().phone);
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getApplicationContext());
 
-        if (Settings.getInstance().isTerminate())
-            stopSelf();
+        if (Settings.getInstance().isTerminate()) {
+            ExitApplication();
+        }
 
     }
 
+    private void ExitApplication() {
+        doTerminate = true;
+        stopSelf();
+        ExitActivity.exitApplication(getApplicationContext());
+    }
 
     private void ListViewBroadcast() {
         Intent intent = new Intent(Constants.DATA_CHANGED);
