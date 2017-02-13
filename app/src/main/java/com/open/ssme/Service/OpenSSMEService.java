@@ -374,9 +374,10 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     }
 
     private void SetUpInterval(long interval, Constants.LocationType type) {
-        mCurrentLocationType = type;
-        if (interval != mGPSUpdateInterval) {
+
+        if (interval != mGPSUpdateInterval || mCurrentLocationType != type) {
             mGPSUpdateInterval = interval;
+            mCurrentLocationType = type;
             mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, type);
 
         }

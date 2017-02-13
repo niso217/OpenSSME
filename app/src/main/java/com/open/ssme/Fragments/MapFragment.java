@@ -300,25 +300,18 @@ public class MapFragment extends Fragment implements
             mapView = (MapView) rootView.findViewById(R.id.map);
             mapView.onCreate(savedInstanceState);
 
+
             if (mapView != null) {
                 mapView.getMapAsync(this);
-
-                if (mapView != null &&
-                        mapView.findViewById(Integer.parseInt("1")) != null) {
-                    // Get the button view
-                    View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-                    // and next place it, on bottom right (as Google Maps app)
-                    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
-                            locationButton.getLayoutParams();
-                    // position on right bottom
-                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
-                    layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
-                    layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
-
-                    layoutParams.setMargins(0, 0, 141, 10);
-                }
-
-
+//                if (mapView.findViewById(Integer.parseInt("1")) != null) {
+//
+//                    View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+//                    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
+//                            locationButton.getLayoutParams();
+//                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+//
+//                    layoutParams.setMargins(0, 620, 0, 0);
+//                }
             } else {
                 Toast.makeText(getContext(), getContext().getResources().getString(R.string.map_error), Toast.LENGTH_SHORT).show();
             }
@@ -437,7 +430,7 @@ public class MapFragment extends Fragment implements
             case R.id.current_location:
                 if (map != null) {
                     GoogleConnection mGoogleConnection = GoogleConnection.getInstance(getContext());
-                    if (mGoogleConnection.getGoogleApiClient().isConnected()){
+                    if (mGoogleConnection.getGoogleApiClient().isConnected()) {
                         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                             return;
@@ -445,8 +438,8 @@ public class MapFragment extends Fragment implements
                         double latitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLatitude();
                         double longitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLongitude();
 
-                    mOnClickLatLang = new LatLng(latitude, longitude);
-                    SetContactPickerIntent();
+                        mOnClickLatLang = new LatLng(latitude, longitude);
+                        SetContactPickerIntent();
                     }
                 }
                 break;

@@ -94,7 +94,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
 
     @Override
     public void onLocationChanged(Location location) {
-            SetLocationData(location);
+        SetLocationData(location);
     }
 
 
@@ -204,18 +204,19 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     public void ChangeLocationRequest(long ETA, Constants.LocationType type) {
         Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, With " + type.toString() + " Method=====");
 
-        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
 
-            if (type == Constants.LocationType.SINGLE_UPDATE) {
-                StopAllLocationServices();
-                reCheckLocation(ETA);
+        if (type == Constants.LocationType.SINGLE_UPDATE) {
+            StopAllLocationServices();
+            reCheckLocation(ETA);
 
-            } else {
+        } else {
+            if (mGoogleConnection.getGoogleApiClient().isConnected()) {
                 StopAllLocationServices();
                 setupLocationRequestBalanced(ETA);
                 StartLocationUpdates();
             }
         }
+
     }
 
 

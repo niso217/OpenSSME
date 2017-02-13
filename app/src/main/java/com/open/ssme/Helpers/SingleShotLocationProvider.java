@@ -38,7 +38,6 @@ public class SingleShotLocationProvider {
                 (Context.CONNECTIVITY_SERVICE));
         Network[] networks = connectivityManager.getAllNetworks();
         if (networks == null || networks.length == 0) {
-            Log.d(TAG, "=====Wifi Is Off Starting Location Updates=====");
             return false;
 
         } else {
@@ -52,7 +51,6 @@ public class SingleShotLocationProvider {
 
             }
         }
-        Log.d(TAG, "=====Wifi Is Off Starting Location Updates=====");
         return false;
 
     }
