@@ -81,12 +81,9 @@ public class MainActivity extends AppCompatActivity implements
     private String CurrentFragment;
     public LocationRequest mLocationRequest;
     public GoogleConnection mGoogleConnection;
-    private View mAutocompleteFragment;
     private Fragment fragment;
     private int mCurrentViewId = R.id.gate_list;
-    private int mLastViewId;
     private OpenSSMEService mLocationService;
-    private Bundle mSavedInstanceState;
 
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -112,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
 
-        mSavedInstanceState = savedInstanceState;
 
         Init();
     }
@@ -156,38 +152,31 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.main_settings:
-                navigationView.setCheckedItem(R.id.settings);
-                displayView(R.id.settings);
-                Log.d(TAG, "");
-                return true;
+            case R.id.main_share:
+                postStatusUpdate();
+                break;
+            case R.id.main_logout:
+                AskLogOut();
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }
+        return true;
     }
 
 
     public void connectClient() {
-
         // Connect the client.
-        if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected()) {
+        if (mGoogleConnection != null && !mGoogleConnection.getGoogleApiClient().isConnected())
             mGoogleConnection.connect();
-        } else
-            SetUpDisplayView();
     }
 
+
     private void SetUpDisplayView() {
-        if (mSavedInstanceState == null) {
             if (ListGateComplexPref.getInstance().gates.size() > 0)
                 displayView(mCurrentViewId);
             else
                 displayView(mCurrentViewId = R.id.menu_map);
-
-
-        } else {
-            mCurrentViewId = mSavedInstanceState.getInt(CURRENT_VIEW_ID);
-            displayView(mCurrentViewId);
-        }
     }
 
     @Override
@@ -200,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements
 
             case OPENED:
                 Log.d(TAG, "Connected to Google Api Client");
-                SetUpDisplayView();
                 break;
             case CLOSED:
                 Log.d(TAG, "Disconnected from Google Api Client");
@@ -279,6 +267,9 @@ public class MainActivity extends AppCompatActivity implements
 
         RegisterReciver();
 
+        SetUpDisplayView();
+
+
     }
 
 
@@ -330,7 +321,6 @@ public class MainActivity extends AppCompatActivity implements
         else
             menuItem.setChecked(true);
 
-        mLastViewId = mCurrentViewId;
         mCurrentViewId = menuItem.getItemId();
         displayView(mCurrentViewId);
         return true;
@@ -338,23 +328,6 @@ public class MainActivity extends AppCompatActivity implements
 
     public void displayView(int ViewId) {
 
-        if (ViewId == R.id.logout) {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(getResources().getString(R.string.log_out))
-                    .setMessage(getResources().getString(R.string.do_log_out))
-                    .setPositiveButton(getResources().getString(R.string.log_out), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            signOut();
-
-                        }
-
-                    })
-                    .setNegativeButton(getResources().getString(R.string.cancel), null)
-                    .show();
-            return;
-        }
 
         String title = getString(R.string.app_name);
 
@@ -386,10 +359,6 @@ public class MainActivity extends AppCompatActivity implements
                 }
                 title = getResources().getString(R.string.settings);
                 CurrentFragment = SETTINGS_FRAGMENT;
-                break;
-
-            case R.id.share:
-                postStatusUpdate();
                 break;
 
         }
@@ -429,6 +398,24 @@ public class MainActivity extends AppCompatActivity implements
         if (drawerLayout != null)
             drawerLayout.closeDrawer(GravityCompat.START);
 
+
+    }
+
+    private void AskLogOut(){
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle(getResources().getString(R.string.log_out))
+                .setMessage(getResources().getString(R.string.do_log_out))
+                .setPositiveButton(getResources().getString(R.string.log_out), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        signOut();
+
+                    }
+
+                })
+                .setNegativeButton(getResources().getString(R.string.cancel), null)
+                .show();
 
     }
 
@@ -476,12 +463,10 @@ public class MainActivity extends AppCompatActivity implements
         dialog.setCanceledOnTouchOutside(true);
         //for dismissing anywhere you touch
         View masterView = dialog.findViewById(R.id.coach_mark_master_view);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         masterView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
             }
         });
         dialog.show();
@@ -574,9 +559,6 @@ public class MainActivity extends AppCompatActivity implements
                 if (User.getInstance().source.equals(Constants.FACEBOOK)) {
                     OpenSSMEApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
                 }
-                break;
-            case 0:
-                mCurrentViewId = mLastViewId;
                 break;
 
         }

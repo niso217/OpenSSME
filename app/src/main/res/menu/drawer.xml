@@ -16,23 +16,10 @@
             android:title="@string/add_gate" />
 
         <item
-            android:id="@+id/share"
-            android:checked="false"
-            android:icon="@drawable/ic_thumb_up_black_24dp"
-            android:title="@string/share" />
-
-        <item
             android:id="@+id/settings"
             android:checked="false"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/settings" />
-
-        <item
-            android:id="@+id/logout"
-            android:checked="false"
-            android:icon="@drawable/ic_exit_to_app_black_24dp"
-            android:title="@string/log_out" />
-
 
 
     </group>
