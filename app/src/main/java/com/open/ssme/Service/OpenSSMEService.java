@@ -347,7 +347,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         long nextUpdateInterval = DEFAULT_LOCATION_INTERVAL;
         long WhenToDispatch = NOW;
 
-        if (ListGateComplexPref.getInstance().getClosestGate().active && !mIsWifiOn) {
+        if (ListGateComplexPref.getInstance().getClosestGate().active) {
 
             //away, set the next update to to ETA / 2
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
