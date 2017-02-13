@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements
     private View mAutocompleteFragment;
     private Fragment fragment;
     private int mCurrentViewId = R.id.gate_list;
+    private int mLastViewId;
     private OpenSSMEService mLocationService;
     private Bundle mSavedInstanceState;
 
@@ -219,8 +220,6 @@ public class MainActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_main);
 
-        //mAutocompleteFragment = findViewById(R.id.autocomplete_fragment);
-
 
         // Initializing Toolbar and setting it as the actionbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -283,17 +282,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    @Override
-    public boolean onNavigationItemSelected(MenuItem menuItem) {
-
-
-        //Checking if the item is in checked state or not, if not make it in checked state
-        if (menuItem.isChecked()) menuItem.setChecked(false);
-        else menuItem.setChecked(true);
-        mCurrentViewId = menuItem.getItemId();
-        displayView(mCurrentViewId);
-        return true;
-    }
 
 
     @Override
@@ -333,6 +321,21 @@ public class MainActivity extends AppCompatActivity implements
         ExitActivity.exitApplication(getApplicationContext());
     }
 
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem menuItem) {
+        //Checking if the item is in checked state or not, if not make it in checked state
+        if (menuItem.isChecked())
+            menuItem.setChecked(false);
+        else
+            menuItem.setChecked(true);
+
+        mLastViewId = mCurrentViewId;
+        mCurrentViewId = menuItem.getItemId();
+        displayView(mCurrentViewId);
+        return true;
+    }
+
     public void displayView(int ViewId) {
 
         if (ViewId == R.id.logout) {
@@ -355,13 +358,10 @@ public class MainActivity extends AppCompatActivity implements
 
         String title = getString(R.string.app_name);
 
-        //mAutocompleteFragment.setVisibility(View.GONE);
-
         switch (ViewId) {
             case R.id.gate_list:
                 fragment = getSupportFragmentManager().findFragmentByTag(GATE_LIST_FRAGMENT);
                 if (fragment == null) {
-                    //fragment = new GateListFragment();
                     fragment = new GateListFragment();
 
                 }
@@ -375,8 +375,7 @@ public class MainActivity extends AppCompatActivity implements
                 if (fragment == null) {
                     fragment = new MapFragment();
                 }
-                //title = getResources().getString(R.string.add_gate);
-                title = "";
+                title = getResources().getString(R.string.add_gate);
                 CurrentFragment = MAP_FRAGMENT;
                 break;
 
@@ -407,12 +406,8 @@ public class MainActivity extends AppCompatActivity implements
                     }
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
-                      //  mAutocompleteFragment.setVisibility(View.VISIBLE);
                         if (ListGateComplexPref.getInstance().gates.size() == 0) {
                             onCoachMark();
-                            //PrefUtils.setSettings(getApplicationContext());
-                            //Settings.getInstance().setFirst_run(false);
-
                         }
 
                     }
@@ -579,8 +574,13 @@ public class MainActivity extends AppCompatActivity implements
                 if (User.getInstance().source.equals(Constants.FACEBOOK)) {
                     OpenSSMEApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
                 }
+                break;
+            case 0:
+                mCurrentViewId = mLastViewId;
+                break;
 
         }
+
     }
 
     private void postStatusUpdate() {

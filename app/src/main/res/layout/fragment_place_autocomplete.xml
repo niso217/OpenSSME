@@ -6,14 +6,6 @@
     android:orientation="vertical">
 
 
-    <EditText
-        android:id="@+id/editWorkLocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:editable="false"
-        android:visibility="gone"
-        android:hint="nir"
-        android:singleLine="true" />
 
     <ImageButton
         android:id="@+id/btn"

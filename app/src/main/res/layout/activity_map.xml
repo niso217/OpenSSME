@@ -17,7 +17,7 @@
 		android:orientation="vertical"
 		android:layout_alignParentTop="true"
 		android:layout_alignParentEnd="true"
-		android:layout_marginTop="60dp">
+		android:layout_marginTop="57dp">
 
 
 	<ImageButton
@@ -32,6 +32,14 @@
 		android:layout_alignParentEnd="true"
 		android:layout_marginRight="10dp" />
 
+		<fragment
+			android:id="@+id/autocomplete_fragment"
+			android:name="com.open.ssme.Fragments.CustomPlaceAutoCompleteFragment"
+			android:layout_width="wrap_content"
+			android:layout_marginTop="5dp"
+			android:layout_marginRight="10dp"
+			android:layout_height="wrap_content" />
+
 	<ImageButton
 		android:id="@+id/help"
 		android:layout_width="42dp"
@@ -44,14 +52,7 @@
 		android:layout_below="@+id/current_location"
 		android:layout_alignStart="@+id/current_location" />
 
-	<fragment
-		android:id="@+id/autocomplete_fragment"
-		android:name="com.open.ssme.Fragments.CustomPlaceAutoCompleteFragment"
-		android:layout_width="wrap_content"
-		android:layout_marginTop="5dp"
-		android:layout_marginRight="10dp"
 
-		android:layout_height="wrap_content" />
 	</LinearLayout>
 
 

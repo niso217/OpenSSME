@@ -28,7 +28,6 @@ import com.open.ssme.R;
  */
 public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
 
-    private EditText editSearch;
     private ImageButton image;
 
     private View zzaRh;
@@ -48,8 +47,6 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View var4 = inflater.inflate(R.layout.fragment_place_autocomplete, container, false);
 
-        editSearch = (EditText) var4.findViewById(R.id.editWorkLocation);
-
         image = (ImageButton) var4.findViewById(R.id.btn);
         image.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,7 +62,6 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
     public void onDestroyView() {
         this.zzaRh = null;
         this.zzaRi = null;
-        this.editSearch = null;
         super.onDestroyView();
     }
 
@@ -78,12 +74,10 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
     }
 
     public void setText(CharSequence text) {
-        this.editSearch.setText(text);
         //this.zzzF();
     }
 
     public void setHint(CharSequence hint) {
-        this.editSearch.setHint(hint);
         this.zzaRh.setContentDescription(hint);
     }
 
@@ -92,7 +86,6 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
     }
 
     private void zzzF() {
-        boolean var1 = !this.editSearch.getText().toString().isEmpty();
         //this.zzaRi.setVisibility(var1?0:8);
     }
 
@@ -100,7 +93,7 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
         int var1 = -1;
 
         try {
-            Intent var2 = (new PlaceAutocomplete.IntentBuilder(2)).setBoundsBias(this.zzaRk).setFilter(this.zzaRl).zzkv(this.editSearch.getText().toString()).zzuk(1).build(this.getActivity());
+            Intent var2 = (new PlaceAutocomplete.IntentBuilder(2)).setBoundsBias(this.zzaRk).setFilter(this.zzaRl).zzkv("").zzuk(1).build(this.getActivity());
             this.startActivityForResult(var2, 1);
         } catch (GooglePlayServicesRepairableException var3) {
             var1 = var3.getConnectionStatusCode();
