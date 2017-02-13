@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         connectClient();
         ScreenSetup();
+        StartOpenSSMEService();
         super.onResume();
     }
 

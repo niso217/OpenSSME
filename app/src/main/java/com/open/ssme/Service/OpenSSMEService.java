@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.open.ssme.Utils.Constants.ALMOST_INTERVAL;
 import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
 import static com.open.ssme.Utils.Constants.DEFAULT_ACTIVE_COEFFICIENT;
 import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
@@ -58,6 +59,8 @@ import static com.open.ssme.Utils.Constants.DEFAULT_RUN_SERVICE_TASK;
 import static com.open.ssme.Utils.Constants.DISTANCE_MATRIX_SUFFIX;
 import static com.open.ssme.Utils.Constants.DRIVING_SPEED;
 import static com.open.ssme.Utils.Constants.GOOGLE_MATRIX_API_REQ_TIME;
+import static com.open.ssme.Utils.Constants.NOW;
+import static com.open.ssme.Utils.Constants.ONWAY_INTERVAL;
 import static com.open.ssme.Utils.Constants.RESTART_SERVICE;
 import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 
@@ -71,6 +74,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public static boolean mCodeBlocker;
     private NotificationManager mNotificationManager;
     private long mGPSUpdateInterval = 0;
+    private long mWhenToDispatch = 0;
     private Constants.LocationType mCurrentLocationType = Constants.LocationType.SINGLE_UPDATE;
     private LocationHelper mLocationHelper;
     private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
@@ -230,32 +234,43 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                     return;
                 }
 
-                if (mLocationHelper.getLocation() != null) {
+                if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
+                    mIsWifiOn = SingleShotLocationProvider.isWifiConnected(getApplicationContext());
 
-                    if (!mCodeBlocker) {
+                if (!mIsWifiOn) {
 
-                        CalcGatesDistanceAndETA();
+                    if (mLocationHelper.getLocation() != null) {
 
-                        SetGateStatus();
+                        if (!mCodeBlocker) {
 
-                        ActiveGate();
+                            CalcGatesDistanceAndETA();
 
-                        UpdateNotification();
+                            SetGateStatus();
 
-                        UpdateIntervalAlgorithm();
+                            ActiveGate();
 
-                        WriteToLog();
+                            UpdateNotification();
 
-                        ListViewBroadcast();
+                            UpdateIntervalAlgorithm();
 
-                        //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
-                        //DistanceMatrixRequest();
+                            WriteToLog();
 
-                        if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
-                            mIsWifiOn = SingleShotLocationProvider.isWifiConnected(getApplicationContext());
+                            ListViewBroadcast();
+
+                            //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
+                            //DistanceMatrixRequest();
+
+
+                        }
+                    }
+                } else {
+                    if (mLocationHelper.isLocationUpdatesOn()) {
+                        mGPSUpdateInterval = 0;
+                        mLocationHelper.StopLocationUpdates();
 
                     }
                 }
+
             }
         };
         mHandlerTask.run();
@@ -330,21 +345,21 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public void UpdateIntervalAlgorithm() {
 
         long nextUpdateInterval = DEFAULT_LOCATION_INTERVAL;
-        Constants.LocationType type = Constants.LocationType.SINGLE_UPDATE;
+        long WhenToDispatch = NOW;
 
-        if (ListGateComplexPref.getInstance().getClosestGate().active  && !mIsWifiOn) {
+        if (ListGateComplexPref.getInstance().getClosestGate().active && !mIsWifiOn) {
 
             //away, set the next update to to ETA / 2
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
                 Log.d(TAG, "=====Out Side GPS Open Distance=====");
-                nextUpdateInterval = (long) ((ListGateComplexPref.getInstance().getClosestETA() / DEFAULT_ACTIVE_COEFFICIENT));
-                type = Constants.LocationType.SINGLE_UPDATE;
+                nextUpdateInterval = ONWAY_INTERVAL;
+                WhenToDispatch = (long) ((ListGateComplexPref.getInstance().getClosestETA() / DEFAULT_ACTIVE_COEFFICIENT));
             }
             //on the way x minutes before the gate, start massive GPS request
             else if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ALMOST) {
                 Log.d(TAG, "=====Massive GPS Request=====");
-                nextUpdateInterval = UPDATE_INTERVAL;
-                type = Constants.LocationType.LOCATION_UPDATE;
+                nextUpdateInterval = ALMOST_INTERVAL;
+                WhenToDispatch = NOW;
             }
             //arrived to the gate, deactivate gate
             else {
@@ -352,8 +367,18 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
             }
 
         }
-        SetUpInterval(nextUpdateInterval, type);
+        SetUpInterval(nextUpdateInterval, WhenToDispatch);
 
+    }
+
+    private void SetUpInterval(long interval, long WhenToDispatch) {
+
+        if (interval != mGPSUpdateInterval) {
+            mWhenToDispatch = WhenToDispatch;
+            mGPSUpdateInterval = interval;
+            mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
+
+        }
     }
 
     private void WriteToLog() {
@@ -361,28 +386,17 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "GPS Open Distance: " + Settings.getInstance().getGps_distance());
         Log.d(TAG, "Gate Radius Open Distance: " + Settings.getInstance().getOpen_distance());
         Log.d(TAG, "====Location====");
-        Log.d(TAG, "Single Location Updates: " + mLocationHelper.isSingleLocationUpdatesOn());
-        Log.d(TAG, "Location Updates: " + mLocationHelper.isLocationUpdatesOn());
-        Log.d(TAG, mCurrentLocationType.getValue() == 1 ? "Location Type: Location Update" : "Location Type: Single Update");
-
+        Log.d(TAG, "Location Updates Is: " + mLocationHelper.isLocationUpdatesOn());
+        Log.d(TAG, "Next Location Update: " + mWhenToDispatch / 1000 + " Seconds");
+        Log.d(TAG, "Interval: " + mGPSUpdateInterval / 1000 + " Seconds");
         Log.d(TAG, "=====Gate Details=====");
         Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
         Log.d(TAG, "Distance To Gate: " + Floor(ListGateComplexPref.getInstance().getClosestGate().distance));
-        Log.d(TAG, "Next Location Update: " + mGPSUpdateInterval / 1000 + " Seconds");
         Log.d(TAG, "ETA: " + Floor(ListGateComplexPref.getInstance().getClosestGate().ETA));
         Log.d(TAG, "Active: " + ListGateComplexPref.getInstance().getClosestGate().active);
         Log.d(TAG, "Speed: " + mLocationHelper.getSpeed());
     }
 
-    private void SetUpInterval(long interval, Constants.LocationType type) {
-
-        if (interval != mGPSUpdateInterval || mCurrentLocationType != type) {
-            mGPSUpdateInterval = interval;
-            mCurrentLocationType = type;
-            mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, type);
-
-        }
-    }
 
     private void OpenSSME() {
         ListGateComplexPref.getInstance().getClosestGate().active = false;

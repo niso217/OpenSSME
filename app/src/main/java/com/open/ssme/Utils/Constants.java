@@ -11,8 +11,11 @@ public class Constants {
 
     public static final String CURRENT_VIEW_ID = "id";
 
+    public static final long ALMOST_INTERVAL = 1000 * 3;
+    public static final long ONWAY_INTERVAL = 1000 * 5;
     public static final long UPDATE_INTERVAL = 1000 * 3;
     public static final long FASTEST_INTERVAL = 1000 * 3;
+    public static final long NOW = 0;
     public static final int DRIVING_SPEED = 100;
     public static final long DEFAULT_LOCATION_INTERVAL = 1000 * 60;
     public static final long DEFAULT_CHECK_WIFI_TASK = 20;

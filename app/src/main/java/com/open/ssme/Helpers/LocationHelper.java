@@ -35,6 +35,7 @@ import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 import static com.open.ssme.Utils.Constants.LOCATION_UPDATE_TIME_OUT;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
+import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 
 /**
  * Created by nirb on 31/01/2017.
@@ -64,7 +65,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         this.mContext = context;
 
         mGoogleConnection = GoogleConnection.getInstance(context);
-        setupLocationRequestBalanced(DEFAULT_LOCATION_INTERVAL);
+        setupLocationRequestBalanced(UPDATE_INTERVAL);
         InitLocationManager();
         StartLocationUpdates();
         mIsGPSOn = IsGpsActive();
@@ -75,19 +76,17 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
 
-    private void reCheckLocation(final long ETA) {
+    private void reCheckLocation(final long WhenToDispatch) {
         mLocationHandler = new Handler();
 
         mLocationHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                SingeLocationRequest();
-                mLocationHandler.postDelayed(this, ETA);
-                Log.d(TAG, "=====ReCheck Location In " + ETA / 1000 + " Seconds=====");
+                StartLocationUpdates();
             }
-        }, ETA);
+        }, WhenToDispatch);
 
-        Log.d(TAG, "=====ReCheck Location In " + ETA / 1000 + " Seconds=====");
+        Log.d(TAG, "=====ReCheck Location In " + WhenToDispatch / 1000 + " Seconds=====");
 
     }
 
@@ -201,20 +200,13 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
                 .setFastestInterval(Interval);
     }
 
-    public void ChangeLocationRequest(long ETA, Constants.LocationType type) {
-        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, With " + type.toString() + " Method=====");
+    public void ChangeLocationRequest(long ETA,  long WhenToDispatch) {
+        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, In " + WhenToDispatch/1000 + " Seconds=====");
 
-
-        if (type == Constants.LocationType.SINGLE_UPDATE) {
+        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
             StopAllLocationServices();
-            reCheckLocation(ETA);
-
-        } else {
-            if (mGoogleConnection.getGoogleApiClient().isConnected()) {
-                StopAllLocationServices();
-                setupLocationRequestBalanced(ETA);
-                StartLocationUpdates();
-            }
+            setupLocationRequestBalanced(ETA);
+            reCheckLocation(WhenToDispatch);
         }
 
     }
