@@ -1,13 +1,16 @@
 package com.open.ssme.Fragments;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
 
 import com.open.ssme.R;
+import com.open.ssme.Utils.Constants;
 import com.open.ssme.Utils.PrefUtils;
 
 import static com.open.ssme.Utils.Constants.PREF_FIRST_RUN;
@@ -55,5 +58,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                 .unregisterOnSharedPreferenceChangeListener(this);
 
     }
+
 
 }

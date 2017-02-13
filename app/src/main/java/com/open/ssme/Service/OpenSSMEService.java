@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
 import static com.open.ssme.Utils.Constants.DEFAULT_ACTIVE_COEFFICIENT;
 import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;

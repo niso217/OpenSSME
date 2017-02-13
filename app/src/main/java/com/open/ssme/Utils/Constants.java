@@ -122,6 +122,7 @@ public class Constants {
 
     public static final String STARTFOREGROUND_ACTION = "OpenSSME.OpenSSMEService.StartForeground";
     public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
+    public static final String ASK_SMS_PREMISSION = "OpenSSME.OpenSSMEService.SMS_PREMISSION";
 
 
 

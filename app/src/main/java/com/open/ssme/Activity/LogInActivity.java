@@ -41,8 +41,6 @@ public class LogInActivity extends AppCompatActivity implements Observer {
     public static final int STARTUP_DELAY = 300;
     public static final int ANIM_ITEM_DURATION = 1000;
     public static final int ITEM_DELAY = 300;
-    List<String> permissions = new ArrayList<>();
-    final public static int REQUEST_CODE = 123;
     public GoogleConnection mGoogleConnection;
     private boolean animationStarted = true;
     /**
@@ -66,33 +64,13 @@ public class LogInActivity extends AppCompatActivity implements Observer {
             setContentView(R.layout.activity_login);
         } else {
             animationStarted = true;
-            addPermissionToList();
-            requestPermissions();
-
-        }
+            startActivity(new Intent(this, MainActivity.class));
+            finish();        }
 
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            //Confirm the result of which request to return
-            case REQUEST_CODE: {
-                List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
-                if (unGranted.size() == 0) {
-                    //All permissions have been granted
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                } else {
-                    Iterator<String> iterator = unGranted.iterator();
-                    PermissionResolver(iterator.next());
-                }
 
-                break;
-            }
-        }
-    }
 
     @Override
     protected void onStart() {
@@ -102,52 +80,8 @@ public class LogInActivity extends AppCompatActivity implements Observer {
     }
 
 
-    private void addPermissionToList() {
-        permissions.add(Manifest.permission.CALL_PHONE);
-        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        permissions.add(Manifest.permission.READ_CONTACTS);
-        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    }
 
-    private void PermissionResolver(String Permission) {
-        boolean messege = false;
-        String AlertMessege = "";
-        switch (Permission) {
 
-            case Constants.CALL_PHONE:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
-                AlertMessege = getResources().getString(R.string.request_call);
-                break;
-            case Constants.ACCESS_FINE_LOCATION:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
-                AlertMessege = getResources().getString(R.string.request_location);
-                break;
-            case Constants.ACCESS_COARSE_LOCATION:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-                AlertMessege = getResources().getString(R.string.request_location);
-                break;
-            case Constants.READ_CONTACTS:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
-                AlertMessege = getResources().getString(R.string.request_contacts);
-                break;
-            case Constants.READ_EXTERNAL_STORAGE:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-                AlertMessege = getResources().getString(R.string.request_read_write);
-                break;
-            case Constants.WRITE_EXTERNAL_STORAGE:
-                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                AlertMessege = getResources().getString(R.string.request_read_write);
-                break;
-        }
-        if (messege) {
-            AlertDialog(AlertMessege);
-        } else {
-            //user has denied with `Never Ask Again`, go to settings
-            promptSettings();
-        }
-    }
     public void connectClient() {
 
         // Connect the client.
@@ -158,59 +92,9 @@ public class LogInActivity extends AppCompatActivity implements Observer {
 
 
 
-    private void requestPermissions() {
-        List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissions(permissions);
-        if (unGranted.size() != 0) {
-            PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
-        } else {
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
 
-        }
-    }
 
-    private void AlertDialog(String message) {
-        //user denied without Never ask again, just show rationale explanation
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getResources().getString(R.string.permission_denied));
-        builder.setMessage(message);
 
-        builder.setNegativeButton(getResources().getString(R.string.re_try), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                requestPermissions();
-            }
-        });
-        builder.show();
-    }
-
-    private void promptSettings() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getResources().getString(R.string.permission_denied));
-        builder.setMessage(getResources().getString(R.string.please_fix));
-        builder.setPositiveButton(getResources().getString(R.string.go_settings), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                goToSettings();
-            }
-        });
-        builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
-        builder.show();
-    }
-
-    private void goToSettings() {
-        Intent myAppSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
-        myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
-        myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(myAppSettings);
-    }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {

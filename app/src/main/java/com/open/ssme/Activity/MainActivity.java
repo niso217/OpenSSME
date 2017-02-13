@@ -1,5 +1,6 @@
 package com.open.ssme.Activity;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -11,11 +12,14 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -49,6 +53,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.open.ssme.Utils.PermissionsUtil;
 import com.squareup.picasso.Picasso;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -58,9 +63,13 @@ import com.open.ssme.Utils.Constants;
 import com.open.ssme.Utils.PrefUtils;
 import com.open.ssme.Common.GoogleConnection;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
+import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
 import static com.open.ssme.Utils.Constants.CURRENT_VIEW_ID;
 import static com.open.ssme.Utils.Constants.GATE_LIST_FRAGMENT;
 import static com.open.ssme.Utils.Constants.MAP_FRAGMENT;
@@ -84,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements
     private Fragment fragment;
     private int mCurrentViewId = R.id.gate_list;
     private OpenSSMEService mLocationService;
+    final public static int REQUEST_CODE = 123;
+    private List<String> permissions;
 
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -98,7 +109,12 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
-    //
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(CURRENT_VIEW_ID, mCurrentViewId);
+        super.onSaveInstanceState(outState);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -109,20 +125,36 @@ public class MainActivity extends AppCompatActivity implements
         mGoogleConnection = GoogleConnection.getInstance(this);
         mGoogleConnection.addObserver(this);
 
+        if (savedInstanceState != null)
+            mCurrentViewId = savedInstanceState.getInt(CURRENT_VIEW_ID);
 
         Init();
+
+        AskForPermissions();
+
+
+
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt(CURRENT_VIEW_ID, mCurrentViewId);
-        super.onSaveInstanceState(outState);
+    protected void onStart() {
+        super.onStart();
     }
+
+    private void AskForPermissions() {
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                addPermissionToList();
+                requestPermissions();
+            }
+        });
+    }
+
 
     @Override
     protected void onResume() {
         connectClient();
-        StartOpenSSMEService();
         ScreenSetup();
         super.onResume();
     }
@@ -138,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements
             mGoogleConnection.deleteObserver(this);
         }
         unregisterReceiver(receiver);
+
         super.onDestroy();
 
     }
@@ -173,10 +206,10 @@ public class MainActivity extends AppCompatActivity implements
 
 
     private void SetUpDisplayView() {
-            if (ListGateComplexPref.getInstance().gates.size() > 0)
-                displayView(mCurrentViewId);
-            else
-                displayView(mCurrentViewId = R.id.menu_map);
+        if (ListGateComplexPref.getInstance().gates.size() > 0)
+            displayView(mCurrentViewId);
+        else
+            displayView(mCurrentViewId = R.id.menu_map);
     }
 
     @Override
@@ -201,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements
         IntentFilter filter = new IntentFilter(PROVIDERS_CHANGED);
         registerReceiver(receiver, filter);
     }
+
 
     private void Init() {
 
@@ -267,12 +301,8 @@ public class MainActivity extends AppCompatActivity implements
 
         RegisterReciver();
 
-        SetUpDisplayView();
-
 
     }
-
-
 
 
     @Override
@@ -401,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    private void AskLogOut(){
+    private void AskLogOut() {
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(getResources().getString(R.string.log_out))
@@ -546,6 +576,58 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
+    private void addPermissionToList() {
+        if (permissions == null) {
+            permissions = new ArrayList<>();
+            permissions.add(Manifest.permission.CALL_PHONE);
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            permissions.add(Manifest.permission.READ_CONTACTS);
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            
+        }
+    }
+
+    private void PermissionResolver(String Permission) {
+        boolean messege = false;
+        String AlertMessege = "";
+        switch (Permission) {
+
+            case Constants.CALL_PHONE:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE);
+                AlertMessege = getResources().getString(R.string.request_call);
+                break;
+            case Constants.ACCESS_FINE_LOCATION:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
+                AlertMessege = getResources().getString(R.string.request_location);
+                break;
+            case Constants.ACCESS_COARSE_LOCATION:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+                AlertMessege = getResources().getString(R.string.request_location);
+                break;
+            case Constants.READ_CONTACTS:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS);
+                AlertMessege = getResources().getString(R.string.request_contacts);
+                break;
+            case Constants.READ_EXTERNAL_STORAGE:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+                AlertMessege = getResources().getString(R.string.request_read_write);
+                break;
+            case Constants.WRITE_EXTERNAL_STORAGE:
+                messege = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                AlertMessege = getResources().getString(R.string.request_read_write);
+                break;
+        }
+        if (messege) {
+            AlertDialog(AlertMessege);
+        } else {
+            //user has denied with `Never Ask Again`, go to settings
+            promptSettings();
+        }
+    }
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -563,6 +645,79 @@ public class MainActivity extends AppCompatActivity implements
 
         }
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            //Confirm the result of which request to return
+            case REQUEST_CODE:
+                List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
+                if (unGranted.size() == 0) {
+                    //All permissions have been granted
+                    SetUpDisplayView();
+
+                } else {
+                    Iterator<String> iterator = unGranted.iterator();
+                    PermissionResolver(iterator.next());
+                }
+
+                break;
+
+        }
+    }
+
+    private void requestPermissions() {
+        List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissions(permissions);
+        if (unGranted.size() != 0)
+            PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
+        else {
+            SetUpDisplayView();
+
+        }
+    }
+
+    private void AlertDialog(String message) {
+        //user denied without Never ask again, just show rationale explanation
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.permission_denied));
+        builder.setMessage(message);
+
+        builder.setNegativeButton(getResources().getString(R.string.re_try), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                requestPermissions();
+            }
+        });
+        builder.show();
+    }
+
+    private void promptSettings() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.permission_denied));
+        builder.setMessage(getResources().getString(R.string.please_fix));
+        builder.setPositiveButton(getResources().getString(R.string.go_settings), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                goToSettings();
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        builder.show();
+    }
+
+    private void goToSettings() {
+        Intent myAppSettings = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
+        myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
+        myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.startActivity(myAppSettings);
     }
 
     private void postStatusUpdate() {
