@@ -12,10 +12,11 @@ public class Constants {
     public static final String CURRENT_VIEW_ID = "id";
 
     public static final long ALMOST_INTERVAL = 1000 * 3;
-    public static final long ONWAY_INTERVAL = 1000 * 5;
+    public static final long ONWAY_INTERVAL = 1000 * 20;
     public static final long UPDATE_INTERVAL = 1000 * 3;
     public static final long FASTEST_INTERVAL = 1000 * 3;
     public static final long NOW = 0;
+    public static final long ONE_SECONDS = 1 * 1000;
     public static final int DRIVING_SPEED = 100;
     public static final long DEFAULT_LOCATION_INTERVAL = 1000 * 60;
     public static final long DEFAULT_CHECK_WIFI_TASK = 20;
@@ -61,7 +62,7 @@ public class Constants {
 
     //addPreferencesFromResource
     public static final String PREF_UPDATE_CATEGORY = "update_category";
-    public static final String PREF_FIRST_RUN = "first_run";
+    public static final int SETTINGS_REQ_SMS = 111;
 
 
     //SocialNetworkHelper
@@ -95,6 +96,8 @@ public class Constants {
     public static final String READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     public static final String WRITE_EXTERNAL_STORAGE = "an" + "droid.permission.WRITE_EXTERNAL_STORAGE";
     public static final String PROVIDERS_CHANGED = "android.location.PROVIDERS_CHANGED";
+    public static final String SMS_READ = "android.permission.READ_SMS";
+
 
     //Service
     public static final String DISTANCE_MATRIX_SUFFIX = "https://maps.googleapis.com/maps/api/distancematrix/json?";

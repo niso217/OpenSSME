@@ -1,8 +1,11 @@
 package com.open.ssme.Utils;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 
 import com.open.ssme.Objects.ListGateComplexPref;
 import com.open.ssme.Objects.Settings;
@@ -22,38 +25,37 @@ import static com.open.ssme.Utils.Constants.USER_PREFS;
 
 public class PrefUtils {
 
-    public static void setCurrentUser(User currentUser, Context ctx){
+    public static void setCurrentUser(User currentUser, Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, USER_PREFS, 0);
         complexPreferences.putObject(CURRENT_USER_VALUE, currentUser);
         complexPreferences.commit();
     }
 
-    public static User getCurrentUser(Context ctx){
+    public static User getCurrentUser(Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, USER_PREFS, 0);
         User currentUser = complexPreferences.getObject(CURRENT_USER_VALUE, User.class);
         return currentUser;
     }
 
 
-    public static void clearCurrentUser(Context ctx){
+    public static void clearCurrentUser(Context ctx) {
         User.getInstance().clear();
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, USER_PREFS, 0);
         complexPreferences.clearObject();
         complexPreferences.commit();
     }
 
-    public static void getSettings(Context ctx){
-        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
-        String gps_distance = pref.getString(Constants.START_LOCATAION_UPDATE,DEFAULT_LOCATION_UPDATE);
-        String open_distance = pref.getString(Constants.OPEN_DISTANCE,DEFAULT_OPEN_DISTANCE);
-        String map_type = pref.getString(Constants.MAP_TYPE,DEFAULT_MAP_TYPE);
-        String profile = pref.getString(Constants.MAP_TYPE,DEFAULT_MAP_TYPE);
-        boolean terminate = pref.getBoolean(Constants.TERMINATE,false);
-        boolean screen = pref.getBoolean(Constants.SCREEN,false);
-        boolean first_run = pref.getBoolean(Constants.FIRST_RUN,true);
-        boolean social = pref.getBoolean(Constants.SOCIAL,false);
-        boolean sound = pref.getBoolean(Constants.SOUND,false);
-
+    public static void getSettings(Context ctx) {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        String gps_distance = pref.getString(Constants.START_LOCATAION_UPDATE, DEFAULT_LOCATION_UPDATE);
+        String open_distance = pref.getString(Constants.OPEN_DISTANCE, DEFAULT_OPEN_DISTANCE);
+        String map_type = pref.getString(Constants.MAP_TYPE, DEFAULT_MAP_TYPE);
+        String profile = pref.getString(Constants.MAP_TYPE, DEFAULT_MAP_TYPE);
+        boolean terminate = pref.getBoolean(Constants.TERMINATE, false);
+        boolean screen = pref.getBoolean(Constants.SCREEN, false);
+        boolean first_run = pref.getBoolean(Constants.FIRST_RUN, true);
+        boolean social = pref.getBoolean(Constants.SOCIAL, false);
+        boolean sound = pref.getBoolean(Constants.SOUND, false);
 
 
         Settings.getInstance().setGps_distance(Integer.parseInt(gps_distance));
@@ -69,26 +71,24 @@ public class PrefUtils {
 
     }
 
-    public static void setSettings(Context ctx) {
-        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
-        pref.edit().putBoolean(Constants.FIRST_RUN, false).commit();
+    public static void setSettings(Context ctx, boolean social) {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        pref.edit().putBoolean(Constants.SOCIAL, social).commit();
+        getSettings(ctx);
 
     }
 
-        public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx){
+    public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, GATE_PREFS, 0);
         complexPreferences.putObject(GATE_LIST, currentGateList);
         complexPreferences.commit();
     }
 
-    public static ListGateComplexPref getCurrentGate(Context ctx){
+    public static ListGateComplexPref getCurrentGate(Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, "gate_prefs", 0);
         ListGateComplexPref gatelist = complexPreferences.getObject("gate_list", ListGateComplexPref.class);
         return gatelist;
     }
-
-
-
 
 
 }

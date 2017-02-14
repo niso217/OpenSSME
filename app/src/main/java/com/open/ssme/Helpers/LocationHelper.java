@@ -27,6 +27,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -48,12 +51,12 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     private final String TAG = LocationHelper.class.getSimpleName();
     private Context mContext;
     private boolean mIsLocationUpdatesOn;
-    private boolean mIsSingleLocationUpdatesOn;
     public boolean mIsGPSOn;
     private LocationRequest mLocationRequest;
     private Handler mLocationHandler;
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
+    private String mLastLocationUpdate;
     private LatLng mCurrentLatLng;
     private double mCurrentSpeed;
     private double mCurrentLongitude;
@@ -63,7 +66,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     public LocationHelper(Context context) {
 
         this.mContext = context;
-
+        mLocationHandler = new Handler();
         mGoogleConnection = GoogleConnection.getInstance(context);
         setupLocationRequestBalanced(UPDATE_INTERVAL);
         InitLocationManager();
@@ -77,7 +80,6 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
 
 
     private void reCheckLocation(final long WhenToDispatch) {
-        mLocationHandler = new Handler();
 
         mLocationHandler.postDelayed(new Runnable() {
             @Override
@@ -150,48 +152,6 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         }
     }
 
-    public void SingeLocationRequest() {
-        SingleShotLocationProvider.getSingleUpdate(mContext, LOCATION_UPDATE_TIME_OUT,
-                new SingleShotLocationProvider.LocationCallback() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        if (location != null) {
-                            mIsSingleLocationUpdatesOn = true;
-                            SetLocationData(location);
-                            Log.d(TAG, "=====Successful Single Location Request!!!!===== ");
-                        }
-                    }
-
-                    @Override
-                    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String s) {
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String s) {
-
-                    }
-
-                    @Override
-                    public void timedOut() {
-                        mIsSingleLocationUpdatesOn = true;
-                        Log.d(TAG, "=====Single Location Request TimeOut After " + LOCATION_UPDATE_TIME_OUT / 1000 + " Seconds=====");
-                    }
-
-                    @Override
-                    public void WifiOn() {
-                        Log.d(TAG, "=====Wifi Is On Stopping Location Updates=====");
-                    }
-                });
-        Log.d(TAG, "=====Single Location Request===== ");
-
-    }
-
 
     public void setupLocationRequestBalanced(long Interval) {
         mLocationRequest = LocationRequest.create()
@@ -213,7 +173,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
 
 
     private void SetLocationData(Location location) {
-        Log.d(TAG, "=====Location Changed " + getLocationType() + "=====");
+        Log.d(TAG, "=====Location Changed=====");
         mCurrentLocation = location;
         mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         mCurrentLatitude = location.getLatitude();
@@ -222,6 +182,8 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
             mCurrentSpeed = location.getSpeed();
         if (location.hasAccuracy())
             mCurrentAccuracy = location.getAccuracy();
+
+        setLastLocationUpdate(new SimpleDateFormat("hh:mm:ss").format(new Date()));
 
         LocationBroadcast();
 
@@ -244,8 +206,6 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     public void removeLocationHandlerCallbacks() {
         if (mLocationHandler != null) {
             mLocationHandler.removeCallbacksAndMessages(null);
-            mLocationHandler = null;
-            mIsSingleLocationUpdatesOn = false;
         }
     }
 
@@ -254,9 +214,6 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         StopLocationUpdates();
     }
 
-    private String getLocationType() {
-        return isLocationUpdatesOn() == true ? Constants.LocationType.LOCATION_UPDATE.name() : Constants.LocationType.SINGLE_UPDATE.name();
-    }
 
     public void destroy() {
         Log.d(TAG, "=====Kill Location Helper=====");
@@ -294,10 +251,6 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
 
-    public boolean isSingleLocationUpdatesOn() {
-        return mIsSingleLocationUpdatesOn;
-    }
-
     public GoogleConnection getGoogleConnection() {
         return mGoogleConnection;
     }
@@ -310,5 +263,11 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         }
     }
 
+    public String getLastLocationUpdate() {
+        return mLastLocationUpdate;
+    }
 
+    public void setLastLocationUpdate(String mLastLocationUpdate) {
+        this.mLastLocationUpdate = mLastLocationUpdate;
+    }
 }

@@ -52,14 +52,6 @@
             android:defaultValue="false"
             />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:key="first_run"
-            android:visibility = "gone"
-            android:defaultValue="true"
-            />
-
-
-
 
     </android.support.v7.preference.PreferenceCategory>
 

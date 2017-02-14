@@ -60,6 +60,7 @@ import static com.open.ssme.Utils.Constants.DISTANCE_MATRIX_SUFFIX;
 import static com.open.ssme.Utils.Constants.DRIVING_SPEED;
 import static com.open.ssme.Utils.Constants.GOOGLE_MATRIX_API_REQ_TIME;
 import static com.open.ssme.Utils.Constants.NOW;
+import static com.open.ssme.Utils.Constants.ONE_SECONDS;
 import static com.open.ssme.Utils.Constants.ONWAY_INTERVAL;
 import static com.open.ssme.Utils.Constants.RESTART_SERVICE;
 import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
@@ -345,7 +346,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public void UpdateIntervalAlgorithm() {
 
         long nextUpdateInterval = DEFAULT_LOCATION_INTERVAL;
-        long WhenToDispatch = NOW;
+        long WhenToDispatch = ONE_SECONDS;
 
         if (ListGateComplexPref.getInstance().getClosestGate().active) {
 
@@ -367,15 +368,16 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
             }
 
         }
+
         SetUpInterval(nextUpdateInterval, WhenToDispatch);
 
     }
 
     private void SetUpInterval(long interval, long WhenToDispatch) {
 
-        if (interval != mGPSUpdateInterval) {
-            mWhenToDispatch = WhenToDispatch;
+        if (interval != mGPSUpdateInterval || mWhenToDispatch != WhenToDispatch) {
             mGPSUpdateInterval = interval;
+            mWhenToDispatch = WhenToDispatch;
             mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
 
         }
@@ -389,6 +391,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "Location Updates Is: " + mLocationHelper.isLocationUpdatesOn());
         Log.d(TAG, "Next Location Update: " + mWhenToDispatch / 1000 + " Seconds");
         Log.d(TAG, "Interval: " + mGPSUpdateInterval / 1000 + " Seconds");
+        Log.d(TAG, "Last Location Update: " + mLocationHelper.getLastLocationUpdate());
         Log.d(TAG, "=====Gate Details=====");
         Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
         Log.d(TAG, "Distance To Gate: " + Floor(ListGateComplexPref.getInstance().getClosestGate().distance));

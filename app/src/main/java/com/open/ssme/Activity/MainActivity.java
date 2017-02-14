@@ -10,16 +10,16 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.content.pm.ActivityInfo;
+import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -69,12 +69,13 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
 import static com.open.ssme.Utils.Constants.CURRENT_VIEW_ID;
 import static com.open.ssme.Utils.Constants.GATE_LIST_FRAGMENT;
 import static com.open.ssme.Utils.Constants.MAP_FRAGMENT;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
 import static com.open.ssme.Utils.Constants.SETTINGS_FRAGMENT;
+import static com.open.ssme.Utils.Constants.SETTINGS_REQ_SMS;
+import static com.open.ssme.Utils.Constants.SOCIAL;
 
 public class MainActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putInt(CURRENT_VIEW_ID, mCurrentViewId);
@@ -131,7 +133,6 @@ public class MainActivity extends AppCompatActivity implements
         Init();
 
         AskForPermissions();
-
 
 
     }
@@ -586,7 +587,7 @@ public class MainActivity extends AppCompatActivity implements
             permissions.add(Manifest.permission.READ_CONTACTS);
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            
+
         }
     }
 
@@ -650,10 +651,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
         switch (requestCode) {
             //Confirm the result of which request to return
             case REQUEST_CODE:
-                List<String> unGranted = PermissionsUtil.getInstance(this).checkPermissionsRequest(permissions, grantResults);
                 if (unGranted.size() == 0) {
                     //All permissions have been granted
                     SetUpDisplayView();
@@ -664,7 +665,11 @@ public class MainActivity extends AppCompatActivity implements
                 }
 
                 break;
-
+            case SETTINGS_REQ_SMS:
+                if (unGranted.size() != 0) {
+                    SettingsFragment.mSettingsChangedListener.SMSChanged();
+                    break;
+                }
         }
     }
 

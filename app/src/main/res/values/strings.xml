@@ -15,8 +15,8 @@
     <string name="error">Error</string>
 
     <string name="facebook_app_id">facebook_app_id</string>
-    <string name="google_api_key">google_api_key</string>
-    <string name="server_client_id">server_client_id</string>
+    <string name="google_api_key">AIzaSyA79drh2Sltdqy4l97nL-5DEgIeuT-QpqM</string>
+    <string name="server_client_id">903106005199-un195uq6r5lac1b9bsl2scsihr6msh3u.apps.googleusercontent.com</string>
 
     <string name="main">Main</string>
     <string name="map">Map</string>

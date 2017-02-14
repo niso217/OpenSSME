@@ -40,6 +40,14 @@ public class PermissionsUtil {
         return unGranted;
     }
 
+    public List<String> checkPermissions(String permission) {
+        List<String> unGranted = new ArrayList<>();
+            if (!checkPermission(permission)) {
+                unGranted.add(permission);
+        }
+        return unGranted;
+    }
+
     /*
      * check single permission
      * */
