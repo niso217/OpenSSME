@@ -15,6 +15,15 @@ public class Settings {
     private boolean first_run;
     private boolean social;
     private boolean sound;
+    private boolean wifi;
+
+    public boolean isWifi() {
+        return wifi;
+    }
+
+    public void setWifi(boolean wifi) {
+        this.wifi = wifi;
+    }
 
     public boolean isSound() {
         return sound;

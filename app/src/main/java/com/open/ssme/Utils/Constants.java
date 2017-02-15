@@ -77,7 +77,7 @@ public class Constants {
     public static final String GATE_PREFS = "gate_prefs";
     public static final String GATE_LIST = "gate_list";
 
-    public static final String DEFAULT_LOCATION_UPDATE = "4";
+    public static final String DEFAULT_LOCATION_UPDATE = "1";
     public static final String DEFAULT_OPEN_DISTANCE = "400";
     public static final String DEFAULT_MAP_TYPE = "1";
 
@@ -110,6 +110,7 @@ public class Constants {
     public static final String FIRST_RUN = "first_run";
     public static final String SOCIAL = "social";
     public static final String SOUND = "sound";
+    public static final String WIFI = "wifi";
     public static final String PDUS = "pdus";
     public static final String FORMAT = "format";
 

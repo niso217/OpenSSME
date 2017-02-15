@@ -89,13 +89,16 @@
     <string name="map_type_summary">types of map to display</string>
 
     <string name="terminate_title">Terminate</string>
-    <string name="terminate_summary">close the application after gate open</string>
+    <string name="terminate_summary">close the application after calling gate</string>
 
     <string name="social_title">Social</string>
-    <string name="social_summary">Receive sms from contacts with message body "OpenSSME" to open the gate that close to you</string>
+    <string name="social_summary">receive sms from contacts with message body "OpenSSME" to open the closest gate</string>
 
     <string name="sound_title">Notification Sound</string>
     <string name="sound_summary">alert sound when calling gate</string>
+
+    <string name="wifi_title">Wifi Mode</string>
+    <string name="wifi_summary">turn off all services when wifi connected</string>
 
 
 

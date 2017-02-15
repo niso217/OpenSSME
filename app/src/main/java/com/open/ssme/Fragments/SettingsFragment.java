@@ -69,7 +69,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         }
 
-        PrefUtils.setSettings(getContext(), mPreferenceSocial.isChecked());
+        PrefUtils.getSettings(getContext());
 
 
     }
@@ -105,6 +105,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         List<String> unGranted = PermissionsUtil.getInstance(getActivity()).checkPermissions(Manifest.permission.READ_SMS);
         if (unGranted.size() != 0)
             PermissionsUtil.getInstance(getActivity()).requestPermissions(unGranted, SETTINGS_REQ_SMS);
+        else
+            PrefUtils.getSettings(getContext());
+
     }
 
 

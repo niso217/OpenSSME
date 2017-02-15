@@ -6,14 +6,15 @@
         >
 
 
-        <android.support.v7.preference.ListPreference
-            android:key="gps_distance"
-            android:title="@string/gps_distance_title"
-            android:summary="@string/gps_distance_summary"
-            android:defaultValue="3"
-            android:entries="@array/GPSDistance"
-            android:entryValues="@array/GPSDistanceValues"
-            />
+        <!--<android.support.v7.preference.ListPreference-->
+            <!--android:key="gps_distance"-->
+            <!--android:title="@string/gps_distance_title"-->
+            <!--android:summary="@string/gps_distance_summary"-->
+            <!--android:defaultValue="1"-->
+            <!--android:entries="@array/GPSDistance"-->
+            <!--android:entryValues="@array/GPSDistanceValues"-->
+            <!--android:visibility="gone"-->
+            <!--/>-->
 
         <android.support.v7.preference.ListPreference
             android:key="open_distance"
@@ -50,6 +51,12 @@
             android:title="@string/social_title"
             android:summary="@string/social_summary"
             android:defaultValue="false"
+            />
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="wifi"
+            android:title="@string/wifi_title"
+            android:summary="@string/wifi_summary"
+            android:defaultValue="true"
             />
 
 

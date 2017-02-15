@@ -56,6 +56,7 @@ public class PrefUtils {
         boolean first_run = pref.getBoolean(Constants.FIRST_RUN, true);
         boolean social = pref.getBoolean(Constants.SOCIAL, false);
         boolean sound = pref.getBoolean(Constants.SOUND, false);
+        boolean wifi = pref.getBoolean(Constants.WIFI, true);
 
 
         Settings.getInstance().setGps_distance(Integer.parseInt(gps_distance));
@@ -67,16 +68,11 @@ public class PrefUtils {
         Settings.getInstance().setFirst_run(first_run);
         Settings.getInstance().setSocial(social);
         Settings.getInstance().setSound(sound);
+        Settings.getInstance().setWifi(wifi);
 
 
     }
 
-    public static void setSettings(Context ctx, boolean social) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
-        pref.edit().putBoolean(Constants.SOCIAL, social).commit();
-        getSettings(ctx);
-
-    }
 
     public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, GATE_PREFS, 0);
@@ -85,8 +81,8 @@ public class PrefUtils {
     }
 
     public static ListGateComplexPref getCurrentGate(Context ctx) {
-        ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, "gate_prefs", 0);
-        ListGateComplexPref gatelist = complexPreferences.getObject("gate_list", ListGateComplexPref.class);
+        ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, GATE_PREFS, 0);
+        ListGateComplexPref gatelist = complexPreferences.getObject(GATE_LIST, ListGateComplexPref.class);
         return gatelist;
     }
 

@@ -134,7 +134,6 @@ public class MainActivity extends AppCompatActivity implements
 
         AskForPermissions();
 
-
     }
 
     @Override
@@ -158,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements
         connectClient();
         ScreenSetup();
         StartOpenSSMEService();
+
         super.onResume();
     }
 
@@ -666,10 +666,12 @@ public class MainActivity extends AppCompatActivity implements
 
                 break;
             case SETTINGS_REQ_SMS:
-                if (unGranted.size() != 0) {
+                if (unGranted.size() != 0)
                     SettingsFragment.mSettingsChangedListener.SMSChanged();
-                    break;
-                }
+                else
+                    PrefUtils.getSettings(this);
+                break;
+
         }
     }
 
@@ -682,6 +684,7 @@ public class MainActivity extends AppCompatActivity implements
 
         }
     }
+
 
     private void AlertDialog(String message) {
         //user denied without Never ask again, just show rationale explanation
@@ -723,7 +726,9 @@ public class MainActivity extends AppCompatActivity implements
         Intent myAppSettings = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
         myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
         myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //myAppSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         this.startActivity(myAppSettings);
+        finish();
     }
 
     private void postStatusUpdate() {

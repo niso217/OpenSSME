@@ -236,7 +236,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 }
 
                 if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
-                    mIsWifiOn = SingleShotLocationProvider.isWifiConnected(getApplicationContext());
+                    WifiStatus();
+
 
                 if (!mIsWifiOn) {
 
@@ -309,6 +310,12 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     }
 
+    private void WifiStatus() {
+        if (!Settings.getInstance().isWifi())
+            mIsWifiOn = false;
+        else
+            mIsWifiOn = SingleShotLocationProvider.isWifiConnected(getApplicationContext());
+    }
 
     private void CalcGatesDistanceAndETA() {
 
