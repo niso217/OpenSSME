@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -146,7 +147,7 @@ public class CustomGateAdapter extends BaseExpandableListAdapter {
                                 new AlertDialog.Builder(context)
                                         .setIcon(android.R.drawable.ic_menu_delete)
                                         .setTitle(context.getResources().getString(R.string.delete))
-                                        .setMessage(context.getResources().getString(R.string.do_delete) +" " +
+                                        .setMessage(context.getResources().getString(R.string.do_delete) + " " +
                                                 ListGateComplexPref.getInstance().gates.get(position).gateName)
                                         .setPositiveButton(context.getResources().getString(R.string.remove), new DialogInterface.OnClickListener() {
                                             @Override
@@ -167,6 +168,12 @@ public class CustomGateAdapter extends BaseExpandableListAdapter {
         listTitleTextView.setTypeface(null, Typeface.BOLD);
         listTitleTextView.setText(title);
 
+        listTitleTextView.setTextColor(ContextCompat.getColor(context, R.color.black));
+
+
+        if (ListGateComplexPref.getInstance().getClosestGate().phone.equals(ListGateComplexPref.getInstance().gates.get(listPosition).phone))
+            if (!ListGateComplexPref.getInstance().getClosestGate().active)
+                listTitleTextView.setTextColor(ContextCompat.getColor(context, R.color.grey));
 
         ImageView image = (ImageView) convertView.findViewById(R.id.imageView);
         Picasso.with(context)

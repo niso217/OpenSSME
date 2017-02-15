@@ -62,6 +62,7 @@
     <!-- MAPFragment  -->
     <string name="map_error">Error on map</string>
     <string name="phone_invalid">Phone number invalid</string>
+    <string name="phone_exist">Phone number exist</string>
     <string name="no_phone">Contact has no phone number</string>
     <string name="click_to_add">Click To Select Contact</string>
 

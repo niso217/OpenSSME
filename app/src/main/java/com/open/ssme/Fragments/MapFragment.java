@@ -136,9 +136,15 @@ public class MapFragment extends Fragment implements
             //get masseges from OpenSSMEService
             msavedInstanceState = null;
             LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
-                    new IntentFilter(Constants.LOCATION_SERVICE));
+                    new IntentFilter(Constants.DATA_CHANGED));
         }
 
+    }
+    private void UnRegisterReceiver() {
+        if (mMessageReceiver != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
+            mMessageReceiver = null;
+        }
     }
 
 
@@ -174,6 +180,7 @@ public class MapFragment extends Fragment implements
     public void onDestroy() {
         super.onDestroy();
         mapView.onDestroy();
+        UnRegisterReceiver();
 
     }
 
@@ -206,21 +213,8 @@ public class MapFragment extends Fragment implements
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getFlags()) {
-
-
-                case Constants.LOCATION_UPDATE_FLAG:
-                    //recived location update
-                    if (intent.hasExtra(Constants.LOCATION)) {
-                        if (map != null) {
-                            //onLocationChanged(intent);
+                        if (map != null)
                             SetUpCircle();
-
-                        }
-                    }
-                    break;
-
-            }
         }
     };
 
@@ -303,15 +297,6 @@ public class MapFragment extends Fragment implements
 
             if (mapView != null) {
                 mapView.getMapAsync(this);
-//                if (mapView.findViewById(Integer.parseInt("1")) != null) {
-//
-//                    View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-//                    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
-//                            locationButton.getLayoutParams();
-//                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
-//
-//                    layoutParams.setMargins(0, 620, 0, 0);
-//                }
             } else {
                 Toast.makeText(getContext(), getContext().getResources().getString(R.string.map_error), Toast.LENGTH_SHORT).show();
             }
@@ -549,6 +534,13 @@ public class MapFragment extends Fragment implements
                 return;
             }
 
+            if (ListGateComplexPref.getInstance().isGateExist(contactNumber)) {
+                Log.d(TAG, "Phone Number Exist");
+                Toast.makeText(getContext(), getString(R.string.phone_exist), Toast.LENGTH_LONG).show();
+                return;
+            }
+
+
             cursorPhone.close();
         } catch (Exception e) {
             Toast.makeText(getContext(), getString(R.string.no_phone), Toast.LENGTH_SHORT).show();
@@ -608,8 +600,6 @@ public class MapFragment extends Fragment implements
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size() == 1) {
-//            Intent OpenSSMEService = new Intent(getActivity(), LocationService2.class);
-//            getActivity().startService(OpenSSMEService);
             Intent startIntent = new Intent(getActivity(), OpenSSMEService.class);
             startIntent.setAction(Constants.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);

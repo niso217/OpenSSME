@@ -185,17 +185,8 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
 
         setLastLocationUpdate(new SimpleDateFormat("hh:mm:ss").format(new Date()));
 
-        LocationBroadcast();
-
     }
 
-
-    private void LocationBroadcast() {
-        Intent intent = new Intent(Constants.LOCATION_SERVICE);
-        intent.addFlags(Constants.LOCATION_UPDATE_FLAG);
-        intent.putExtra(Constants.LOCATION, getLocation());
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-    }
 
     private void GPSChangedBroadcast() {
         Intent intent = new Intent(PROVIDERS_CHANGED);

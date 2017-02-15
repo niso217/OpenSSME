@@ -3,6 +3,7 @@ package com.open.ssme.Objects;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * Created by root on 02/05/16.
@@ -27,6 +28,15 @@ public class ListGateComplexPref {
     public Gate getClosestGate()
     {
         return gates.get(0);
+    }
+
+    public boolean isGateExist(String phone){
+        Iterator<Gate> iterator = gates.iterator();
+        while (iterator.hasNext()) {
+            Gate current = iterator.next();
+            if (current.phone.equals(phone)) return true;
+        }
+        return false;
     }
 
 
