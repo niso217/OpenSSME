@@ -36,6 +36,7 @@ import android.widget.TextView;
 import com.open.ssme.Fragments.GateListFragment;
 import com.open.ssme.Fragments.MapFragment;
 import com.open.ssme.Fragments.SettingsFragment;
+import com.open.ssme.Helpers.SocialNetworkHelper;
 import com.open.ssme.Objects.Settings;
 import com.open.ssme.OpenSSMEApplication;
 import com.open.ssme.Service.OpenSSMEService;
@@ -659,10 +660,10 @@ public class MainActivity extends AppCompatActivity implements
             case Constants.REQ_SELECT_PHOTO:
 
                 if (User.getInstance().source.equals(Constants.GPLUS)) {
-                    OpenSSMEApplication.getSocialNetworkHelper().GooglePostPhoto(this, data);
+                    SocialNetworkHelper.getInstance(this).GooglePostPhoto(this, data);
                 }
                 if (User.getInstance().source.equals(Constants.FACEBOOK)) {
-                    OpenSSMEApplication.getSocialNetworkHelper().FacebookPostPhoto(this, data);
+                    SocialNetworkHelper.getInstance(this).FacebookPostPhoto(this, data);
                 }
                 break;
 
@@ -757,13 +758,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void postStatusUpdate() {
         if (User.getInstance().source.equals(Constants.GPLUS)) {
-            OpenSSMEApplication.getSocialNetworkHelper().PostOnGoogle(this,
+            SocialNetworkHelper.getInstance(this).PostOnGoogle(this,
                     getResources().getString(R.string.subject),
                     getResources().getString(R.string.body),
                     getResources().getString(R.string.url));
         }
         if (User.getInstance().source.equals(Constants.FACEBOOK)) {
-            OpenSSMEApplication.getSocialNetworkHelper().PostOnFacebook(this,
+            SocialNetworkHelper.getInstance(this).PostOnFacebook(this,
                     getResources().getString(R.string.subject),
                     getResources().getString(R.string.body),
                     getResources().getString(R.string.url));

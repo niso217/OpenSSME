@@ -41,20 +41,32 @@ import static com.open.ssme.Utils.Constants.REQ_START_SHARE;
 public class SocialNetworkHelper
 
 {
-    private final String TAG = SocialNetworkHelper.class.getSimpleName();
+    private static final String TAG = SocialNetworkHelper.class.getSimpleName();
 
-    private FacebookCallback<Sharer.Result> shareCallback;
-    private CallbackManager callbackManager;
-    private Context mContext;
+    private static FacebookCallback<Sharer.Result> shareCallback;
+    private static CallbackManager callbackManager;
+    public static Context mContext;
 
 
-    public SocialNetworkHelper(Context context){
-        mContext = context;
-        FacebookSdk.sdkInitialize(mContext);
-        callbackManager = CallbackManager.Factory.create();
-        setShareCallback();
+
+
+    private static SocialNetworkHelper ourInstance = new SocialNetworkHelper();
+
+    public static SocialNetworkHelper getInstance(Context context) {
+        if (mContext==null){
+            mContext = context;
+            FacebookSdk.sdkInitialize(mContext);
+            callbackManager = CallbackManager.Factory.create();
+            setShareCallback();
+        }
+
+
+        return ourInstance;
     }
 
+    public SocialNetworkHelper(){
+
+    }
 
 
     public FacebookCallback<Sharer.Result> getShareCallback() {
@@ -77,7 +89,7 @@ public class SocialNetworkHelper
 
 
 
-    public void setShareCallback() {
+    public static void setShareCallback() {
         shareCallback = new FacebookCallback<Sharer.Result>() {
             @Override
             public void onCancel() {

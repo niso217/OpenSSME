@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.facebook.FacebookSdk;
 import com.open.ssme.Activity.LogInActivity;
 import com.open.ssme.Objects.User;
 import com.facebook.AccessToken;
@@ -46,7 +47,9 @@ public class FacebookLoginFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
+        FacebookSdk.sdkInitialize(getContext());
+
         callbackManager = CallbackManager.Factory.create();
 
          mCallBack = new FacebookCallback<LoginResult>() {

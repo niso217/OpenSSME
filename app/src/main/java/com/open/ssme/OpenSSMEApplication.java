@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.os.Environment;
 import android.util.Log;
 
-import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.Objects.ListGateComplexPref;
-import com.open.ssme.Helpers.SocialNetworkHelper;
 import com.open.ssme.Objects.User;
 import com.open.ssme.Utils.PrefUtils;
 import com.open.ssme.Common.GoogleConnection;
@@ -19,8 +17,6 @@ import java.io.IOException;
 public class OpenSSMEApplication extends Application{
 
     private static final String TAG = "OpenSSMEApplication";
-    private SocialNetworkHelper mSocialNetworkHelper;
-    private Runnable mHandlerTask;
 
 
 
@@ -29,14 +25,8 @@ public class OpenSSMEApplication extends Application{
     public void onCreate() {
         super.onCreate();
 
-        mInstance = this;
+                //ReadLogs();
 
-        mHandlerTask = new Runnable() {
-            @Override
-            public void run() {
-                ReadLogs();
-
-                mSocialNetworkHelper = new SocialNetworkHelper(getApplicationContext());
 
                 //get the current shared prefernce settings and store to settings object
                 PrefUtils.getSettings(getApplicationContext());
@@ -53,17 +43,11 @@ public class OpenSSMEApplication extends Application{
                 //initialize user from share pref saved user params
                 ListGateComplexPref mListGateComplexPref = PrefUtils.getCurrentGate(getApplicationContext());
                 if (mListGateComplexPref != null) {
-                    Log.d(TAG,"Retrived Array of Gate");
+                    Log.d(TAG,"Retrieved Array of Gate");
                     ListGateComplexPref.getInstance().copy(mListGateComplexPref);
                 }
             }
-        };
-        mHandlerTask.run();
 
-
-
-
-    }
 
     private void ReadLogs()
     {
@@ -116,23 +100,6 @@ public class OpenSSMEApplication extends Application{
         }
         return false;
     }
-
-
-    public static synchronized OpenSSMEApplication getInstance() {
-        return mInstance;
-    }
-
-    public static SocialNetworkHelper getSocialNetworkHelper() {
-        return getInstance().mSocialNetworkHelper;
-    }
-
-    public  void stopService()
-    {
-        stopService(new Intent(getBaseContext(), OpenSSMEService.class));
-
-
-    }
-
 
     }
 
