@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements
     private OpenSSMEService mLocationService;
     final public static int REQUEST_CODE = 123;
     private List<String> permissions;
+    private Handler mFragmentHandler;
 
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -113,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState");
+
         outState.putInt(CURRENT_VIEW_ID, mCurrentViewId);
         super.onSaveInstanceState(outState);
     }
@@ -136,10 +139,6 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     private void AskForPermissions() {
         new Handler().post(new Runnable() {
@@ -154,9 +153,12 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onResume() {
+        Log.d(TAG, "onResume");
+
         connectClient();
         ScreenSetup();
         StartOpenSSMEService();
+        SetUpDisplayView();
 
         super.onResume();
     }
@@ -167,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onDestroy");
 
         // Disconnecting the client invalidates it.
-        if (mGoogleConnection != null) {
+        if (mGoogleConnection != null && !isMyServiceRunning(mLocationService.getClass())) {
             mGoogleConnection.disconnect();
             mGoogleConnection.deleteObserver(this);
         }
@@ -175,6 +177,13 @@ public class MainActivity extends AppCompatActivity implements
 
         super.onDestroy();
 
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "onPause");
+        mFragmentHandler.removeCallbacksAndMessages(null);
+        super.onPause();
     }
 
     @Override
@@ -208,6 +217,7 @@ public class MainActivity extends AppCompatActivity implements
 
 
     private void SetUpDisplayView() {
+
         if (ListGateComplexPref.getInstance().gates.size() > 0)
             displayView(mCurrentViewId);
         else
@@ -239,6 +249,8 @@ public class MainActivity extends AppCompatActivity implements
 
 
     private void Init() {
+
+        mFragmentHandler = new Handler();
 
         setupLocationRequestBalanced();
 
@@ -347,6 +359,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onNavigationItemSelected(MenuItem menuItem) {
+
         //Checking if the item is in checked state or not, if not make it in checked state
         if (menuItem.isChecked())
             menuItem.setChecked(false);
@@ -354,6 +367,7 @@ public class MainActivity extends AppCompatActivity implements
             menuItem.setChecked(true);
 
         mCurrentViewId = menuItem.getItemId();
+        Log.d(TAG,"displayView");
         displayView(mCurrentViewId);
         return true;
     }
@@ -396,15 +410,22 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         if (fragment != null) {
-            new Handler().postDelayed(new Runnable() {
+
+            mFragmentHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
 
-                    if (fragment.getTag() != CurrentFragment) {
-                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                        ft.replace(R.id.frame, fragment, CurrentFragment);
-                        ft.commit();
-                    }
+                    //try {
+
+                        if (fragment.getTag() != CurrentFragment) {
+                            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                            ft.replace(R.id.frame, fragment, CurrentFragment);
+                            ft.commit();
+                        }
+                    //}
+                    //catch (IllegalStateException e){
+                     //   Log.d(TAG,e.getMessage());
+                    //}
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
                         if (ListGateComplexPref.getInstance().gates.size() == 0) {
@@ -519,11 +540,11 @@ public class MainActivity extends AppCompatActivity implements
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
-                Log.d(TAG, "is Connection Service Running: " + true);
+                Log.d(TAG, "is OpenSSME Service Running: " + true);
                 return true;
             }
         }
-        Log.d(TAG, "is Connection Service Running: " + false);
+        Log.d(TAG, "is OpenSSME Service Running: " + false);
         return false;
     }
 
@@ -657,7 +678,8 @@ public class MainActivity extends AppCompatActivity implements
             case REQUEST_CODE:
                 if (unGranted.size() == 0) {
                     //All permissions have been granted
-                    SetUpDisplayView();
+                    Log.d(TAG,"SetUpDisplayView onRequestPermissionsResult");
+                    //SetUpDisplayView();
 
                 } else {
                     Iterator<String> iterator = unGranted.iterator();
@@ -680,7 +702,9 @@ public class MainActivity extends AppCompatActivity implements
         if (unGranted.size() != 0)
             PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
         else {
-            SetUpDisplayView();
+            Log.d(TAG,"SetUpDisplayView requestPermissions");
+           // SetUpDisplayView();
+
 
         }
     }

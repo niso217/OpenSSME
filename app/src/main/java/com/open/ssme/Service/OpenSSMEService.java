@@ -33,6 +33,7 @@ import android.widget.Toast;
 
 import com.open.ssme.Activity.ExitActivity;
 import com.open.ssme.Activity.MainActivity;
+import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
 import com.open.ssme.Helpers.LocationHelper;
 import com.open.ssme.Helpers.SingleShotLocationProvider;
@@ -53,6 +54,7 @@ import java.util.List;
 import static com.open.ssme.Utils.Constants.ALMOST_INTERVAL;
 import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
 import static com.open.ssme.Utils.Constants.DEFAULT_ACTIVE_COEFFICIENT;
+import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_GPS;
 import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 import static com.open.ssme.Utils.Constants.DEFAULT_RUN_SERVICE_TASK;
@@ -265,13 +267,20 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
                         }
                     }
-                } else {
+                    else{
+                        if (counter>DEFAULT_CHECK_GPS)
+                            mLocationHelper.GetSingleLocationRequest();
+                    }
+
+                }
+                else {
                     if (mLocationHelper.isLocationUpdatesOn()) {
                         mGPSUpdateInterval = 0;
                         mLocationHelper.StopLocationUpdates();
 
                     }
                 }
+
 
             }
         };
@@ -405,6 +414,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "ETA: " + Floor(ListGateComplexPref.getInstance().getClosestGate().ETA));
         Log.d(TAG, "Active: " + ListGateComplexPref.getInstance().getClosestGate().active);
         Log.d(TAG, "Speed: " + mLocationHelper.getSpeed());
+        Log.d(TAG, "LocationHelper is null?: " + (mLocationHelper==null) + "");
+
     }
 
 

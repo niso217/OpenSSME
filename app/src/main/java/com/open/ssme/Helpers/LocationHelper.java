@@ -98,6 +98,40 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         SetLocationData(location);
     }
 
+    public void GetSingleLocationRequest(){
+        SingleShotLocationProvider.getSingleUpdate(mContext, 15000, new SingleShotLocationProvider.LocationCallback() {
+            @Override
+            public void timedOut() {
+
+            }
+
+            @Override
+            public void WifiOn() {
+
+            }
+
+            @Override
+            public void onLocationChanged(Location location) {
+                SetLocationData(location);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        });
+    }
+
 
     private void InitLocationManager() {
         mLocationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
@@ -209,6 +243,10 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     public void destroy() {
         Log.d(TAG, "=====Kill Location Helper=====");
         StopAllLocationServices();
+        // Disconnecting the client invalidates it.
+        if (mGoogleConnection != null) {
+            mGoogleConnection.disconnect();
+        }
 
     }
 

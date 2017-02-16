@@ -20,6 +20,7 @@ public class Constants {
     public static final int DRIVING_SPEED = 100;
     public static final long DEFAULT_LOCATION_INTERVAL = 1000 * 60;
     public static final long DEFAULT_CHECK_WIFI_TASK = 20;
+    public static final long DEFAULT_CHECK_GPS = 30;
     public static final long DEFAULT_RUN_SERVICE_TASK = 1000 * 2;
     public static final int DEFAULT_ACTIVE_COEFFICIENT = 2;
     public static final int GOOGLE_MATRIX_API_REQ_TIME = 60 * 5;

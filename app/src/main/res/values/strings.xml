@@ -14,9 +14,6 @@
     <string name="successfully_posted_post">Post ID: %1$s</string>
     <string name="error">Error</string>
 
-    <string name="facebook_app_id">facebook_app_id</string>
-    <string name="google_api_key">google_api_key</string>
-    <string name="server_client_id">server_client_id</string>
 
     <string name="main">Main</string>
     <string name="map">Map</string>
