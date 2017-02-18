@@ -74,6 +74,7 @@ import static com.open.ssme.Utils.Constants.CURRENT_VIEW_ID;
 import static com.open.ssme.Utils.Constants.GATE_LIST_FRAGMENT;
 import static com.open.ssme.Utils.Constants.MAP_FRAGMENT;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
+import static com.open.ssme.Utils.Constants.REQUEST_LOCATION;
 import static com.open.ssme.Utils.Constants.SETTINGS_FRAGMENT;
 import static com.open.ssme.Utils.Constants.SETTINGS_REQ_SMS;
 import static com.open.ssme.Utils.Constants.SOCIAL;
@@ -98,19 +99,9 @@ public class MainActivity extends AppCompatActivity implements
     final public static int REQUEST_CODE = 123;
     private List<String> permissions;
     private Handler mFragmentHandler;
+    private boolean mLocationSettingsResultInProcess;
+    private boolean mIsCoachMarksOn;
 
-
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case PROVIDERS_CHANGED:
-                    if (mLocationService != null && isMyServiceRunning(mLocationService.getClass()))
-                        GPSResolver();
-                    break;
-            }
-        }
-    };
 
 
     @Override
@@ -160,6 +151,8 @@ public class MainActivity extends AppCompatActivity implements
         ScreenSetup();
         StartOpenSSMEService();
         SetUpDisplayView();
+        if (!mLocationSettingsResultInProcess)
+            GPSResolver();
 
         super.onResume();
     }
@@ -170,11 +163,11 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onDestroy");
 
         // Disconnecting the client invalidates it.
-        if (mGoogleConnection != null && !isMyServiceRunning(mLocationService.getClass())) {
+        if (mGoogleConnection != null && mLocationService != null && !isMyServiceRunning(mLocationService.getClass())) {
             mGoogleConnection.disconnect();
             mGoogleConnection.deleteObserver(this);
         }
-        unregisterReceiver(receiver);
+        //unregisterReceiver(receiver);
 
         super.onDestroy();
 
@@ -243,13 +236,10 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void RegisterReciver() {
-        IntentFilter filter = new IntentFilter(PROVIDERS_CHANGED);
-        registerReceiver(receiver, filter);
-    }
-
 
     private void Init() {
+
+        mLocationSettingsResultInProcess = false;
 
         mFragmentHandler = new Handler();
 
@@ -314,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements
         //calling sync state is necessay or else your hamburger icon wont show up
         actionBarDrawerToggle.syncState();
 
-        RegisterReciver();
+        //RegisterReciver();
 
 
     }
@@ -368,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements
             menuItem.setChecked(true);
 
         mCurrentViewId = menuItem.getItemId();
-        Log.d(TAG,"displayView");
+        Log.d(TAG, "displayView");
         displayView(mCurrentViewId);
         return true;
     }
@@ -416,33 +406,20 @@ public class MainActivity extends AppCompatActivity implements
                 @Override
                 public void run() {
 
-                    //try {
-
-                        if (fragment.getTag() != CurrentFragment) {
-                            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                            ft.replace(R.id.frame, fragment, CurrentFragment);
-                            ft.commit();
-                        }
-                    //}
-                    //catch (IllegalStateException e){
-                     //   Log.d(TAG,e.getMessage());
-                    //}
+                    if (fragment.getTag() != CurrentFragment) {
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.replace(R.id.frame, fragment, CurrentFragment);
+                        ft.commit();
+                    }
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
-                        if (ListGateComplexPref.getInstance().gates.size() == 0) {
+                        if (ListGateComplexPref.getInstance().gates.size() == 0 && !mLocationSettingsResultInProcess && !mIsCoachMarksOn) {
                             onCoachMark();
                         }
-
                     }
-                    GPSResolver();
-
                 }
-
             }, 500);
-
-
         }
-
 
         // set the toolbar title
         if (getSupportActionBar() != null) {
@@ -510,6 +487,7 @@ public class MainActivity extends AppCompatActivity implements
 
     public void onCoachMark() {
 
+        mIsCoachMarksOn = true;
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
@@ -521,6 +499,7 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
+                mIsCoachMarksOn = false;
             }
         });
         dialog.show();
@@ -556,7 +535,6 @@ public class MainActivity extends AppCompatActivity implements
 
     private void GPSResolver() {
 
-
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
         // **************************
@@ -566,6 +544,7 @@ public class MainActivity extends AppCompatActivity implements
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi
                 .checkLocationSettings(mGoogleConnection.getGoogleApiClient(), builder.build());
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+
             @Override
             public void onResult(LocationSettingsResult result) {
                 final Status status = result.getStatus();
@@ -576,16 +555,19 @@ public class MainActivity extends AppCompatActivity implements
                         // All location settings are satisfied. The client can
                         // initialize location
                         // requests here.
+                        mLocationSettingsResultInProcess = false;
+
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied. But could be
                         // fixed by showing the user
                         // a dialog.
+
                         try {
                             // Show the dialog by calling
                             // startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(MainActivity.this, 1000);
+                            status.startResolutionForResult(MainActivity.this, REQUEST_LOCATION);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
@@ -594,6 +576,8 @@ public class MainActivity extends AppCompatActivity implements
                         // Location settings are not satisfied. However, we have
                         // no way to fix the
                         // settings so we won't show the dialog.
+                        mLocationSettingsResultInProcess = false;
+
                         break;
                 }
             }
@@ -647,7 +631,7 @@ public class MainActivity extends AppCompatActivity implements
             AlertDialog(AlertMessege);
         } else {
             //user has denied with `Never Ask Again`, go to settings
-            promptSettings();
+            promptAppSettings();
         }
     }
 
@@ -666,6 +650,15 @@ public class MainActivity extends AppCompatActivity implements
                     SocialNetworkHelper.getInstance(this).FacebookPostPhoto(this, data);
                 }
                 break;
+            case REQUEST_LOCATION:
+                if (resultCode == 0) {
+                    mLocationSettingsResultInProcess = true;
+                    promptLocationSettings();
+                } else {
+                    mLocationSettingsResultInProcess = false;
+
+                }
+                break;
 
         }
 
@@ -679,14 +672,10 @@ public class MainActivity extends AppCompatActivity implements
             case REQUEST_CODE:
                 if (unGranted.size() == 0) {
                     //All permissions have been granted
-                    Log.d(TAG,"SetUpDisplayView onRequestPermissionsResult");
-                    //SetUpDisplayView();
-
                 } else {
                     Iterator<String> iterator = unGranted.iterator();
                     PermissionResolver(iterator.next());
                 }
-
                 break;
             case SETTINGS_REQ_SMS:
                 if (unGranted.size() != 0)
@@ -703,8 +692,7 @@ public class MainActivity extends AppCompatActivity implements
         if (unGranted.size() != 0)
             PermissionsUtil.getInstance(this).requestPermissions(unGranted, REQUEST_CODE);
         else {
-            Log.d(TAG,"SetUpDisplayView requestPermissions");
-           // SetUpDisplayView();
+            Log.d(TAG, "SetUpDisplayView requestPermissions");
 
 
         }
@@ -727,7 +715,7 @@ public class MainActivity extends AppCompatActivity implements
         builder.show();
     }
 
-    private void promptSettings() {
+    private void promptAppSettings() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getResources().getString(R.string.permission_denied));
         builder.setMessage(getResources().getString(R.string.please_fix));
@@ -735,7 +723,7 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                goToSettings();
+                goToAppSettings();
             }
         });
         builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -747,12 +735,47 @@ public class MainActivity extends AppCompatActivity implements
         builder.show();
     }
 
-    private void goToSettings() {
-        Intent myAppSettings = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
-        myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
-        myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    private void promptLocationSettings() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.location_denied));
+        builder.setMessage(getResources().getString(R.string.location_fix));
+        builder.setPositiveButton(getResources().getString(R.string.go_settings), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                goLocationSettings();
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                finish();
+            }
+        });
+        builder.show();
+    }
+
+    private void goToAppSettings() {
+        Intent AppSettings = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + this.getPackageName()));
+        AppSettings.addCategory(Intent.CATEGORY_DEFAULT);
+        AppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         //myAppSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        this.startActivity(myAppSettings);
+        this.startActivity(AppSettings);
+        finish();
+    }
+
+    private void goLocationSettings() {
+        Intent LocationSettings = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        LocationSettings.addCategory(Intent.CATEGORY_DEFAULT);
+        LocationSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //myAppSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        this.startActivity(LocationSettings);
         finish();
     }
 

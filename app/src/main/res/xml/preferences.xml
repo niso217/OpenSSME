@@ -60,6 +60,8 @@
             />
 
 
+
+
     </android.support.v7.preference.PreferenceCategory>
 
     <android.support.v7.preference.PreferenceCategory
@@ -74,6 +76,7 @@
         android:entries="@array/MapType"
         android:entryValues="@array/MapTypeValues"
         />
+
 
 
 

@@ -45,13 +45,13 @@ import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
  */
 
 
-public class LocationHelper extends BroadcastReceiver implements LocationListener {
+public class LocationHelper implements LocationListener {
 
     private GoogleConnection mGoogleConnection;
     private final String TAG = LocationHelper.class.getSimpleName();
     private Context mContext;
     private boolean mIsLocationUpdatesOn;
-    public boolean mIsGPSOn;
+    //public boolean mIsGPSOn;
     private LocationRequest mLocationRequest;
     private Handler mLocationHandler;
     private LocationManager mLocationManager;
@@ -71,7 +71,7 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         setupLocationRequestBalanced(UPDATE_INTERVAL);
         InitLocationManager();
         StartLocationUpdates();
-        mIsGPSOn = IsGpsActive();
+        //mIsGPSOn = IsGpsActive();
     }
 
     public LocationHelper() {
@@ -222,11 +222,11 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
     }
 
 
-    private void GPSChangedBroadcast() {
-        Intent intent = new Intent(PROVIDERS_CHANGED);
-        intent.putExtra(Constants.GPS_STATUS, mIsGPSOn);
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-    }
+//    private void GPSChangedBroadcast() {
+//        Intent intent = new Intent(PROVIDERS_CHANGED);
+//        intent.putExtra(Constants.GPS_STATUS, mIsGPSOn);
+//        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+//    }
 
     public void removeLocationHandlerCallbacks() {
         if (mLocationHandler != null) {
@@ -284,13 +284,13 @@ public class LocationHelper extends BroadcastReceiver implements LocationListene
         return mGoogleConnection;
     }
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().matches(PROVIDERS_CHANGED)) {
-            mIsGPSOn = IsGpsActive();
-            GPSChangedBroadcast();
-        }
-    }
+//    @Override
+//    public void onReceive(Context context, Intent intent) {
+//        if (intent.getAction().matches(PROVIDERS_CHANGED)) {
+//            mIsGPSOn = IsGpsActive();
+//            GPSChangedBroadcast();
+//        }
+//    }
 
     public String getLastLocationUpdate() {
         return mLastLocationUpdate;

@@ -64,6 +64,7 @@ public class Constants {
     //addPreferencesFromResource
     public static final String PREF_UPDATE_CATEGORY = "update_category";
     public static final int SETTINGS_REQ_SMS = 111;
+    public static final int REQUEST_LOCATION = 217;
 
 
     //SocialNetworkHelper

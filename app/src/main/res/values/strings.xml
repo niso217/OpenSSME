@@ -37,6 +37,10 @@
     <string name="please_fix">Please fix Permissions manually</string>
     <string name="go_settings">Go to settings</string>
 
+    <string name="location_denied">OpenSSME requires location</string>
+    <string name="location_fix">visit your device settings and turn on location to High accuracy mode.</string>
+
+
 
     <!-- MainActivity  -->
     <string name="add_gate">Add Gate</string>
