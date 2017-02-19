@@ -19,6 +19,7 @@ import com.open.ssme.Utils.PrefUtils;
 
 import java.util.List;
 
+import static com.open.ssme.Utils.Constants.FIRST_RUN;
 import static com.open.ssme.Utils.Constants.PREF_UPDATE_CATEGORY;
 import static com.open.ssme.Utils.Constants.SETTINGS_REQ_SMS;
 import static com.open.ssme.Utils.Constants.SOCIAL;
@@ -31,7 +32,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
     private static final String TAG = SettingsFragment.class.getSimpleName();
     private PreferenceCategory mPreferenceCategory;
-    private SwitchPreferenceCompat mPreferenceSocial;
+    private SwitchPreferenceCompat mPreferenceSocial,mPreferenceFirstRun;
     public static SettingsChangedListener mSettingsChangedListener;
 
 
@@ -42,6 +43,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         mPreferenceCategory = (PreferenceCategory) findPreference(PREF_UPDATE_CATEGORY);
         mPreferenceSocial = (SwitchPreferenceCompat) findPreference(SOCIAL);
+        mPreferenceFirstRun = (SwitchPreferenceCompat) findPreference(FIRST_RUN);
+        mPreferenceFirstRun.setVisible(false);
 
         mSettingsChangedListener = new SettingsChangedListener() {
             @Override

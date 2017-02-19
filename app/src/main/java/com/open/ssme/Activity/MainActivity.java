@@ -38,9 +38,8 @@ import com.open.ssme.Fragments.MapFragment;
 import com.open.ssme.Fragments.SettingsFragment;
 import com.open.ssme.Helpers.SocialNetworkHelper;
 import com.open.ssme.Objects.Settings;
-import com.open.ssme.OpenSSMEApplication;
-import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.R;
+import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.Objects.ListGateComplexPref;
 import com.open.ssme.Common.State;
 import com.facebook.login.LoginManager;
@@ -100,7 +99,6 @@ public class MainActivity extends AppCompatActivity implements
     private List<String> permissions;
     private Handler mFragmentHandler;
     private boolean mLocationSettingsResultInProcess;
-    private boolean mIsCoachMarksOn;
 
 
 
@@ -413,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements
                     }
 
                     if (CurrentFragment.equals(MAP_FRAGMENT)) {
-                        if (ListGateComplexPref.getInstance().gates.size() == 0 && !mLocationSettingsResultInProcess && !mIsCoachMarksOn) {
+                        if (ListGateComplexPref.getInstance().gates.size() == 0 && !mLocationSettingsResultInProcess && Settings.getInstance().isFirst_run()) {
                             onCoachMark();
                         }
                     }
@@ -487,7 +485,6 @@ public class MainActivity extends AppCompatActivity implements
 
     public void onCoachMark() {
 
-        mIsCoachMarksOn = true;
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
@@ -499,7 +496,9 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
-                mIsCoachMarksOn = false;
+                if (Settings.getInstance().isFirst_run())
+                    PrefUtils.setFirstRun(getApplicationContext());
+
             }
         });
         dialog.show();

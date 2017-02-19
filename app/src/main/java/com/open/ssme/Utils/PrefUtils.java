@@ -73,6 +73,14 @@ public class PrefUtils {
 
     }
 
+    public static void setFirstRun(Context ctx) {
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
+        pref.edit().putBoolean(Constants.FIRST_RUN, false).commit();
+
+        getSettings(ctx);
+
+    }
+
 
     public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, GATE_PREFS, 0);
