@@ -35,6 +35,8 @@ The application is free, No commercials.
 <img src="/app/src/main/res/drawable/screenshots/6.png" width="200" hight="200">
 <img src="/app/src/main/res/drawable/screenshots/7.png" width="200" hight="200">
 <img src="/app/src/main/res/drawable/screenshots/8.png" width="200" hight="200">
+<img src="/app/src/main/res/drawable/screenshots/9.png" width="200" hight="200">
+<img src="/app/src/main/res/drawable/screenshots/10.png" width="200" hight="200">
 
 
 
