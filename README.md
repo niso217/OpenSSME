@@ -26,3 +26,5 @@ This is convenient for car drivers who needs to dial the gate while driving in o
 
 the application login is using Google/Facebook Sign-In secure authentication system.
 The application is free, No commercials.
+
+play store link: https://play.google.com/store/apps/details?id=com.open.ssme&hl=en
