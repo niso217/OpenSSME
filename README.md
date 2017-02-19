@@ -17,7 +17,7 @@ When configuring the settings, you can:
 - social will let your contacts send you text message with the content of: "OpenSSME"
 (not case sensitive) and call on your behalf to the gate
 - Wi-Fi mode will help keep your battery life by stoping all background services.
--change the type of the map.
+- change the type of the map.
 
 When getting to the gate activation distance it’ll switch to use GPS to get your fine location. 
 When getting to the open distance, it’ll call the gate number for you. 
