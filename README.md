@@ -4,9 +4,9 @@ the application runs a background notification that allows you to shut down the 
 You can configure multiple gates and see the distance and estimated time of arrival from each gate at any time. 
 When configuring the gate, you can either be at the:
 
--gate’s location to get your exact fix, 
--search on google, 
--use the map to place the gate on it.
+- gate’s location to get your exact fix, 
+- search on google, 
+- use the map to place the gate on it.
 
 the application runs a sophisticated algorithm that will calculate the estimated time of arrival and adjust the GPS calls.
 
