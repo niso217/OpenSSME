@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 
+import com.google.android.gms.maps.model.Marker;
 import com.open.ssme.R;
 import com.open.ssme.Utils.Constants;
 import com.google.android.gms.maps.model.LatLng;
@@ -43,6 +44,11 @@ public class Gate {
         return googleDistance;
     }
 
+    public void setLocation(LatLng latLng){
+        location = latLng;
+        Location = new Location(LatLngToLocation(location));
+    }
+
     public void setGoogleDistance(String googleDistance) {
         this.googleDistance = googleDistance;
     }
@@ -72,6 +78,7 @@ public class Gate {
         this.status = GateStatus.ALMOST; //close
         this.active = false;
     }
+
 
     public Location LatLngToLocation(LatLng latlang) {
         Location loc = new Location(LocationManager.GPS_PROVIDER);

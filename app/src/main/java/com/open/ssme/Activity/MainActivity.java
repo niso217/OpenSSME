@@ -2,15 +2,19 @@ package com.open.ssme.Activity;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,13 +36,17 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.open.ssme.Fragments.GateListFragment;
 import com.open.ssme.Fragments.MapFragment;
 import com.open.ssme.Fragments.SettingsFragment;
+import com.open.ssme.Helpers.ScheduleHelper;
 import com.open.ssme.Helpers.SocialNetworkHelper;
 import com.open.ssme.Objects.Settings;
 import com.open.ssme.R;
+import com.open.ssme.Receiver.AlarmBroadcastReceiver;
+import com.open.ssme.Receiver.BootReceiver;
 import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.Objects.ListGateComplexPref;
 import com.open.ssme.Common.State;
@@ -64,6 +72,7 @@ import com.open.ssme.Utils.PrefUtils;
 import com.open.ssme.Common.GoogleConnection;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
@@ -94,12 +103,11 @@ public class MainActivity extends AppCompatActivity implements
     public GoogleConnection mGoogleConnection;
     private Fragment fragment;
     private int mCurrentViewId = R.id.gate_list;
-    private OpenSSMEService mLocationService;
+    private OpenSSMEService mOpenSSMEService;
     final public static int REQUEST_CODE = 123;
     private List<String> permissions;
     private Handler mFragmentHandler;
     private boolean mLocationSettingsResultInProcess;
-
 
 
     @Override
@@ -161,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onDestroy");
 
         // Disconnecting the client invalidates it.
-        if (mGoogleConnection != null && mLocationService != null && !isMyServiceRunning(mLocationService.getClass())) {
+        if (mGoogleConnection != null && mOpenSSMEService != null && !isMyServiceRunning(mOpenSSMEService.getClass())) {
             mGoogleConnection.disconnect();
             mGoogleConnection.deleteObserver(this);
         }
@@ -210,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void SetUpDisplayView() {
 
-        if (ListGateComplexPref.getInstance().gates.size() > 0)
+        if (ListGateComplexPref.getInstance().gates.size() > 0 || mCurrentViewId == R.id.settings)
             displayView(mCurrentViewId);
         else
             displayView(mCurrentViewId = R.id.menu_map);
@@ -496,20 +504,21 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
-                if (Settings.getInstance().isFirst_run())
-                    PrefUtils.setFirstRun(getApplicationContext());
 
             }
         });
         dialog.show();
+        if (Settings.getInstance().isFirst_run())
+            PrefUtils.setFirstRun(getApplicationContext());
     }
 
     public void StartOpenSSMEService() {
-        if (ListGateComplexPref.getInstance().gates != null && ListGateComplexPref.getInstance().gates.size() > 0) {
+        if (ListGateComplexPref.getInstance().gates != null && ListGateComplexPref.getInstance().gates.size() > 0
+                && !Settings.getInstance().isSchedule()) {
 
-            mLocationService = new OpenSSMEService();
-            Intent ServiceIntent = new Intent(this, mLocationService.getClass());
-            if (!isMyServiceRunning(mLocationService.getClass())) {
+            mOpenSSMEService = new OpenSSMEService();
+            Intent ServiceIntent = new Intent(this, mOpenSSMEService.getClass());
+            if (!isMyServiceRunning(mOpenSSMEService.getClass())) {
                 startService(ServiceIntent);
             }
         }
@@ -799,6 +808,8 @@ public class MainActivity extends AppCompatActivity implements
         } else
             getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
+
+
 
 
 }

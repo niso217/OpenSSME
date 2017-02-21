@@ -12,6 +12,10 @@
     <color name="teal">#008080</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+    <color name="shadecolor">#99CEEB</color>
+    <color name="strokecolor">#1E90FF</color>
+
+
 
 
 

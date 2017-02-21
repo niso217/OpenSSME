@@ -57,6 +57,9 @@ public class PrefUtils {
         boolean social = pref.getBoolean(Constants.SOCIAL, false);
         boolean sound = pref.getBoolean(Constants.SOUND, false);
         boolean wifi = pref.getBoolean(Constants.WIFI, true);
+        int start_time = pref.getInt(Constants.START_TIME, 0);
+        int end_time = pref.getInt(Constants.END_TIME, 0);
+        boolean schedule = pref.getBoolean(Constants.SCHEDULE, false);
 
 
         Settings.getInstance().setGps_distance(Integer.parseInt(gps_distance));
@@ -69,6 +72,10 @@ public class PrefUtils {
         Settings.getInstance().setSocial(social);
         Settings.getInstance().setSound(sound);
         Settings.getInstance().setWifi(wifi);
+        Settings.getInstance().setStart_time(start_time);
+        Settings.getInstance().setEnd_time(end_time);
+        Settings.getInstance().setSchedule(schedule);
+
 
 
     }
@@ -76,11 +83,15 @@ public class PrefUtils {
     public static void setFirstRun(Context ctx) {
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
         pref.edit().putBoolean(Constants.FIRST_RUN, false).commit();
-
         getSettings(ctx);
 
     }
 
+    public static void setTime(Context ctx,TimePreference time) {
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
+        pref.edit().putInt(time.getKey(), time.getTime()).commit();
+        getSettings(ctx);
+    }
 
     public static void setCurrentGate(ListGateComplexPref currentGateList, Context ctx) {
         ComplexPreferences complexPreferences = ComplexPreferences.getComplexPreferences(ctx, GATE_PREFS, 0);

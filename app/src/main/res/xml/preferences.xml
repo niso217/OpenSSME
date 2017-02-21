@@ -64,8 +64,39 @@
             android:defaultValue="true"
             />
 
+    </android.support.v7.preference.PreferenceCategory>
+
+
+    <android.support.v7.preference.PreferenceCategory
+        android:key="schedule_category"
+        android:title="@string/schedule"
+        >
+
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="schedule"
+            android:title="@string/schedule_title"
+            android:summary="@string/schedule_summary"
+            android:defaultValue="false"
+            />
+
+    <com.open.ssme.Utils.TimePreference
+        android:defaultValue="90"
+        android:dependency="schedule"
+        android:key="start_time"
+        android:title="@string/clock_start"
+        style="@style/AppPreference.DialogPreference"/>
+
+
+        <com.open.ssme.Utils.TimePreference
+            android:dependency="schedule"
+            android:defaultValue="90"
+            android:key="end_time"
+            android:title="@string/clock_end"
+            style="@style/AppPreference.DialogPreference"/>
+
 
     </android.support.v7.preference.PreferenceCategory>
+
 
     <android.support.v7.preference.PreferenceCategory
         android:title="@string/map"

@@ -99,6 +99,8 @@ public class Constants {
     public static final String WRITE_EXTERNAL_STORAGE = "an" + "droid.permission.WRITE_EXTERNAL_STORAGE";
     public static final String PROVIDERS_CHANGED = "android.location.PROVIDERS_CHANGED";
     public static final String SMS_READ = "android.permission.READ_SMS";
+    public static final String BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED";
+
 
 
     //Service
@@ -110,6 +112,11 @@ public class Constants {
     public static final String TERMINATE = "terminate";
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
+    public static final String START_TIME = "start_time";
+    public static final String END_TIME = "end_time";
+    public static final String SCHEDULE = "schedule";
+
+
     public static final String SOCIAL = "social";
 
     public static final String SOUND = "sound";
@@ -127,8 +134,12 @@ public class Constants {
     public static final String GATE_LIST_FRAGMENT = "mGateListFragment";
 
     public static final String RESTART_SERVICE = "OpenSSME.OpenSSMEService.RestartServer";
+
+
     public static final String LOCATION_SERVICE = "OpenSSME.OpenSSMEService.Location";
     public static final String DATA_CHANGED = "OpenSSME.OpenSSMEService.DATA_CHANGED";
+    public static final String START_SERVICE = "OpenSSME.OpenSSMEService.START_SERVICE";
+    public static final String END_SERVICE = "OpenSSME.OpenSSMEService.END_SERVICE";
 
     public static final String STARTFOREGROUND_ACTION = "OpenSSME.OpenSSMEService.StartForeground";
     public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";

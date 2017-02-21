@@ -8,17 +8,84 @@ public class Settings {
     private int gps_distance;
     private int open_distance;
     private int map_type;
+    private int start_time;
+    private int end_time;
     private int service_provider;
     private String profile;
     private boolean screen;
     private boolean terminate;
+    private boolean schedule;
     private boolean first_run;
+
     private boolean social;
     private boolean sound;
     private boolean wifi;
 
+    public boolean isSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(boolean schedule) {
+        this.schedule = schedule;
+    }
+
     public boolean isWifi() {
         return wifi;
+    }
+
+    public int[] getInteger_End_time() {
+        return new int[]{end_time / 60, end_time % 60};
+    }
+
+    public int[] getInteger_Start_time() {
+        return new int[]{start_time / 60, start_time % 60};
+    }
+
+    public String getEnd_time() {
+        String h = "";
+        String m = "";
+        int hours = end_time / 60;
+        int mins = end_time%60;
+        if (hours<10) h += "0"+hours;
+        else
+            h=String.valueOf(hours);
+        if (mins<10) m += "0"+mins;
+        else
+            m=String.valueOf(mins);
+
+        return h+":"+m;
+    }
+
+    public int getStart(){
+        return start_time;
+    }
+
+    public int getEnd(){
+        return end_time;
+    }
+
+    public void setEnd_time(int end_time) {
+        this.end_time = end_time;
+    }
+
+    public String getStart_time() {
+        String h = "";
+        String m = "";
+        int hours = start_time / 60;
+        int mins = start_time%60;
+        if (hours<10) h += "0"+hours;
+        else
+            h=String.valueOf(hours);
+        if (mins<10) m += "0"+mins;
+        else
+            m=String.valueOf(mins);
+
+        return h+":"+m;
+
+    }
+
+    public void setStart_time(int start_time) {
+        this.start_time = start_time;
     }
 
     public void setWifi(boolean wifi) {
@@ -106,7 +173,7 @@ public class Settings {
     }
 
     private static Settings ourInstance = new Settings();
-    
+
 
     public static Settings getInstance() {
 

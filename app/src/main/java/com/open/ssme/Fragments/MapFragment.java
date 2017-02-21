@@ -25,6 +25,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.InflateException;
@@ -91,7 +92,7 @@ public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener,
-        PlaceSelectionListener, View.OnClickListener
+        PlaceSelectionListener, View.OnClickListener,GoogleMap.OnMarkerDragListener
 
 
 {
@@ -109,7 +110,6 @@ public class MapFragment extends Fragment implements
     private Circle mCircle;
     private Bundle msavedInstanceState;
     private PlaceAutocompleteFragment autocompleteFragment;
-
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -361,6 +361,7 @@ public class MapFragment extends Fragment implements
                 // permission has been granted, continue as usual
                 map.setMyLocationEnabled(location_updates);
                 map.setOnMapLongClickListener(this);
+                map.setOnMarkerDragListener(this);
 
 
             }
@@ -386,10 +387,13 @@ public class MapFragment extends Fragment implements
 
         if (ListGateComplexPref.getInstance().gates.size() > 0 && map != null) {
             if (mCircle == null) {
+
                 mCircle = map.addCircle(new CircleOptions()
                         .center(ListGateComplexPref.getInstance().gates.get(0).location)
                         .radius(Settings.getInstance().getOpen_distance())
-                        .strokeColor(Color.RED));
+                        .fillColor(0x44ff0000)
+                        .strokeWidth(4)
+                        .strokeColor(0xffff0000));
             } else {
 
                 mCircle.setCenter(ListGateComplexPref.getInstance().gates.get(0).location);
@@ -452,6 +456,7 @@ public class MapFragment extends Fragment implements
                 mMarkers.add(new MarkerOptions()
                         .position(ListGateComplexPref.getInstance().gates.get(i).location)
                         .snippet(ListGateComplexPref.getInstance().gates.get(i).gateName)
+                        .draggable(true)
                         .title(ListGateComplexPref.getInstance().gates.get(i).phone).icon(BitmapDescriptorFactory.fromBitmap(photo))
                 );
             }
@@ -599,7 +604,7 @@ public class MapFragment extends Fragment implements
         mMarkers.add(markerOptions);
 
         //fist gate just added, start the service
-        if (ListGateComplexPref.getInstance().gates.size() == 1) {
+        if (ListGateComplexPref.getInstance().gates.size() == 1 && !Settings.getInstance().isSchedule()) {
             Intent startIntent = new Intent(getActivity(), OpenSSMEService.class);
             startIntent.setAction(Constants.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
@@ -685,6 +690,20 @@ public class MapFragment extends Fragment implements
     }
 
 
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+        ListGateComplexPref.getInstance().ChangeGatePosition(marker);
+    }
 };
 
 

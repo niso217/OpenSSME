@@ -414,8 +414,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         Log.d(TAG, "ETA: " + Floor(ListGateComplexPref.getInstance().getClosestGate().ETA));
         Log.d(TAG, "Active: " + ListGateComplexPref.getInstance().getClosestGate().active);
         Log.d(TAG, "Speed: " + mLocationHelper.getSpeed());
-        Log.d(TAG, "LocationHelper is null?: " + (mLocationHelper==null) + "");
-
     }
 
 

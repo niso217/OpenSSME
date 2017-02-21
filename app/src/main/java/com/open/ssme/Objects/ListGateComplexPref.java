@@ -1,5 +1,8 @@
 package com.open.ssme.Objects;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,6 +40,14 @@ public class ListGateComplexPref {
             if (current.phone.equals(phone)) return true;
         }
         return false;
+    }
+
+    public void ChangeGatePosition(Marker marker){
+        for (int i = 0; i < gates.size(); i++) {
+            if (gates.get(i).phone.equals(marker.getTitle()))
+                gates.get(i).setLocation(marker.getPosition());
+            return;
+        }
     }
 
 
