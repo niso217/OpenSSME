@@ -14,6 +14,8 @@
     <color name="black">#000000</color>
     <color name="shadecolor">#99CEEB</color>
     <color name="strokecolor">#1E90FF</color>
+    <color name="shaderedcolor">#66FF0000</color>
+    <color name="strokeredcolor">#ff0000</color>
 
 
 

@@ -14,6 +14,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.SeekBarPreference;
 import android.support.v7.preference.SwitchPreferenceCompat;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
@@ -36,6 +37,7 @@ import java.util.List;
 import static android.content.Context.ALARM_SERVICE;
 import static com.open.ssme.Utils.Constants.END_TIME;
 import static com.open.ssme.Utils.Constants.FIRST_RUN;
+import static com.open.ssme.Utils.Constants.OPEN_DISTANCE;
 import static com.open.ssme.Utils.Constants.PREF_UPDATE_CATEGORY;
 import static com.open.ssme.Utils.Constants.SCHEDULE;
 import static com.open.ssme.Utils.Constants.SETTINGS_REQ_SMS;
@@ -54,6 +56,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private static final String TAG = SettingsFragment.class.getSimpleName();
     private PreferenceCategory mPreferenceCategory;
     private SwitchPreferenceCompat mPreferenceSocial, mPreferenceFirstRun, mPreferenceSchedule;
+    private SeekBarPreference mSeekBarPreference;
     private TimePreference start_time, end_time;
     public static SettingsChangedListener mSettingsChangedListener;
     private ScheduleHelper mScheduleHelper;
@@ -70,8 +73,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         mPreferenceSocial = (SwitchPreferenceCompat) findPreference(SOCIAL);
         mPreferenceFirstRun = (SwitchPreferenceCompat) findPreference(FIRST_RUN);
         mPreferenceSchedule = (SwitchPreferenceCompat) findPreference(SCHEDULE);
+        mSeekBarPreference = (SeekBarPreference) findPreference(OPEN_DISTANCE);
 
-
+        mSeekBarPreference.setMin(50);
         mPreferenceFirstRun.setVisible(false);
 
         start_time = (TimePreference) findPreference(START_TIME);
@@ -80,6 +84,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         end_time.setSummary(Settings.getInstance().getEnd_time());
 
         SetUpPreferenceSchedule();
+        SetUpSettingsChangedListener();
 
 
     }

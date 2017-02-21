@@ -92,7 +92,8 @@ public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener,
-        PlaceSelectionListener, View.OnClickListener,GoogleMap.OnMarkerDragListener
+        PlaceSelectionListener, View.OnClickListener, GoogleMap.OnMarkerDragListener,
+        GoogleMap.OnMapClickListener
 
 
 {
@@ -140,6 +141,7 @@ public class MapFragment extends Fragment implements
         }
 
     }
+
     private void UnRegisterReceiver() {
         if (mMessageReceiver != null) {
             LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
@@ -213,8 +215,8 @@ public class MapFragment extends Fragment implements
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-                        if (map != null)
-                            SetUpCircle();
+            if (map != null)
+                SetUpCircle();
         }
     };
 
@@ -387,21 +389,38 @@ public class MapFragment extends Fragment implements
 
         if (ListGateComplexPref.getInstance().gates.size() > 0 && map != null) {
             if (mCircle == null) {
-
-                mCircle = map.addCircle(new CircleOptions()
-                        .center(ListGateComplexPref.getInstance().gates.get(0).location)
-                        .radius(Settings.getInstance().getOpen_distance())
-                        .fillColor(0x44ff0000)
-                        .strokeWidth(4)
-                        .strokeColor(0xffff0000));
+                mCircle = map.addCircle(setCircleOptions(
+                        ContextCompat.getColor(getContext(), R.color.shaderedcolor),
+                        ContextCompat.getColor(getContext(), R.color.strokeredcolor
+                )));
             } else {
-
-                mCircle.setCenter(ListGateComplexPref.getInstance().gates.get(0).location);
-                mCircle.setRadius(Settings.getInstance().getOpen_distance());
-
+                PaintCircleByStatus();
 
             }
         }
+    }
+
+    private void PaintCircleByStatus(){
+        if (ListGateComplexPref.getInstance().getClosestGate().active){
+            mCircle.setFillColor(ContextCompat.getColor(getContext(), R.color.shadecolor));
+            mCircle.setStrokeColor(ContextCompat.getColor(getContext(), R.color.strokecolor));
+        }
+        else
+        {
+            mCircle.setFillColor(ContextCompat.getColor(getContext(), R.color.shaderedcolor));
+            mCircle.setStrokeColor(ContextCompat.getColor(getContext(), R.color.strokeredcolor));
+        }
+        mCircle.setCenter(ListGateComplexPref.getInstance().getClosestGate().location);
+        mCircle.setRadius(Settings.getInstance().getOpen_distance());
+    }
+
+    private CircleOptions setCircleOptions(int fillColor, int strokeColor){
+        return new CircleOptions()
+                .center(ListGateComplexPref.getInstance().getClosestGate().location)
+                .radius(Settings.getInstance().getOpen_distance())
+                .fillColor(fillColor)
+                .strokeWidth(4)
+                .strokeColor(strokeColor);
     }
 
 
@@ -649,7 +668,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        if (marker.isDraggable()) {
+        if (!ListGateComplexPref.getInstance().isGateExist(marker.getTitle())) {
 
             mOnClickLatLang = marker.getPosition();
             marker.remove();
@@ -669,6 +688,7 @@ public class MapFragment extends Fragment implements
     @Override
     public boolean onMarkerClick(Marker marker) {
         mCurrentMarker = LocationToLatLng(marker.getPosition());
+
         return false;
     }
 
@@ -704,6 +724,11 @@ public class MapFragment extends Fragment implements
     @Override
     public void onMarkerDragEnd(Marker marker) {
         ListGateComplexPref.getInstance().ChangeGatePosition(marker);
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
     }
 };
 

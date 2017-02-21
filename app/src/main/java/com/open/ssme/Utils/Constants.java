@@ -80,7 +80,7 @@ public class Constants {
     public static final String GATE_LIST = "gate_list";
 
     public static final String DEFAULT_LOCATION_UPDATE = "1";
-    public static final String DEFAULT_OPEN_DISTANCE = "400";
+    public static final int DEFAULT_OPEN_DISTANCE = 400;
     public static final String DEFAULT_MAP_TYPE = "1";
 
 

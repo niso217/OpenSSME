@@ -16,14 +16,30 @@
             <!--android:visibility="gone"-->
             <!--/>-->
 
-        <android.support.v7.preference.ListPreference
+        <!--<android.support.v7.preference.ListPreference-->
+            <!--android:key="open_distance"-->
+            <!--android:title="@string/open_distance_title"-->
+            <!--android:summary="@string/open_distance_summary"-->
+            <!--android:defaultValue="400"-->
+            <!--android:entries="@array/openDistance"-->
+            <!--android:entryValues="@array/openDistanceValues"-->
+            <!--/>-->
+
+        <android.support.v7.preference.SeekBarPreference
             android:key="open_distance"
             android:title="@string/open_distance_title"
             android:summary="@string/open_distance_summary"
-            android:defaultValue="400"
-            android:entries="@array/openDistance"
-            android:entryValues="@array/openDistanceValues"
+            android:max="500"
+            android:defaultValue="300"
             />
+
+    </android.support.v7.preference.PreferenceCategory>
+
+
+    <android.support.v7.preference.PreferenceCategory
+        android:key="update"
+        android:title="@string/settings"
+        >
 
 
         <android.support.v7.preference.SwitchPreferenceCompat
