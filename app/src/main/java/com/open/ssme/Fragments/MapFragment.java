@@ -592,6 +592,7 @@ public class MapFragment extends Fragment implements
         MarkerOptions markerOptions = new MarkerOptions().position(mOnClickLatLang)
                 .snippet(contactName)
                 .title(contactNumber)
+                .draggable(true)
                 .icon(defaultMarker);
 
         // Creates and adds marker to the map
