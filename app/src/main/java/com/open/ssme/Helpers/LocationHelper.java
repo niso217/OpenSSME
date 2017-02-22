@@ -30,6 +30,8 @@ import com.google.android.gms.maps.model.LatLng;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,6 +39,7 @@ import static android.content.Context.LOCATION_SERVICE;
 import static com.open.ssme.Utils.Constants.DEFAULT_CHECK_WIFI_TASK;
 import static com.open.ssme.Utils.Constants.DEFAULT_LOCATION_INTERVAL;
 import static com.open.ssme.Utils.Constants.LOCATION_UPDATE_TIME_OUT;
+import static com.open.ssme.Utils.Constants.NOW;
 import static com.open.ssme.Utils.Constants.PROVIDERS_CHANGED;
 import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 
@@ -45,13 +48,12 @@ import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
  */
 
 
-public class LocationHelper implements LocationListener {
+public class LocationHelper implements LocationListener, Observer {
 
     private GoogleConnection mGoogleConnection;
     private final String TAG = LocationHelper.class.getSimpleName();
     private Context mContext;
     private boolean mIsLocationUpdatesOn;
-    //public boolean mIsGPSOn;
     private LocationRequest mLocationRequest;
     private Handler mLocationHandler;
     private LocationManager mLocationManager;
@@ -68,10 +70,8 @@ public class LocationHelper implements LocationListener {
         this.mContext = context;
         mLocationHandler = new Handler();
         mGoogleConnection = GoogleConnection.getInstance(context);
-        setupLocationRequestBalanced(UPDATE_INTERVAL);
+        ChangeLocationRequest(UPDATE_INTERVAL,NOW);
         InitLocationManager();
-        StartLocationUpdates();
-        //mIsGPSOn = IsGpsActive();
     }
 
     public LocationHelper() {
@@ -98,7 +98,7 @@ public class LocationHelper implements LocationListener {
         SetLocationData(location);
     }
 
-    public void GetSingleLocationRequest(){
+    public void GetSingleLocationRequest() {
         SingleShotLocationProvider.getSingleUpdate(mContext, 15000, new SingleShotLocationProvider.LocationCallback() {
             @Override
             public void timedOut() {
@@ -148,6 +148,7 @@ public class LocationHelper implements LocationListener {
                     ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
+            Log.d(TAG, mGoogleConnection.getGoogleApiClient().isConnected() + "");
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationRequest, this).setResultCallback(new ResultCallbacks<Status>() {
                 @Override
                 public void onSuccess(Status status) {
@@ -194,15 +195,20 @@ public class LocationHelper implements LocationListener {
                 .setFastestInterval(Interval);
     }
 
-    public void ChangeLocationRequest(long ETA,  long WhenToDispatch) {
-        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, In " + WhenToDispatch/1000 + " Seconds=====");
+    public void ChangeLocationRequest(long ETA, long WhenToDispatch) {
+        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, In " + WhenToDispatch / 1000 + " Seconds=====");
 
-        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
-            StopAllLocationServices();
-            setupLocationRequestBalanced(ETA);
-            reCheckLocation(WhenToDispatch);
-        }
+        if (mGoogleConnection.getGoogleApiClient().isConnected())
+            StartUpdates(ETA, WhenToDispatch);
+        else
+            mGoogleConnection.getGoogleApiClient().connect();
 
+    }
+
+    private void StartUpdates(long ETA, long WhenToDispatch) {
+        StopAllLocationServices();
+        setupLocationRequestBalanced(ETA);
+        reCheckLocation(WhenToDispatch);
     }
 
 
@@ -221,12 +227,6 @@ public class LocationHelper implements LocationListener {
 
     }
 
-
-//    private void GPSChangedBroadcast() {
-//        Intent intent = new Intent(PROVIDERS_CHANGED);
-//        intent.putExtra(Constants.GPS_STATUS, mIsGPSOn);
-//        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-//    }
 
     public void removeLocationHandlerCallbacks() {
         if (mLocationHandler != null) {
@@ -284,13 +284,6 @@ public class LocationHelper implements LocationListener {
         return mGoogleConnection;
     }
 
-//    @Override
-//    public void onReceive(Context context, Intent intent) {
-//        if (intent.getAction().matches(PROVIDERS_CHANGED)) {
-//            mIsGPSOn = IsGpsActive();
-//            GPSChangedBroadcast();
-//        }
-//    }
 
     public String getLastLocationUpdate() {
         return mLastLocationUpdate;
@@ -298,5 +291,22 @@ public class LocationHelper implements LocationListener {
 
     public void setLastLocationUpdate(String mLastLocationUpdate) {
         this.mLastLocationUpdate = mLastLocationUpdate;
+    }
+
+    @Override
+    public void update(Observable observable, Object data) {
+        if (observable != mGoogleConnection) {
+            return;
+        }
+        switch ((State) data) {
+
+            case OPENED:
+                Log.d(TAG, "Connected to Google Api Client");
+                StartUpdates(UPDATE_INTERVAL, NOW);
+                break;
+            case CLOSED:
+                Log.d(TAG, "Disconnected from Google Api Client");
+                break;
+        }
     }
 }

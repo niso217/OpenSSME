@@ -60,6 +60,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private TimePreference start_time, end_time;
     public static SettingsChangedListener mSettingsChangedListener;
     private ScheduleHelper mScheduleHelper;
+    protected static final String PREF_CUSTOMIZE_DIALOG = "customizedialog_key";
 
 
     @Override
@@ -209,6 +210,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             mScheduleHelper.StartOpenSSMEService();
 
         }
+
+        if (PREF_CUSTOMIZE_DIALOG.equals(key)) {
+            String date = sharedPreferences.getString(key, null);
+            Toast.makeText(getActivity(), "選択した時間: " + date,
+                    Toast.LENGTH_SHORT).show();
+        }
+
 
     }
 

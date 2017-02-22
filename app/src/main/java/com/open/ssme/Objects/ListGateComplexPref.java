@@ -44,9 +44,10 @@ public class ListGateComplexPref {
 
     public void ChangeGatePosition(Marker marker){
         for (int i = 0; i < gates.size(); i++) {
-            if (gates.get(i).phone.equals(marker.getTitle()))
+            if (gates.get(i).phone.equals(marker.getTitle())){
                 gates.get(i).setLocation(marker.getPosition());
-            return;
+                return;
+            }
         }
     }
 

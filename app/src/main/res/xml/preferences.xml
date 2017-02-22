@@ -30,16 +30,9 @@
             android:title="@string/open_distance_title"
             android:summary="@string/open_distance_summary"
             android:max="500"
+
             android:defaultValue="300"
             />
-
-    </android.support.v7.preference.PreferenceCategory>
-
-
-    <android.support.v7.preference.PreferenceCategory
-        android:key="update"
-        android:title="@string/settings"
-        >
 
 
         <android.support.v7.preference.SwitchPreferenceCompat

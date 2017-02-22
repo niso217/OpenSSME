@@ -73,6 +73,7 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.open.ssme.Adapter.CustomWindowAdapter;
 import com.open.ssme.Utils.Constants;
@@ -108,9 +109,10 @@ public class MapFragment extends Fragment implements
     private ArrayList<MarkerOptions> mMarkers;
     private LatLng mOnClickLatLang;
     private Location mCurrentMarker;
-    private Circle mCircle;
-    private Bundle msavedInstanceState;
     private PlaceAutocompleteFragment autocompleteFragment;
+    private List<Circle> mCircleList;
+    private boolean mShowCircles;
+    ;
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -123,7 +125,6 @@ public class MapFragment extends Fragment implements
         super.onActivityCreated(savedInstanceState);
 
         if (savedInstanceState != null) {
-            msavedInstanceState = savedInstanceState;
             zoom = savedInstanceState.getFloat(MAP_ZOOM);
             latlng = new LatLng(savedInstanceState.getDouble(MAP_LAT), savedInstanceState.getDouble(MAP_LNG));
             tilt = savedInstanceState.getFloat(MAP_TILT);
@@ -135,7 +136,6 @@ public class MapFragment extends Fragment implements
 
         } else {
             //get masseges from OpenSSMEService
-            msavedInstanceState = null;
             LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
                     new IntentFilter(Constants.DATA_CHANGED));
         }
@@ -215,13 +215,17 @@ public class MapFragment extends Fragment implements
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (map != null)
+            if (map != null && mShowCircles)
+            {
+                ClearCircles();
                 SetUpCircle();
+            }
         }
     };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        mCircleList = new ArrayList<Circle>();
         super.onCreate(savedInstanceState);
     }
 
@@ -232,7 +236,11 @@ public class MapFragment extends Fragment implements
         map.setOnInfoWindowClickListener(this);
         map.setOnMarkerClickListener(this);
 
+
+
         ChangeMapType();
+
+        SetUpZoom();
 
         SetUpCircle();
 
@@ -258,6 +266,7 @@ public class MapFragment extends Fragment implements
                         temp.showInfoWindow();
                 }
             }
+
 
         }
     }
@@ -292,6 +301,7 @@ public class MapFragment extends Fragment implements
         try {
             rootView.findViewById(R.id.help).setOnClickListener(this);
             rootView.findViewById(R.id.current_location).setOnClickListener(this);
+            rootView.findViewById(R.id.draw).setOnClickListener(this);
             MapsInitializer.initialize(this.getActivity());
             mapView = (MapView) rootView.findViewById(R.id.map);
             mapView.onCreate(savedInstanceState);
@@ -384,43 +394,53 @@ public class MapFragment extends Fragment implements
 
     }
 
+    private void SetUpZoom(){
+        GoogleConnection mGoogleConnection = GoogleConnection.getInstance(getContext());
+        if (mGoogleConnection.getGoogleApiClient().isConnected()) {
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            double latitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLatitude();
+            double longitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLongitude();
+
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
+
+        }
+    }
+
 
     private void SetUpCircle() {
-
         if (ListGateComplexPref.getInstance().gates.size() > 0 && map != null) {
-            if (mCircle == null) {
-                mCircle = map.addCircle(setCircleOptions(
-                        ContextCompat.getColor(getContext(), R.color.shaderedcolor),
-                        ContextCompat.getColor(getContext(), R.color.strokeredcolor
-                )));
-            } else {
-                PaintCircleByStatus();
+            Circle temp;
+            for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+                if (ListGateComplexPref.getInstance().gates.get(i).active)
+                    temp = map.addCircle(setCircleOptions(
+                            ContextCompat.getColor(getContext(), R.color.shadecolor),
+                            ContextCompat.getColor(getContext(), R.color.strokecolor),
+                            ListGateComplexPref.getInstance().gates.get(i).location));
 
+                else
+                    temp = map.addCircle(setCircleOptions(
+                            ContextCompat.getColor(getContext(), R.color.shaderedcolor),
+                            ContextCompat.getColor(getContext(), R.color.strokeredcolor),
+                            ListGateComplexPref.getInstance().gates.get(i).location));
+
+                mCircleList.add(temp);
             }
+
         }
     }
 
-    private void PaintCircleByStatus(){
-        if (ListGateComplexPref.getInstance().getClosestGate().active){
-            mCircle.setFillColor(ContextCompat.getColor(getContext(), R.color.shadecolor));
-            mCircle.setStrokeColor(ContextCompat.getColor(getContext(), R.color.strokecolor));
-        }
-        else
-        {
-            mCircle.setFillColor(ContextCompat.getColor(getContext(), R.color.shaderedcolor));
-            mCircle.setStrokeColor(ContextCompat.getColor(getContext(), R.color.strokeredcolor));
-        }
-        mCircle.setCenter(ListGateComplexPref.getInstance().getClosestGate().location);
-        mCircle.setRadius(Settings.getInstance().getOpen_distance());
-    }
 
-    private CircleOptions setCircleOptions(int fillColor, int strokeColor){
+    private CircleOptions setCircleOptions(int fillColor, int strokeColor, LatLng latLng) {
         return new CircleOptions()
-                .center(ListGateComplexPref.getInstance().getClosestGate().location)
+                .center(latLng)
                 .radius(Settings.getInstance().getOpen_distance())
                 .fillColor(fillColor)
                 .strokeWidth(4)
                 .strokeColor(strokeColor);
+
     }
 
 
@@ -454,8 +474,26 @@ public class MapFragment extends Fragment implements
             case R.id.help:
                 onCoachMark();
                 break;
+            case R.id.draw:
+                if (mCircleList.size() == 0){
+                    mShowCircles = true;
+                    SetUpCircle();
+                }
+                else{
+                    mShowCircles = false;
+                    ClearCircles();
+
+                }
+                break;
         }
 
+    }
+
+    private void ClearCircles() {
+        for (Circle myCircle : mCircleList) {
+            myCircle.remove();
+        }
+        mCircleList.clear();
     }
 
 
@@ -618,7 +656,10 @@ public class MapFragment extends Fragment implements
         if (map != null) {
             Marker marker = map.addMarker(markerOptions);
             dropPinEffect(marker);
-            SetUpCircle();
+            map.addCircle(setCircleOptions(
+                    ContextCompat.getColor(getContext(), R.color.shadecolor),
+                    ContextCompat.getColor(getContext(), R.color.strokecolor),
+                    marker.getPosition()));
 
         }
         mMarkers.add(markerOptions);
@@ -724,6 +765,8 @@ public class MapFragment extends Fragment implements
     @Override
     public void onMarkerDragEnd(Marker marker) {
         ListGateComplexPref.getInstance().ChangeGatePosition(marker);
+        PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getActivity());
+
     }
 
     @Override
