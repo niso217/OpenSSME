@@ -50,6 +50,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.open.ssme.Utils.Constants.ALMOST_INTERVAL;
 import static com.open.ssme.Utils.Constants.ASK_SMS_PREMISSION;
@@ -71,8 +73,6 @@ import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo {
     private final String TAG = OpenSSMEService.class.getSimpleName();
     private int counter = -5;
-    private Runnable mHandlerTask;
-    private Handler mHandler;
     private static boolean doTerminate;
     public static boolean mCodeBlocker;
     private NotificationManager mNotificationManager;
@@ -82,6 +82,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     private LocationHelper mLocationHelper;
     private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
     private boolean mIsWifiOn;
+    private Timer mTimer;
 
     public OpenSSMEService() {
         super();
@@ -111,7 +112,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     private void InitService() {
 
         mLocationHelper = new LocationHelper(this);
-        mHandler = new Handler();
+        mTimer = new Timer();
 
         mCodeBlocker = false;
         doTerminate = false;
@@ -209,8 +210,16 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         mLocationHelper.destroy();
         mLocationHelper = null;
         unregisterReceiver(receiver);
-        mHandler.removeCallbacks(mHandlerTask);
+        stopUpdates();
         RestartService();
+    }
+
+    private void stopUpdates() {
+        if (mTimer!=null) {
+            mTimer.cancel();
+            mTimer.purge();
+            mTimer = null;
+        }
     }
 
     private void RestartService() {
@@ -223,74 +232,76 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     public void Worker() {
         Log.d(TAG, "=====Starting Worker...=====");
-        mHandlerTask = new Runnable() {
+        mTimer.schedule(new TimerTask()
+        {
             @Override
-            public void run() {
-                //indicate that the service is running
-                Log.d(TAG, "" + (counter++));
-                mHandler.postDelayed(mHandlerTask, DEFAULT_RUN_SERVICE_TASK);
+            public void run()
+            {
+                DoRun();
+            }},0, 1000);
 
-                //there are no gates stop this service
-                if (ListGateComplexPref.getInstance().gates.size() == 0) {
-                    Log.d(TAG, "No Gates Found, Stopping Location Service");
-                    stopSelf();
-                    return;
-                }
-
-                if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
-                    WifiStatus();
-
-
-                if (!mIsWifiOn) {
-
-                    if (mLocationHelper.getLocation() != null) {
-
-                        if (!mCodeBlocker) {
-
-                            CalcGatesDistanceAndETA();
-
-                            SetGateStatus();
-
-                            ActiveGate();
-
-                            UpdateNotification();
-
-                            UpdateIntervalAlgorithm();
-
-                            WriteToLog();
-
-                            ListViewBroadcast();
-
-                            //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
-                            //DistanceMatrixRequest();
-
-
-                        }
-                    }
-                    else{
-                        if (counter>DEFAULT_CHECK_GPS)
-                            mLocationHelper.GetSingleLocationRequest();
-                    }
-
-                }
-                else {
-                    if (mLocationHelper.isLocationUpdatesOn()) {
-                        mGPSUpdateInterval = 0;
-                        mLocationHelper.StopLocationUpdates();
-
-                    }
-                }
-
-
-            }
-        };
-        mHandlerTask.run();
     }
 
     private static void Terminate(Context context) {
         doTerminate = true;
         Intent stop = new Intent(context, OpenSSMEService.class);
         context.stopService(stop);
+    }
+
+    private void DoRun(){
+        //indicate that the service is running
+        Log.d(TAG, "" + (counter++));
+
+        //there are no gates stop this service
+        if (ListGateComplexPref.getInstance().gates.size() == 0) {
+            Log.d(TAG, "No Gates Found, Stopping Location Service");
+            stopSelf();
+            return;
+        }
+
+        if (counter % DEFAULT_CHECK_WIFI_TASK == 0)
+            WifiStatus();
+
+
+        if (!mIsWifiOn) {
+
+            if (mLocationHelper.getLocation() != null) {
+
+                if (!mCodeBlocker) {
+
+                    CalcGatesDistanceAndETA();
+
+                    SetGateStatus();
+
+                    ActiveGate();
+
+                    UpdateNotification();
+
+                    UpdateIntervalAlgorithm();
+
+                    WriteToLog();
+
+                    ListViewBroadcast();
+
+                    //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
+                    //DistanceMatrixRequest();
+
+
+                }
+            }
+            else{
+                if (counter>DEFAULT_CHECK_GPS)
+                    mLocationHelper.GetSingleLocationRequest();
+            }
+
+        }
+        else {
+            if (mLocationHelper.isLocationUpdatesOn()) {
+                mGPSUpdateInterval = 0;
+                mLocationHelper.StopLocationUpdates();
+
+            }
+        }
     }
 
     @Nullable

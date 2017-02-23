@@ -87,9 +87,9 @@ public class PrefUtils {
 
     }
 
-    public static void setTime(Context ctx,TimePreference time) {
+    public static void setTime(Context ctx, String key, int time) {
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(ctx);
-        pref.edit().putInt(time.getKey(), time.getTime()).commit();
+        pref.edit().putInt(key, time).commit();
         getSettings(ctx);
     }
 

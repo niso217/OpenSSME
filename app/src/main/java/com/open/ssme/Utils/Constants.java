@@ -113,8 +113,10 @@ public class Constants {
     public static final String SCREEN = "screen";
     public static final String FIRST_RUN = "first_run";
     public static final String START_TIME = "start_time";
+
     public static final String END_TIME = "end_time";
     public static final String SCHEDULE = "schedule";
+    public static final String SCHEDULE_TIME = "schedule_time";
 
 
     public static final String SOCIAL = "social";

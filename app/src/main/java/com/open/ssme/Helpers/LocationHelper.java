@@ -64,6 +64,8 @@ public class LocationHelper implements LocationListener, Observer {
     private double mCurrentLongitude;
     private double mCurrentLatitude;
     private double mCurrentAccuracy;
+    private Timer mTimer;
+
 
     public LocationHelper(Context context) {
 
@@ -87,6 +89,7 @@ public class LocationHelper implements LocationListener, Observer {
                 StartLocationUpdates();
             }
         }, WhenToDispatch);
+
 
         Log.d(TAG, "=====ReCheck Location In " + WhenToDispatch / 1000 + " Seconds=====");
 

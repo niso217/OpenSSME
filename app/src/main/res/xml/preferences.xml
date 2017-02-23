@@ -91,17 +91,9 @@
     <com.open.ssme.Utils.TimePreference
         android:defaultValue="90"
         android:dependency="schedule"
-        android:key="start_time"
-        android:title="@string/clock_start"
+        android:title="@string/schedule_time_title"
+        android:key="schedule_time"
         style="@style/AppPreference.DialogPreference"/>
-
-
-        <com.open.ssme.Utils.TimePreference
-            android:dependency="schedule"
-            android:defaultValue="90"
-            android:key="end_time"
-            android:title="@string/clock_end"
-            style="@style/AppPreference.DialogPreference"/>
 
 
     </android.support.v7.preference.PreferenceCategory>

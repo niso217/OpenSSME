@@ -40,6 +40,7 @@ import static com.open.ssme.Utils.Constants.FIRST_RUN;
 import static com.open.ssme.Utils.Constants.OPEN_DISTANCE;
 import static com.open.ssme.Utils.Constants.PREF_UPDATE_CATEGORY;
 import static com.open.ssme.Utils.Constants.SCHEDULE;
+import static com.open.ssme.Utils.Constants.SCHEDULE_TIME;
 import static com.open.ssme.Utils.Constants.SETTINGS_REQ_SMS;
 import static com.open.ssme.Utils.Constants.SOCIAL;
 import static com.open.ssme.Utils.Constants.START_TIME;
@@ -57,10 +58,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private PreferenceCategory mPreferenceCategory;
     private SwitchPreferenceCompat mPreferenceSocial, mPreferenceFirstRun, mPreferenceSchedule;
     private SeekBarPreference mSeekBarPreference;
-    private TimePreference start_time, end_time;
+    private TimePreference schedule_time;
     public static SettingsChangedListener mSettingsChangedListener;
     private ScheduleHelper mScheduleHelper;
-    protected static final String PREF_CUSTOMIZE_DIALOG = "customizedialog_key";
 
 
     @Override
@@ -79,10 +79,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         mSeekBarPreference.setMin(50);
         mPreferenceFirstRun.setVisible(false);
 
-        start_time = (TimePreference) findPreference(START_TIME);
-        end_time = (TimePreference) findPreference(END_TIME);
-        start_time.setSummary(Settings.getInstance().getStart_time());
-        end_time.setSummary(Settings.getInstance().getEnd_time());
+        schedule_time = (TimePreference) findPreference(SCHEDULE_TIME);
+        schedule_time.setSummary(Settings.getInstance().getStart_time() + " - " + Settings.getInstance().getEnd_time());
 
         SetUpPreferenceSchedule();
         SetUpSettingsChangedListener();
@@ -189,20 +187,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
             mScheduleHelper.StopOpenSSMEService();
 
-            if (key.equals(START_TIME)) {
-                start_time.setSummary(Settings.getInstance().getStart_time());
-            }
-            if (key.equals(END_TIME)) {
-                end_time.setSummary(Settings.getInstance().getEnd_time());
-            }
-
-
-            if (Settings.getInstance().getStart() != 0 && Settings.getInstance().getEnd() != 0) {
+            if (key.equals(SCHEDULE_TIME)) {
                 mScheduleHelper.ScheduleStartTime();
                 mScheduleHelper.ScheduleEndTime();
-                Toast.makeText(getContext(),Settings.getInstance().getStart_time() +" - "+
-                                Settings.getInstance().getEnd_time(),
-                        Toast.LENGTH_SHORT).show();
+                schedule_time.setSummary(Settings.getInstance().getStart_time() + " - " + Settings.getInstance().getEnd_time());
             }
 
         } else {
@@ -211,11 +199,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         }
 
-        if (PREF_CUSTOMIZE_DIALOG.equals(key)) {
-            String date = sharedPreferences.getString(key, null);
-            Toast.makeText(getActivity(), "選択した時間: " + date,
-                    Toast.LENGTH_SHORT).show();
-        }
 
 
     }

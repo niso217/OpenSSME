@@ -111,6 +111,7 @@
     <string name="clock_end">End Time</string>
 
     <string name="schedule_title">Schedule</string>
+    <string name="schedule_time_title">Select Time</string>
     <string name="schedule_summary">turn on service in specific hours</string>
 
     <string name="no_gates_settings">please add at least one gate</string>

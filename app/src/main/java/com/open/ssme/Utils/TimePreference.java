@@ -21,7 +21,7 @@ public class TimePreference extends DialogPreference {
     /**
      * In Minutes after midnight
      */
-    private int mTime;
+    private String mTime;
 
     /**
      * Resource of the dialog layout
@@ -57,7 +57,7 @@ public class TimePreference extends DialogPreference {
      *
      * @return The current preference value
      */
-    public int getTime() {
+    public String getTime() {
         return mTime;
     }
 
@@ -66,11 +66,11 @@ public class TimePreference extends DialogPreference {
      *
      * @param time The time to save
      */
-    public void setTime(int time) {
+    public void setTime(String time) {
         mTime = time;
 
         // Save to SharedPreference
-        persistInt(time);
+        persistString(time);
     }
 
 
@@ -106,7 +106,7 @@ public class TimePreference extends DialogPreference {
     protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
         // If the value can be restored, do it. If not, use the default value.
         setTime(restorePersistedValue ?
-                getPersistedInt(mTime) : (int) defaultValue);
+                getPersistedString(mTime) : String.valueOf(defaultValue));
     }
 
 }

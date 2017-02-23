@@ -112,7 +112,8 @@ public class MapFragment extends Fragment implements
     private PlaceAutocompleteFragment autocompleteFragment;
     private List<Circle> mCircleList;
     private boolean mShowCircles;
-    ;
+
+    private int light_blue,blue,light_red,red;
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -226,6 +227,10 @@ public class MapFragment extends Fragment implements
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         mCircleList = new ArrayList<Circle>();
+        light_blue =ContextCompat.getColor(getContext(), R.color.shadecolor);
+        blue = ContextCompat.getColor(getContext(), R.color.strokecolor);
+        light_red = ContextCompat.getColor(getContext(), R.color.shaderedcolor);
+        red = ContextCompat.getColor(getContext(), R.color.strokeredcolor);
         super.onCreate(savedInstanceState);
     }
 
@@ -416,14 +421,14 @@ public class MapFragment extends Fragment implements
             for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
                 if (ListGateComplexPref.getInstance().gates.get(i).active)
                     temp = map.addCircle(setCircleOptions(
-                            ContextCompat.getColor(getContext(), R.color.shadecolor),
-                            ContextCompat.getColor(getContext(), R.color.strokecolor),
+                            light_blue,
+                            blue,
                             ListGateComplexPref.getInstance().gates.get(i).location));
 
                 else
                     temp = map.addCircle(setCircleOptions(
-                            ContextCompat.getColor(getContext(), R.color.shaderedcolor),
-                            ContextCompat.getColor(getContext(), R.color.strokeredcolor),
+                            light_red,
+                            red,
                             ListGateComplexPref.getInstance().gates.get(i).location));
 
                 mCircleList.add(temp);
@@ -657,8 +662,8 @@ public class MapFragment extends Fragment implements
             Marker marker = map.addMarker(markerOptions);
             dropPinEffect(marker);
             map.addCircle(setCircleOptions(
-                    ContextCompat.getColor(getContext(), R.color.shadecolor),
-                    ContextCompat.getColor(getContext(), R.color.strokecolor),
+                    light_blue,
+                    blue,
                     marker.getPosition()));
 
         }
