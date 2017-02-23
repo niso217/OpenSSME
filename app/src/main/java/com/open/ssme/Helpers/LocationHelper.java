@@ -12,6 +12,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -102,10 +103,21 @@ public class LocationHelper implements LocationListener, Observer {
     }
 
     public void GetSingleLocationRequest() {
-        SingleShotLocationProvider.getSingleUpdate(mContext, 15000, new SingleShotLocationProvider.LocationCallback() {
+
+        mLocationHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                SingleReq();
+            }
+        });
+    }
+
+
+    private void SingleReq(){
+        SingleShotLocationProvider.getSingleUpdate(mContext, 60000, new SingleShotLocationProvider.LocationCallback() {
             @Override
             public void timedOut() {
-
+                Log.d(TAG,"timedOut");
             }
 
             @Override
@@ -134,7 +146,6 @@ public class LocationHelper implements LocationListener, Observer {
             }
         });
     }
-
 
     private void InitLocationManager() {
         mLocationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);

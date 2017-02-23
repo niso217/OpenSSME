@@ -290,7 +290,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
                 }
             }
             else{
-                if (counter>DEFAULT_CHECK_GPS)
+                if (counter==DEFAULT_CHECK_GPS)
                     mLocationHelper.GetSingleLocationRequest();
             }
 

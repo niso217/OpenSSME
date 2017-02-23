@@ -116,6 +116,9 @@
 
     <string name="no_gates_settings">please add at least one gate</string>
 
+    <string name="start">Start</string>
+    <string name="end">End</string>
+
     <string name="schedule">Schedule</string>
 
 </resources>
