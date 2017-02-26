@@ -381,7 +381,7 @@ public class MapFragment extends Fragment implements
                 map.setMyLocationEnabled(location_updates);
                 map.setOnMapLongClickListener(this);
                 map.setOnMarkerDragListener(this);
-
+                map.getUiSettings().setZoomControlsEnabled(true);
 
             }
         }
