@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sample="http://schemas.android.com/apk/res-auto">
     <android.support.v7.preference.PreferenceCategory
         android:key="update_category"
         android:title="@string/settings"
@@ -25,14 +26,25 @@
             <!--android:entryValues="@array/openDistanceValues"-->
             <!--/>-->
 
-        <android.support.v7.preference.SeekBarPreference
+        <!--<android.support.v7.preference.SeekBarPreference-->
+            <!--android:key="open_distance"-->
+            <!--android:title="@string/open_distance_title"-->
+            <!--android:summary="@string/open_distance_summary"-->
+            <!--android:max="500"-->
+
+            <!--android:defaultValue="300"-->
+            <!--/>-->
+
+        <com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat
             android:key="open_distance"
             android:title="@string/open_distance_title"
             android:summary="@string/open_distance_summary"
-            android:max="500"
-
             android:defaultValue="300"
-            />
+            sample:msbp_minValue="50"
+            sample:msbp_maxValue="1000"
+            sample:msbp_interval="50"
+            sample:msbp_measurementUnit="Meters"
+            sample:msbp_dialogEnabled="false"/>
 
 
         <android.support.v7.preference.SwitchPreferenceCompat

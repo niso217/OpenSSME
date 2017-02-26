@@ -30,6 +30,7 @@ import com.open.ssme.Service.OpenSSMEService;
 import com.open.ssme.Utils.PermissionsUtil;
 import com.open.ssme.Utils.PrefUtils;
 import com.open.ssme.Utils.TimePreference;
+import com.pavelsikun.seekbarpreference.SeekBarPreferenceCompat;
 
 import java.util.Calendar;
 import java.util.List;
@@ -57,7 +58,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private static final String TAG = SettingsFragment.class.getSimpleName();
     private PreferenceCategory mPreferenceCategory;
     private SwitchPreferenceCompat mPreferenceSocial, mPreferenceFirstRun, mPreferenceSchedule;
-    private SeekBarPreference mSeekBarPreference;
+    private SeekBarPreferenceCompat mSeekBarPreference;
     private TimePreference schedule_time;
     public static SettingsChangedListener mSettingsChangedListener;
     private ScheduleHelper mScheduleHelper;
@@ -74,9 +75,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         mPreferenceSocial = (SwitchPreferenceCompat) findPreference(SOCIAL);
         mPreferenceFirstRun = (SwitchPreferenceCompat) findPreference(FIRST_RUN);
         mPreferenceSchedule = (SwitchPreferenceCompat) findPreference(SCHEDULE);
-        mSeekBarPreference = (SeekBarPreference) findPreference(OPEN_DISTANCE);
+        mSeekBarPreference = (SeekBarPreferenceCompat) findPreference(OPEN_DISTANCE);
 
-        mSeekBarPreference.setMin(50);
         mPreferenceFirstRun.setVisible(false);
 
         schedule_time = (TimePreference) findPreference(SCHEDULE_TIME);
