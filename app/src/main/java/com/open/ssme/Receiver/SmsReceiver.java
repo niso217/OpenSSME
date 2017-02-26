@@ -62,7 +62,7 @@ public class SMSReceiver extends BroadcastReceiver {
                         if (isContactExsit && message.toLowerCase().equals(Constants.KEY_SMS_ORIGIN)
                                 && ListGateComplexPref.getInstance().gates.size()>0) {
                             Log.d(TAG, "SMS Received! Open Gate");
-                            OpenSSMEService.MakeTheCall(context);
+                            OpenSSMEService.MakeTheCall(context,true);
 
                         }
                         else

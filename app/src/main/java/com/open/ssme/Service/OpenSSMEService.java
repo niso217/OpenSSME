@@ -5,23 +5,19 @@ package com.open.ssme.Service;
  */
 
 import android.Manifest;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -33,7 +29,6 @@ import android.widget.Toast;
 
 import com.open.ssme.Activity.ExitActivity;
 import com.open.ssme.Activity.MainActivity;
-import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
 import com.open.ssme.Helpers.LocationHelper;
 import com.open.ssme.Helpers.SingleShotLocationProvider;
@@ -67,7 +62,6 @@ import static com.open.ssme.Utils.Constants.NOW;
 import static com.open.ssme.Utils.Constants.ONE_SECONDS;
 import static com.open.ssme.Utils.Constants.ONWAY_INTERVAL;
 import static com.open.ssme.Utils.Constants.RESTART_SERVICE;
-import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 
 
 public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo {
@@ -97,16 +91,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         return START_STICKY;
     }
 
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case Intent.ACTION_CALL:
-                    MakeTheCall(context);
-                    break;
-            }
-        }
-    };
 
 
     private void InitService() {
@@ -121,8 +105,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
         setUpNotificationManager();
 
-        RegisterReciver();
-
         InitServiceNotification();
 
         Worker();
@@ -135,10 +117,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     }
 
 
-    private void RegisterReciver() {
-        IntentFilter filter = new IntentFilter(Intent.ACTION_CALL);
-        registerReceiver(receiver, filter);
-    }
 
     private void InitNotificationIntent() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -200,7 +178,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public static class NotificationCallGate extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            MakeTheCall(context);
+            MakeTheCall(context,false);
         }
     }
 
@@ -209,7 +187,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
         super.onDestroy();
         mLocationHelper.destroy();
         mLocationHelper = null;
-        unregisterReceiver(receiver);
         stopUpdates();
         RestartService();
     }
@@ -238,7 +215,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
             public void run()
             {
                 DoRun();
-            }},0, 1000);
+            }},NOW, DEFAULT_RUN_SERVICE_TASK);
 
     }
 
@@ -311,9 +288,9 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     }
 
 
-    public static void MakeTheCall(Context context) {
+    public static void MakeTheCall(Context context, boolean sound) {
 
-        if (Settings.getInstance().isSound())
+        if (Settings.getInstance().isSound() && sound)
             PlayNotificationSound(context);
 
         Intent intent = new Intent(Intent.ACTION_CALL);
@@ -366,8 +343,10 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     private void ActiveGate() {
         //active the gate if the open distance is * 2
-        if (ListGateComplexPref.getInstance().getClosestGate().distance > Settings.getInstance().getOpen_distance() * DEFAULT_ACTIVE_COEFFICIENT)
-            ListGateComplexPref.getInstance().getClosestGate().active = true;
+        for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
+            if (ListGateComplexPref.getInstance().gates.get(i).distance > Settings.getInstance().getOpen_distance() * DEFAULT_ACTIVE_COEFFICIENT)
+                ListGateComplexPref.getInstance().gates.get(i).active = true;
+        }
     }
 
     public void UpdateIntervalAlgorithm() {
@@ -404,6 +383,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
         if (interval != mGPSUpdateInterval || mWhenToDispatch != WhenToDispatch) {
             mGPSUpdateInterval = interval;
+            MapBroadcast();
             mWhenToDispatch = WhenToDispatch;
             mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
 
@@ -430,7 +410,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     private void OpenSSME() {
         ListGateComplexPref.getInstance().getClosestGate().active = false;
-        MakeTheCall(this);
+        MakeTheCall(this,true);
         Log.d(TAG, "=====OpenSSME=====");
         Log.d(TAG, "Make The Call To " + ListGateComplexPref.getInstance().getClosestGate().phone);
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getApplicationContext());
@@ -450,7 +430,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     private void ListViewBroadcast() {
         Intent intent = new Intent(Constants.DATA_CHANGED);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
+    private void MapBroadcast() {
+        Intent intent = new Intent(Constants.STATUS_CHANGED);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private double Floor(double value) {

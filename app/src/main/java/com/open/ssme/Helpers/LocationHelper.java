@@ -65,13 +65,11 @@ public class LocationHelper implements LocationListener, Observer {
     private double mCurrentLongitude;
     private double mCurrentLatitude;
     private double mCurrentAccuracy;
-    private Timer mTimer;
 
 
     public LocationHelper(Context context) {
 
         this.mContext = context;
-        mLocationHandler = new Handler();
         mGoogleConnection = GoogleConnection.getInstance(context);
         ChangeLocationRequest(UPDATE_INTERVAL,NOW);
         InitLocationManager();
@@ -83,7 +81,7 @@ public class LocationHelper implements LocationListener, Observer {
 
 
     private void reCheckLocation(final long WhenToDispatch) {
-
+        InitHandler();
         mLocationHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -103,13 +101,20 @@ public class LocationHelper implements LocationListener, Observer {
     }
 
     public void GetSingleLocationRequest() {
-
+        InitHandler();
         mLocationHandler.post(new Runnable() {
             @Override
             public void run() {
                 SingleReq();
             }
         });
+    }
+
+    private void InitHandler(){
+        if (mLocationHandler!=null)
+            mLocationHandler.removeCallbacksAndMessages(null);
+        else
+            mLocationHandler = new Handler();
     }
 
 

@@ -138,7 +138,7 @@ public class MapFragment extends Fragment implements
         } else {
             //get masseges from OpenSSMEService
             LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
-                    new IntentFilter(Constants.DATA_CHANGED));
+                    new IntentFilter(Constants.STATUS_CHANGED));
         }
 
     }
@@ -218,8 +218,10 @@ public class MapFragment extends Fragment implements
         public void onReceive(Context context, Intent intent) {
             if (map != null && mShowCircles)
             {
-                ClearCircles();
-                SetUpCircle();
+                if (mShowCircles) {
+                    ClearCircles();
+                    SetUpCircle();
+                }
             }
         }
     };
@@ -247,7 +249,7 @@ public class MapFragment extends Fragment implements
 
         SetUpZoom();
 
-        SetUpCircle();
+        //SetUpCircle();
 
         getMyLocation(true);
 
@@ -759,7 +761,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onMarkerDragStart(Marker marker) {
-
+        ClearCircles();
     }
 
     @Override
@@ -771,6 +773,8 @@ public class MapFragment extends Fragment implements
     public void onMarkerDragEnd(Marker marker) {
         ListGateComplexPref.getInstance().ChangeGatePosition(marker);
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getActivity());
+        if (mShowCircles)
+        SetUpCircle();
 
     }
 
