@@ -113,7 +113,7 @@ public class MapFragment extends Fragment implements
     private List<Circle> mCircleList;
     private boolean mShowCircles;
 
-    private int light_blue,blue,light_red,red;
+    private int light_blue, blue, light_red, red;
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -216,8 +216,7 @@ public class MapFragment extends Fragment implements
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (map != null && mShowCircles)
-            {
+            if (map != null && mShowCircles) {
                 if (mShowCircles) {
                     ClearCircles();
                     SetUpCircle();
@@ -229,7 +228,7 @@ public class MapFragment extends Fragment implements
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         mCircleList = new ArrayList<Circle>();
-        light_blue =ContextCompat.getColor(getContext(), R.color.shadecolor);
+        light_blue = ContextCompat.getColor(getContext(), R.color.shadecolor);
         blue = ContextCompat.getColor(getContext(), R.color.strokecolor);
         light_red = ContextCompat.getColor(getContext(), R.color.shaderedcolor);
         red = ContextCompat.getColor(getContext(), R.color.strokeredcolor);
@@ -242,7 +241,6 @@ public class MapFragment extends Fragment implements
         map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater(getArguments())));
         map.setOnInfoWindowClickListener(this);
         map.setOnMarkerClickListener(this);
-
 
 
         ChangeMapType();
@@ -401,18 +399,21 @@ public class MapFragment extends Fragment implements
 
     }
 
-    private void SetUpZoom(){
+    private void SetUpZoom() {
+        double latitude,longitude;
         GoogleConnection mGoogleConnection = GoogleConnection.getInstance(getContext());
         if (mGoogleConnection.getGoogleApiClient().isConnected()) {
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            double latitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLatitude();
-            double longitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLongitude();
+            Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
+            if (location != null) {
+                 latitude = location.getLatitude();
+                 longitude = location.getLongitude();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
 
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
-
+            }
         }
     }
 
@@ -460,7 +461,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-
+        double latitude,longitude;
         switch (v.getId()) {
             case R.id.current_location:
                 if (map != null) {
@@ -470,11 +471,15 @@ public class MapFragment extends Fragment implements
                                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                             return;
                         }
-                        double latitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLatitude();
-                        double longitude = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient()).getLongitude();
+                        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
+                        if (location != null) {
+                             latitude = location.getLatitude();
+                             longitude = location.getLongitude();
+                            mOnClickLatLang = new LatLng(latitude, longitude);
+                            SetContactPickerIntent();
 
-                        mOnClickLatLang = new LatLng(latitude, longitude);
-                        SetContactPickerIntent();
+                        }
+
                     }
                 }
                 break;
@@ -482,11 +487,10 @@ public class MapFragment extends Fragment implements
                 onCoachMark();
                 break;
             case R.id.draw:
-                if (mCircleList.size() == 0){
+                if (mCircleList.size() == 0) {
                     mShowCircles = true;
                     SetUpCircle();
-                }
-                else{
+                } else {
                     mShowCircles = false;
                     ClearCircles();
 
@@ -774,7 +778,7 @@ public class MapFragment extends Fragment implements
         ListGateComplexPref.getInstance().ChangeGatePosition(marker);
         PrefUtils.setCurrentGate(ListGateComplexPref.getInstance(), getActivity());
         if (mShowCircles)
-        SetUpCircle();
+            SetUpCircle();
 
     }
 

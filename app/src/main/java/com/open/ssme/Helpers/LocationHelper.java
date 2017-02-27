@@ -13,10 +13,14 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.open.ssme.Utils.Constants;
 import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Common.State;
@@ -49,7 +53,7 @@ import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
  */
 
 
-public class LocationHelper implements LocationListener, Observer {
+public class LocationHelper implements Observer {
 
     private GoogleConnection mGoogleConnection;
     private final String TAG = LocationHelper.class.getSimpleName();
@@ -70,6 +74,7 @@ public class LocationHelper implements LocationListener, Observer {
     public LocationHelper(Context context) {
 
         this.mContext = context;
+        mLocationHandler = new Handler();
         mGoogleConnection = GoogleConnection.getInstance(context);
         ChangeLocationRequest(UPDATE_INTERVAL,NOW);
         InitLocationManager();
@@ -85,20 +90,17 @@ public class LocationHelper implements LocationListener, Observer {
         mLocationHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG,"Fired Handler In : " + new SimpleDateFormat("hh:mm:ss").format(new Date()));
                 StartLocationUpdates();
             }
         }, WhenToDispatch);
 
 
-        Log.d(TAG, "=====ReCheck Location In " + WhenToDispatch / 1000 + " Seconds=====");
-
+        Log.d(TAG,"Asked For Handler In: " + new SimpleDateFormat("hh:mm:ss").format(new Date()) +
+                " Dispatch Time: " + new SimpleDateFormat("hh:mm:ss").format(new Date(System.currentTimeMillis() + WhenToDispatch)) + "=====");
     }
 
 
-    @Override
-    public void onLocationChanged(Location location) {
-        SetLocationData(location);
-    }
 
     public void GetSingleLocationRequest() {
         InitHandler();
@@ -113,9 +115,22 @@ public class LocationHelper implements LocationListener, Observer {
     private void InitHandler(){
         if (mLocationHandler!=null)
             mLocationHandler.removeCallbacksAndMessages(null);
-        else
-            mLocationHandler = new Handler();
+
     }
+
+    private LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult result) {
+            SetLocationData(result.getLastLocation());
+        }
+
+        @Override
+        public void onLocationAvailability(LocationAvailability locationAvailability) {
+            mIsLocationUpdatesOn = locationAvailability.isLocationAvailable();
+            Log.d(TAG, "=====Location Availability Is: " + mIsLocationUpdatesOn + "=====");
+        }
+
+    };
 
 
     private void SingleReq(){
@@ -167,43 +182,16 @@ public class LocationHelper implements LocationListener, Observer {
                     ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            Log.d(TAG, mGoogleConnection.getGoogleApiClient().isConnected() + "");
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationRequest, this).setResultCallback(new ResultCallbacks<Status>() {
-                @Override
-                public void onSuccess(Status status) {
-                    mIsLocationUpdatesOn = true;
-                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
-
-                }
-
-                @Override
-                public void onFailure(Status status) {
-                    mIsLocationUpdatesOn = false;
-                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
-                }
-
-            });
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationRequest, mLocationCallback,null);
         }
     }
 
     public void StopLocationUpdates() {
-        if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), this).setResultCallback(new ResultCallbacks<Status>() {
-                @Override
-                public void onSuccess(Status status) {
-                    mIsLocationUpdatesOn = false;
-                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
+        if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected())
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationCallback);
+            mIsLocationUpdatesOn = false;
+        Log.d(TAG, "=====Location Availability Is: " + mIsLocationUpdatesOn + "=====");
 
-                }
-
-                @Override
-                public void onFailure(Status status) {
-                    mIsLocationUpdatesOn = true;
-                    Log.d(TAG, "Location Updates Is " + mIsLocationUpdatesOn);
-
-                }
-            });
-        }
     }
 
 
@@ -232,7 +220,7 @@ public class LocationHelper implements LocationListener, Observer {
 
 
     private void SetLocationData(Location location) {
-        Log.d(TAG, "=====Location Changed=====");
+        Log.d(TAG, "=====Location Changed In " + new SimpleDateFormat("hh:mm:ss").format(new Date()) +"=====");
         mCurrentLocation = location;
         mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         mCurrentLatitude = location.getLatitude();
