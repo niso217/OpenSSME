@@ -103,8 +103,7 @@ public class LocationHelper implements Observer {
 
 
     public void GetSingleLocationRequest() {
-        InitHandler();
-        mLocationHandler.post(new Runnable() {
+        new Handler().post(new Runnable() {
             @Override
             public void run() {
                 SingleReq();
@@ -203,7 +202,7 @@ public class LocationHelper implements Observer {
     }
 
     public void ChangeLocationRequest(long ETA, long WhenToDispatch) {
-        Log.d(TAG, "=====Change Location Request To " + ETA / 1000 + " Seconds, In " + WhenToDispatch / 1000 + " Seconds=====");
+        Log.d(TAG, "=====Change Location Interval To " + ETA / 1000 + " Seconds, Dispatch In " + WhenToDispatch / 1000 + " Seconds=====");
 
         if (mGoogleConnection.getGoogleApiClient().isConnected())
             StartUpdates(ETA, WhenToDispatch);
