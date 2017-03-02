@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements
     private List<String> permissions;
     private Handler mFragmentHandler;
     private boolean mLocationSettingsResultInProcess;
+    private Runnable mRunnable;
 
 
     @Override
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         Log.d(TAG, "onPause");
-        mFragmentHandler.removeCallbacksAndMessages(null);
+        mFragmentHandler.removeCallbacks(mRunnable);
         super.onPause();
     }
 
@@ -246,6 +247,23 @@ public class MainActivity extends AppCompatActivity implements
     private void Init() {
 
         mLocationSettingsResultInProcess = false;
+
+        mRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (fragment.getTag() != CurrentFragment) {
+                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                    ft.replace(R.id.frame, fragment, CurrentFragment);
+                    ft.commit();
+                }
+
+                if (CurrentFragment.equals(MAP_FRAGMENT)) {
+                    if (ListGateComplexPref.getInstance().gates.size() == 0 && !mLocationSettingsResultInProcess && Settings.getInstance().isFirst_run()) {
+                        onCoachMark();
+                    }
+                }
+            }
+        };
 
         mFragmentHandler = new Handler();
 
@@ -408,23 +426,7 @@ public class MainActivity extends AppCompatActivity implements
 
         if (fragment != null) {
 
-            mFragmentHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-
-                    if (fragment.getTag() != CurrentFragment) {
-                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                        ft.replace(R.id.frame, fragment, CurrentFragment);
-                        ft.commit();
-                    }
-
-                    if (CurrentFragment.equals(MAP_FRAGMENT)) {
-                        if (ListGateComplexPref.getInstance().gates.size() == 0 && !mLocationSettingsResultInProcess && Settings.getInstance().isFirst_run()) {
-                            onCoachMark();
-                        }
-                    }
-                }
-            }, 500);
+            mFragmentHandler.postDelayed(mRunnable, 500);
         }
 
         // set the toolbar title

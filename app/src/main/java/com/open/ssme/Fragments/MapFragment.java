@@ -87,6 +87,7 @@ import static com.open.ssme.Utils.Constants.MAP_LNG;
 import static com.open.ssme.Utils.Constants.MAP_MARKERS;
 import static com.open.ssme.Utils.Constants.MAP_TILT;
 import static com.open.ssme.Utils.Constants.MAP_ZOOM;
+import static java.lang.Math.abs;
 
 
 public class MapFragment extends Fragment implements
@@ -106,12 +107,14 @@ public class MapFragment extends Fragment implements
     public GoogleMap map;
     private Float zoom, tilt, bearing;
     private LatLng latlng;
-    private ArrayList<MarkerOptions> mMarkers;
+    private ArrayList<MarkerOptions> mMarkerOptions;
+    private ArrayList<Marker> mMarker;
     private LatLng mOnClickLatLang;
     private Location mCurrentMarker;
     private PlaceAutocompleteFragment autocompleteFragment;
     private List<Circle> mCircleList;
     private boolean mShowCircles;
+    private int mCurrentListIndex;
 
     private int light_blue, blue, light_red, red;
 
@@ -130,7 +133,7 @@ public class MapFragment extends Fragment implements
             latlng = new LatLng(savedInstanceState.getDouble(MAP_LAT), savedInstanceState.getDouble(MAP_LNG));
             tilt = savedInstanceState.getFloat(MAP_TILT);
             bearing = savedInstanceState.getFloat(MAP_BEARING);
-            mMarkers = savedInstanceState.getParcelableArrayList(MAP_BEARING);
+            mMarkerOptions = savedInstanceState.getParcelableArrayList(MAP_BEARING);
             mCurrentMarker = savedInstanceState.getParcelable(MAP_CURRENT_MARKER);
             mOnClickLatLang = savedInstanceState.getParcelable(MAP_CLICKED_LAT_LNG);
 
@@ -160,7 +163,7 @@ public class MapFragment extends Fragment implements
             outState.putFloat(MAP_TILT, map.getCameraPosition().tilt);
             outState.putFloat(MAP_BEARING, map.getCameraPosition().bearing);
             outState.putParcelable(MAP_CURRENT_MARKER, mCurrentMarker);
-            outState.putParcelableArrayList(MAP_MARKERS, mMarkers);
+            outState.putParcelableArrayList(MAP_MARKERS, mMarkerOptions);
             outState.putParcelable(MAP_CLICKED_LAT_LNG, mOnClickLatLang);
 
 
@@ -262,9 +265,10 @@ public class MapFragment extends Fragment implements
         }
         restoreMarkerArrayToMap();
 
-        for (int i = 0; i < mMarkers.size(); i++) {
-            if (mMarkers.get(i) != null && mMarkers.get(i).getPosition() != null) {
-                Marker temp = map.addMarker(mMarkers.get(i));
+        for (int i = 0; i < mMarkerOptions.size(); i++) {
+            if (mMarkerOptions.get(i) != null && mMarkerOptions.get(i).getPosition() != null) {
+                Marker temp = map.addMarker(mMarkerOptions.get(i));
+                mMarker.add(temp);
                 Location marker = LocationToLatLng(temp.getPosition());
                 if (mCurrentMarker != null && temp != null) {
                     if (mCurrentMarker.distanceTo(marker) < 0.0001)
@@ -307,6 +311,8 @@ public class MapFragment extends Fragment implements
             rootView.findViewById(R.id.help).setOnClickListener(this);
             rootView.findViewById(R.id.current_location).setOnClickListener(this);
             rootView.findViewById(R.id.draw).setOnClickListener(this);
+            rootView.findViewById(R.id.left).setOnClickListener(this);
+            rootView.findViewById(R.id.right).setOnClickListener(this);
             MapsInitializer.initialize(this.getActivity());
             mapView = (MapView) rootView.findViewById(R.id.map);
             mapView.onCreate(savedInstanceState);
@@ -350,6 +356,9 @@ public class MapFragment extends Fragment implements
                     .snippet(place.getAddress() + "")
                     .title(getString(R.string.click_to_add))
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+            mMarker.add(PlaceMarker);
+
 
             map.animateCamera(CameraUpdateFactory
                     .newCameraPosition(cameraPosition));
@@ -400,7 +409,7 @@ public class MapFragment extends Fragment implements
     }
 
     private void SetUpZoom() {
-        double latitude,longitude;
+        double latitude, longitude;
         GoogleConnection mGoogleConnection = GoogleConnection.getInstance(getContext());
         if (mGoogleConnection.getGoogleApiClient().isConnected()) {
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -409,8 +418,8 @@ public class MapFragment extends Fragment implements
             }
             Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
             if (location != null) {
-                 latitude = location.getLatitude();
-                 longitude = location.getLongitude();
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
 
             }
@@ -461,7 +470,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        double latitude,longitude;
+        double latitude, longitude;
         switch (v.getId()) {
             case R.id.current_location:
                 if (map != null) {
@@ -473,8 +482,8 @@ public class MapFragment extends Fragment implements
                         }
                         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleConnection.getGoogleApiClient());
                         if (location != null) {
-                             latitude = location.getLatitude();
-                             longitude = location.getLongitude();
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
                             mOnClickLatLang = new LatLng(latitude, longitude);
                             SetContactPickerIntent();
 
@@ -485,6 +494,12 @@ public class MapFragment extends Fragment implements
                 break;
             case R.id.help:
                 onCoachMark();
+                break;
+            case R.id.left:
+                ChangeCameraPosition(--mCurrentListIndex);
+                break;
+            case R.id.right:
+                ChangeCameraPosition(++mCurrentListIndex);
                 break;
             case R.id.draw:
                 if (mCircleList.size() == 0) {
@@ -507,12 +522,23 @@ public class MapFragment extends Fragment implements
         mCircleList.clear();
     }
 
+    private void ChangeCameraPosition(int position) {
+        if (mMarker.size() > 0) {
+            int index = abs(position % mMarker.size());
+            Marker currentMarker = mMarker.get(index);
+            LatLng latLng = currentMarker.getPosition();
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15.0f));
+            currentMarker.showInfoWindow();
+            Log.d(TAG,currentMarker.getTitle()+ "  "+ currentMarker.getSnippet());
+        }
+    }
+
 
     private void restoreMarkerArrayToMap() {
-        //first load add to mMarkers all the Gate from the ShredPrefernce
-        if (mMarkers == null) {
-            mMarkers = new ArrayList<MarkerOptions>();
-
+        //first load add to mMarkerOptions all the Gate from the ShredPrefernce
+        if (mMarkerOptions == null) {
+            mMarkerOptions = new ArrayList<>();
+            mMarker = new ArrayList<>();
             for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
 
                 Bitmap photo = BitmapFactory.decodeFile(ListGateComplexPref.getInstance().gates.get(i).imagePath);
@@ -521,7 +547,7 @@ public class MapFragment extends Fragment implements
                 if (photo == null) {
                     photo = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.gate);
                 }
-                mMarkers.add(new MarkerOptions()
+                mMarkerOptions.add(new MarkerOptions()
                         .position(ListGateComplexPref.getInstance().gates.get(i).location)
                         .snippet(ListGateComplexPref.getInstance().gates.get(i).gateName)
                         .draggable(true)
@@ -666,14 +692,14 @@ public class MapFragment extends Fragment implements
         // Creates and adds marker to the map
         if (map != null) {
             Marker marker = map.addMarker(markerOptions);
+            mMarker.add(marker);
             dropPinEffect(marker);
-            map.addCircle(setCircleOptions(
-                    light_blue,
-                    blue,
-                    marker.getPosition()));
+            if (mShowCircles)
+                SetUpCircle();
+
 
         }
-        mMarkers.add(markerOptions);
+        mMarkerOptions.add(markerOptions);
 
         //fist gate just added, start the service
         if (ListGateComplexPref.getInstance().gates.size() == 1 && !Settings.getInstance().isSchedule()) {
