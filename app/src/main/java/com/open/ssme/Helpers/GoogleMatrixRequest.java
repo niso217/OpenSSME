@@ -69,6 +69,7 @@ public class GoogleMatrixRequest extends AsyncTask<String, Void, GoogleMatrixRes
         return null;
     }
 
+
     public interface Geo{
         public void setGoogleMatrixResponse(GoogleMatrixResponse response);
     }

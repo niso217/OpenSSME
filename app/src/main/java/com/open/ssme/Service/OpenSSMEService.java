@@ -200,6 +200,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
     @Override
     public void onDestroy() {
+        Log.d(TAG,"=====On Destroy=====");
         super.onDestroy();
         destroy();
         stopUpdates();
@@ -271,8 +272,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
                     UpdateIntervalAlgorithm();
 
-                    WriteToLog();
-
                     ListViewBroadcast();
 
                     //if (counter % GOOGLE_MATRIX_API_REQ_TIME == 0)
@@ -283,7 +282,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
             }
             else{
                 if (counter%DEFAULT_CHECK_GPS==0)
-                    GetSingleLocationRequest();
+                    ChangeLocationRequest(UPDATE_INTERVAL,NOW);
+                //GetSingleLocationRequest();
             }
 
         }
@@ -373,13 +373,11 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
             //away, set the next update to to ETA / 2
             if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ONWAY) {
-                Log.d(TAG, "=====Out Side GPS Open Distance=====");
                 nextUpdateInterval = ONWAY_INTERVAL;
                 WhenToDispatch = (long) ((ListGateComplexPref.getInstance().getClosestETA() / DEFAULT_ACTIVE_COEFFICIENT));
             }
             //on the way x minutes before the gate, start massive GPS request
             else if (ListGateComplexPref.getInstance().getClosestGate().status == GateStatus.ALMOST) {
-                Log.d(TAG, "=====Massive GPS Request=====");
                 nextUpdateInterval = ALMOST_INTERVAL;
                 WhenToDispatch = NOW;
             }
@@ -400,12 +398,15 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
             mGPSUpdateInterval = interval;
             MapBroadcast();
             mWhenToDispatch = WhenToDispatch;
+            WriteToLog();
             ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
 
         }
     }
 
     private void WriteToLog() {
+        Log.d(TAG, "====Status====");
+        Log.d(TAG, "Status: " +ListGateComplexPref.getInstance().getClosestGate().status.toString());
         Log.d(TAG, "====Settings====");
         Log.d(TAG, "GPS Open Distance: " + Settings.getInstance().getGps_distance());
         Log.d(TAG, "Gate Radius Open Distance: " + Settings.getInstance().getOpen_distance());
