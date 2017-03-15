@@ -19,6 +19,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,6 +46,7 @@ import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Common.State;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
 import com.open.ssme.Helpers.LocationHelper;
+import com.open.ssme.Helpers.PlayNotification;
 import com.open.ssme.Helpers.SingleShotLocationProvider;
 import com.open.ssme.Objects.Gate;
 import com.open.ssme.Objects.GoogleMatrixResponse;
@@ -86,6 +88,7 @@ import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo {
     private final String TAG = OpenSSMEService.class.getSimpleName();
     private final String WAKE_LOCK = "OpenSSMEServiceWakelock";
+
     private int counter = -5;
     private static boolean doTerminate;
     public static boolean mCodeBlocker;
@@ -110,6 +113,8 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "=====Service is Starting...=====");
+        Log.d(TAG, getPackageName());
+
         InitService();
         return START_STICKY;
     }
@@ -327,8 +332,9 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     public static void MakeTheCall(Context context, boolean sound) {
 
-        if (Settings.getInstance().isSound() && sound)
-            PlayNotificationSound(context);
+        if (Settings.getInstance().isSound() && sound){
+            new PlayNotification().execute(context);
+        }
 
         Intent intent = new Intent(Intent.ACTION_CALL);
 
@@ -519,33 +525,38 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo 
 
     }
 
-    private static void PlayNotificationSound(Context context) {
-        Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+//    private static void PlayNotificationSound(Context context) {
+//        Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+//
+//        Uri url = Uri.parse("android.resource://" + "com.open.ssme" + "/" + R.raw.gtae_open);
+//
+//        MediaPlayer mediaPlayer = new MediaPlayer();
+//
+//        try {
+//            mediaPlayer.setDataSource(context, url);
+//            mediaPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+//            mediaPlayer.prepare();
+//            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//
+//                @Override
+//                public void onCompletion(MediaPlayer mp) {
+//                    mp.release();
+//                }
+//            });
+//            mediaPlayer.start();
+//        } catch (IllegalArgumentException e) {
+//            e.printStackTrace();
+//        } catch (SecurityException e) {
+//            e.printStackTrace();
+//        } catch (IllegalStateException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-        MediaPlayer mediaPlayer = new MediaPlayer();
 
-        try {
-            mediaPlayer.setDataSource(context, defaultRingtoneUri);
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
-            mediaPlayer.prepare();
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    mp.release();
-                }
-            });
-            mediaPlayer.start();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
 
 
