@@ -16,6 +16,8 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
 
     <application
         android:name=".OpenSSMEApplication"
@@ -72,6 +74,7 @@
         </receiver>
         <receiver android:name=".Service.OpenSSMEService$NotificationCallGate" />
         <receiver android:name=".Service.OpenSSMEService$NotificationStopService" />
+
         <!-- SMS Receiver -->
         <receiver android:name=".Receiver.SMSReceiver">
             <intent-filter android:priority="99999">

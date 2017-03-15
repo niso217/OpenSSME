@@ -5,6 +5,7 @@ package com.open.ssme.Service;
  */
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -22,6 +23,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -41,6 +44,7 @@ import com.open.ssme.Activity.MainActivity;
 import com.open.ssme.Common.GoogleConnection;
 import com.open.ssme.Common.State;
 import com.open.ssme.Helpers.GoogleMatrixRequest;
+import com.open.ssme.Helpers.LocationHelper;
 import com.open.ssme.Helpers.SingleShotLocationProvider;
 import com.open.ssme.Objects.Gate;
 import com.open.ssme.Objects.GoogleMatrixResponse;
@@ -79,8 +83,9 @@ import static com.open.ssme.Utils.Constants.RESTART_SERVICE;
 import static com.open.ssme.Utils.Constants.UPDATE_INTERVAL;
 
 
-public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,Observer {
+public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo {
     private final String TAG = OpenSSMEService.class.getSimpleName();
+    private final String WAKE_LOCK = "OpenSSMEServiceWakelock";
     private int counter = -5;
     private static boolean doTerminate;
     public static boolean mCodeBlocker;
@@ -88,10 +93,13 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
     private long mGPSUpdateInterval = 0;
     private long mWhenToDispatch = 0;
     private Constants.LocationType mCurrentLocationType = Constants.LocationType.SINGLE_UPDATE;
-    //private LocationHelper mLocationHelper;
+    private LocationHelper mLocationHelper;
     private PendingIntent mActivityIntent, mCallGateIntent, mStopServiceIntent;
     private boolean mIsWifiOn;
-    private Timer mTimer;
+    private Handler mHandler;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
+
 
     public OpenSSMEService() {
         super();
@@ -110,12 +118,13 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
     private void InitService() {
 
-        //mLocationHelper = new LocationHelper(this);
-        StartLocationHelper();
-        mTimer = new Timer();
+        mLocationHelper = new LocationHelper(this);
+        mHandler = new Handler();
 
         mCodeBlocker = false;
         doTerminate = false;
+
+        InitPowerManager();
 
         InitNotificationIntent();
 
@@ -127,6 +136,14 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
 
     }
+
+    private void InitPowerManager() {
+        mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK);
+        mWakeLock.acquire();
+    }
+
+
 
     private void setUpNotificationManager() {
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -198,20 +215,21 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
         }
     }
 
+
     @Override
     public void onDestroy() {
         Log.d(TAG,"=====On Destroy=====");
         super.onDestroy();
-        destroy();
+        mLocationHelper.destroy();
         stopUpdates();
         RestartService();
+        if (mWakeLock != null)
+            mWakeLock.release();
     }
 
     private void stopUpdates() {
-        if (mTimer!=null) {
-            mTimer.cancel();
-            mTimer.purge();
-            mTimer = null;
+        if (mHandler!=null) {
+            mHandler.removeCallbacksAndMessages(null);
         }
     }
 
@@ -225,13 +243,17 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
     public void Worker() {
         Log.d(TAG, "=====Starting Worker...=====");
-        mTimer.schedule(new TimerTask()
+        mHandler.post(new Runnable()
         {
             @Override
             public void run()
             {
                 DoRun();
-            }},NOW, DEFAULT_RUN_SERVICE_TASK);
+                mHandler.postDelayed(this,DEFAULT_RUN_SERVICE_TASK);
+            }});
+
+
+
 
     }
 
@@ -258,7 +280,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
         if (!mIsWifiOn) {
 
-            if (getLocation() != null) {
+            if (mLocationHelper.getLocation() != null) {
 
                 if (!mCodeBlocker) {
 
@@ -282,15 +304,15 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
             }
             else{
                 if (counter%DEFAULT_CHECK_GPS==0)
-                    ChangeLocationRequest(UPDATE_INTERVAL,NOW);
+                    mLocationHelper.ChangeLocationRequest(UPDATE_INTERVAL,NOW);
                 //GetSingleLocationRequest();
             }
 
         }
         else {
-            if (isLocationUpdatesOn()) {
+            if (mLocationHelper.isLocationUpdatesOn()) {
                 mGPSUpdateInterval = 0;
-                StopLocationUpdates();
+                mLocationHelper.StopLocationUpdates();
 
             }
         }
@@ -333,7 +355,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
         for (int i = 0; i < ListGateComplexPref.getInstance().gates.size(); i++) {
             Location GateLocation = ListGateComplexPref.getInstance().gates.get(i).Location;
-            ListGateComplexPref.getInstance().gates.get(i).distance = new Double(getLocation().distanceTo(GateLocation));
+            ListGateComplexPref.getInstance().gates.get(i).distance = new Double(mLocationHelper.getLocation().distanceTo(GateLocation));
             double distance = ListGateComplexPref.getInstance().gates.get(i).distance / 1000; //to Km
             double time = (distance / DRIVING_SPEED) * 60; //to minutes
             ListGateComplexPref.getInstance().gates.get(i).ETA = time;
@@ -399,7 +421,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
             MapBroadcast();
             mWhenToDispatch = WhenToDispatch;
             WriteToLog();
-            ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
+            mLocationHelper.ChangeLocationRequest(mGPSUpdateInterval, WhenToDispatch);
 
         }
     }
@@ -411,16 +433,16 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
         Log.d(TAG, "GPS Open Distance: " + Settings.getInstance().getGps_distance());
         Log.d(TAG, "Gate Radius Open Distance: " + Settings.getInstance().getOpen_distance());
         Log.d(TAG, "====Location====");
-        Log.d(TAG, "Location Updates Is: " + isLocationUpdatesOn());
+        Log.d(TAG, "Location Updates Is: " + mLocationHelper.isLocationUpdatesOn());
         Log.d(TAG, "Next Location Update: " + mWhenToDispatch / 1000 + " Seconds");
         Log.d(TAG, "Interval: " + mGPSUpdateInterval / 1000 + " Seconds");
-        Log.d(TAG, "Last Location Update: " + getLastLocationUpdate());
+        Log.d(TAG, "Last Location Update: " + mLocationHelper.getLastLocationUpdate());
         Log.d(TAG, "=====Gate Details=====");
         Log.d(TAG, "Gate Name: " + ListGateComplexPref.getInstance().getClosestGate().gateName);
         Log.d(TAG, "Distance To Gate: " + Floor(ListGateComplexPref.getInstance().getClosestGate().distance));
         Log.d(TAG, "ETA: " + Floor(ListGateComplexPref.getInstance().getClosestGate().ETA));
         Log.d(TAG, "Active: " + ListGateComplexPref.getInstance().getClosestGate().active);
-        Log.d(TAG, "Speed: " + getSpeed());
+        Log.d(TAG, "Speed: " + mLocationHelper.getSpeed());
     }
 
 
@@ -460,7 +482,7 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
 
     private void DistanceMatrixRequest() {
         String destinations = "";
-        String origins = getLatitude() + "," + getLongitude();
+        String origins = mLocationHelper.getLatitude() + "," + mLocationHelper.getLongitude();
         Iterator<Gate> iterator = ListGateComplexPref.getInstance().gates.iterator();
 
         while (iterator.hasNext()) {
@@ -525,260 +547,6 @@ public class OpenSSMEService extends Service implements GoogleMatrixRequest.Geo,
         }
     }
 
-
-    //=======================================LOCATION HELPER=====================================
-
-    private GoogleConnection mGoogleConnection;
-    private boolean mIsLocationUpdatesOn;
-    private LocationRequest mLocationRequest;
-    private Handler mLocationHandler;
-    private LocationManager mLocationManager;
-    private Location mCurrentLocation;
-    private String mLastLocationUpdate;
-    private LatLng mCurrentLatLng;
-    private double mCurrentSpeed;
-    private double mCurrentLongitude;
-    private double mCurrentLatitude;
-    private double mCurrentAccuracy;
-    private Runnable mLocationRunnable;
-
-
-    public void StartLocationHelper() {
-
-        InitRunnable();
-        mLocationHandler = new Handler();
-        mGoogleConnection = GoogleConnection.getInstance(getApplicationContext());
-        ChangeLocationRequest(UPDATE_INTERVAL,NOW);
-        InitLocationManager();
-
-    }
-
-    private void InitRunnable() {
-        mLocationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG,"Fired Handler In : " + new SimpleDateFormat("hh:mm:ss").format(new Date()));
-                StartLocationUpdates();
-            }
-        };
-    }
-
-
-    private void reCheckLocation(final long WhenToDispatch) {
-        mLocationHandler.postDelayed(mLocationRunnable, WhenToDispatch);
-        Log.d(TAG,"Asked For Handler In: " + new SimpleDateFormat("hh:mm:ss").format(new Date()) +
-                " Dispatch Time: " + new SimpleDateFormat("hh:mm:ss").format(new Date(System.currentTimeMillis() + WhenToDispatch)) + "=====");
-    }
-
-
-
-    public void GetSingleLocationRequest() {
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                SingleReq();
-            }
-        });
-    }
-
-    private LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult result) {
-            SetLocationData(result.getLastLocation());
-        }
-
-        @Override
-        public void onLocationAvailability(LocationAvailability locationAvailability) {
-            mIsLocationUpdatesOn = locationAvailability.isLocationAvailable();
-            Log.d(TAG, "=====Location Availability Is: " + mIsLocationUpdatesOn + "=====");
-        }
-
-    };
-
-
-    private void SingleReq(){
-        SingleShotLocationProvider.getSingleUpdate(getApplicationContext(), 60000, new SingleShotLocationProvider.LocationCallback() {
-            @Override
-            public void timedOut() {
-                Log.d(TAG,"timedOut");
-            }
-
-            @Override
-            public void WifiOn() {
-
-            }
-
-            @Override
-            public void onLocationChanged(Location location) {
-                SetLocationData(location);
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        });
-    }
-
-    private void InitLocationManager() {
-        mLocationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
-    }
-
-    private boolean IsGpsActive() {
-        return mLocationManager != null ? mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) : false;
-    }
-
-
-    private void StartLocationUpdates() {
-        if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected()) {
-            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationRequest, mLocationCallback,null);
-        }
-    }
-
-    public void StopLocationUpdates() {
-        if (mGoogleConnection != null && mGoogleConnection.getGoogleApiClient().isConnected())
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleConnection.getGoogleApiClient(), mLocationCallback);
-        mIsLocationUpdatesOn = false;
-        Log.d(TAG, "=====Location Availability Is: " + mIsLocationUpdatesOn + "=====");
-
-    }
-
-
-    public void setupLocationRequestBalanced(long Interval) {
-        mLocationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(Interval)
-                .setFastestInterval(Interval);
-    }
-
-    public void ChangeLocationRequest(long ETA, long WhenToDispatch) {
-        Log.d(TAG, "=====Change Location Interval To " + ETA / 1000 + " Seconds, Dispatch In " + WhenToDispatch / 1000 + " Seconds=====");
-
-        if (mGoogleConnection.getGoogleApiClient().isConnected())
-            StartUpdates(ETA, WhenToDispatch);
-        else
-            mGoogleConnection.getGoogleApiClient().connect();
-
-    }
-
-    private void StartUpdates(long ETA, long WhenToDispatch) {
-        StopAllLocationServices();
-        setupLocationRequestBalanced(ETA);
-        reCheckLocation(WhenToDispatch);
-    }
-
-
-    private void SetLocationData(Location location) {
-        Log.d(TAG, "=====Location Changed In " + new SimpleDateFormat("hh:mm:ss").format(new Date()) +"=====");
-        mCurrentLocation = location;
-        mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mCurrentLatitude = location.getLatitude();
-        mCurrentLongitude = location.getLongitude();
-        if (location.hasSpeed())
-            mCurrentSpeed = location.getSpeed();
-        if (location.hasAccuracy())
-            mCurrentAccuracy = location.getAccuracy();
-
-        setLastLocationUpdate(new SimpleDateFormat("hh:mm:ss").format(new Date()));
-
-    }
-
-
-    public void removeLocationHandlerCallbacks() {
-        if (mLocationHandler != null) {
-            mLocationHandler.removeCallbacks(mLocationRunnable);
-        }
-    }
-
-    private void StopAllLocationServices() {
-        removeLocationHandlerCallbacks();
-        StopLocationUpdates();
-    }
-
-
-    public void destroy() {
-        Log.d(TAG, "=====Kill Location Helper=====");
-        StopAllLocationServices();
-        // Disconnecting the client invalidates it.
-        if (mGoogleConnection != null) {
-            mGoogleConnection.disconnect();
-        }
-
-    }
-
-    public boolean isLocationUpdatesOn() {
-        return mIsLocationUpdatesOn;
-    }
-
-    public Location getLocation() {
-        return mCurrentLocation;
-    }
-
-    public LatLng getLatLng() {
-        return mCurrentLatLng;
-    }
-
-    public double getSpeed() {
-        return mCurrentSpeed;
-    }
-
-
-    public double getLongitude() {
-        return mCurrentLongitude;
-    }
-
-    public double getLatitude() {
-        return mCurrentLatitude;
-    }
-
-    public double getAccuracy() {
-        return mCurrentAccuracy;
-    }
-
-
-    public GoogleConnection getGoogleConnection() {
-        return mGoogleConnection;
-    }
-
-
-    public String getLastLocationUpdate() {
-        return mLastLocationUpdate;
-    }
-
-    public void setLastLocationUpdate(String mLastLocationUpdate) {
-        this.mLastLocationUpdate = mLastLocationUpdate;
-    }
-
-    @Override
-    public void update(Observable observable, Object data) {
-        if (observable != mGoogleConnection) {
-            return;
-        }
-        switch ((State) data) {
-
-            case OPENED:
-                Log.d(TAG, "Connected to Google Api Client");
-                StartUpdates(UPDATE_INTERVAL, NOW);
-                break;
-            case CLOSED:
-                Log.d(TAG, "Disconnected from Google Api Client");
-                break;
-        }
-    }
 
 
 }
